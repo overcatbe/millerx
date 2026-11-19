@@ -12,7 +12,7 @@
 #include <gtk/gtk.h>
 
 #ifndef MILLERX_VERSION
-#define MILLERX_VERSION "0.5.4"
+#define MILLERX_VERSION "0.5.5"
 #endif
 
 #define COL_WIDTH 230

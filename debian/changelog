@@ -1,3 +1,11 @@
+millerx (0.5.5) unstable; urgency=medium
+
+  * Bookmarks and drives menus open at full size right away (no resize, no
+    scrolling up).
+  * Small x next to each bookmark removes it.
+
+ -- overcatbe <1771834+overcatbe@users.noreply.github.com>  Thu, 19 Nov 2026 08:43:41 +0200
+
 millerx (0.5.4) unstable; urgency=medium
 
   * First public release.
