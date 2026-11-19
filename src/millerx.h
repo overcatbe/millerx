@@ -87,6 +87,8 @@ struct Column {
 struct Preview {
     Win *win;
     GtkWidget *box, *image, *icon, *text, *text_scroll, *title, *details;
+    GtkWidget *grid_scroll, *grid;   /* a folder's contents as thumbnails, under its details */
+    guint grid_timer;
     guint token;
     int width;
     GFile *current;
