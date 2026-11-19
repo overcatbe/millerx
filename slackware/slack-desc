@@ -1,0 +1,19 @@
+# HOW TO EDIT THIS FILE:
+# The "handy ruler" below makes it easier to edit a package description.
+# Line up the first '|' above the ':' following the base package name, and
+# the '|' on the right side marks the last column you can put a character in.
+# You must make exactly 11 lines for the formatting to be correct.  It's also
+# customary to leave one space after the ':' except on otherwise blank lines.
+
+       |-----handy-ruler------------------------------------------------------|
+millerx: millerX (Miller-column file browser)
+millerx:
+millerx: A small native GTK 3 file browser that shows folders as columns from
+millerx: / to the current folder, with a preview on the right (pictures, PDF,
+millerx: text, archive contents, folder sizes). Open with, terminal here,
+millerx: Thunar-compatible copy/paste, drag and drop, bookmarks shared with
+millerx: Thunar, USB drives, properties, resizable columns, "Open as root"
+millerx: through polkit. Optional: poppler-utils (PDF preview).
+millerx:
+millerx:
+millerx:

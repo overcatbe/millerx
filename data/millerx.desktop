@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=millerX
+GenericName=File Browser
+Comment=Browse files in Miller columns
+Exec=millerx %U
+Icon=millerx
+Terminal=false
+Categories=System;FileTools;FileManager;GTK;
+MimeType=inode/directory;
+Keywords=files;folders;browser;miller;columns;
+StartupNotify=true

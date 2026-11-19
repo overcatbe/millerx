@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-label="millerX">
+  <!-- millerX: a wide, sharp M in yellow (#d4ff02) on a dark tile (#0d0d17) -->
+  <rect width="128" height="128" rx="23" fill="#0d0d17"/>
+  <path d="M26 100 V38 L64 78 L102 38 V100" fill="none" stroke="#d4ff02" stroke-width="16"
+        stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="10"/>
+</svg>

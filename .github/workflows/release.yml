@@ -1,0 +1,61 @@
+# On every version tag (v0.5.4, ...): build the Debian/Ubuntu and Arch packages
+# and attach them, plus the Slackware build files, to a GitHub release.
+name: release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  deb:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build .deb
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends build-essential debhelper \
+            meson ninja-build pkgconf libgtk-3-dev libarchive-dev
+          dpkg-buildpackage -us -uc -b
+          mkdir out && mv ../millerx_*.deb out/
+      - uses: actions/upload-artifact@v4
+        with: { name: deb, path: out/*.deb }
+
+  arch:
+    runs-on: ubuntu-24.04
+    container: archlinux:latest
+    steps:
+      - name: Tools
+        run: pacman -Syu --noconfirm --needed base-devel git meson ninja gtk3 libarchive hicolor-icon-theme
+      - uses: actions/checkout@v4
+      - name: Build Arch package
+        run: |
+          ver=${GITHUB_REF_NAME#v}
+          git config --global --add safe.directory "$PWD"
+          git archive --prefix=millerx-$ver/ -o packaging/arch/millerx-$ver.tar.gz HEAD
+          useradd -m builder
+          chown -R builder packaging/arch
+          cd packaging/arch && su builder -c "makepkg --nodeps --noconfirm"
+          mkdir -p ../../out && mv millerx-*.pkg.tar.zst ../../out/
+      - uses: actions/upload-artifact@v4
+        with: { name: arch, path: out/*.pkg.tar.zst }
+
+  release:
+    needs: [deb, arch]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: { path: dist, merge-multiple: true }
+      - name: Slackware build files + source
+        run: |
+          ver=${GITHUB_REF_NAME#v}
+          git archive --prefix=millerx-$ver/ -o dist/millerx-$ver.tar.gz HEAD
+          tar czf dist/millerx-$ver.SlackBuild.tar.gz --transform 's,^slackware,millerx,' slackware
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
