@@ -13,7 +13,7 @@ and moving up or sideways is a single click or arrow key.
 
 The technique is credited to **Mark S. Miller**, who came up with it in 1980 at
 Yale University; it was later used at Project Xanadu, Datapoint and NeXT.
-millerX carries his name, and the X is for X11.
+millerX carries his name.
 
 ![millerX](docs/screenshot.png)
 
