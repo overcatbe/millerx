@@ -127,6 +127,32 @@ static void on_remove_here(GtkMenuItem *mi, Win *w)
     g_free(uri);
 }
 
+/* the small ✕ at the end of a bookmark removes it and keeps the menu open */
+static gboolean on_mark_release(GtkWidget *mi, GdkEventButton *ev, Win *w)
+{
+    GtkWidget *x = g_object_get_data(G_OBJECT(mi), "x");
+    int xx, yy;
+    if (ev->button != 1 || !gtk_widget_translate_coordinates(mi, x, (int) ev->x, (int) ev->y, &xx, &yy))
+        return FALSE;
+    GtkAllocation a;
+    gtk_widget_get_allocation(x, &a);
+    if (xx < -6 || xx >= a.width + 6) /* a little slack around the icon */
+        return FALSE;
+    GtkWidget *menu = gtk_widget_get_parent(mi);
+    bookmark_remove(w, g_object_get_data(G_OBJECT(mi), "uri"));
+    gtk_widget_destroy(mi);
+    /* the last bookmark gone: show the placeholder like a fresh fill would */
+    GList *kids = gtk_container_get_children(GTK_CONTAINER(menu));
+    if (GTK_IS_SEPARATOR_MENU_ITEM(kids->data)) {
+        GtkWidget *none = menu_item_new("No bookmarks yet", NULL, NULL);
+        gtk_widget_set_sensitive(none, FALSE);
+        gtk_menu_shell_prepend(GTK_MENU_SHELL(menu), none);
+        gtk_widget_show_all(none);
+    }
+    g_list_free(kids);
+    return TRUE;
+}
+
 static void clear_menu(GtkWidget *m)
 {
     GList *kids = gtk_container_get_children(GTK_CONTAINER(m));
@@ -160,6 +186,12 @@ void places_fill_bookmarks(Win *w)
         char *name = *mk->label ? g_strdup(mk->label) : path ? g_file_get_basename(f) : g_strdup(mk->uri);
         gboolean exists = !path || g_file_query_exists(f, NULL);
         GtkWidget *mi = menu_item_new(name, NULL, exists ? "folder" : "dialog-warning");
+        GtkWidget *x = gtk_image_new_from_icon_name("window-close-symbolic", GTK_ICON_SIZE_MENU);
+        gtk_widget_set_margin_start(x, 18);
+        gtk_box_pack_end(GTK_BOX(gtk_bin_get_child(GTK_BIN(mi))), x, FALSE, FALSE, 0);
+        g_object_set_data(G_OBJECT(mi), "x", x);
+        g_object_set_data_full(G_OBJECT(mi), "uri", g_strdup(mk->uri), g_free);
+        g_signal_connect(mi, "button-release-event", G_CALLBACK(on_mark_release), w);
         char *tip = file_path(f);
         gtk_widget_set_tooltip_text(mi, tip);
         add(m, mi, f, G_CALLBACK(on_open_bookmark), w);

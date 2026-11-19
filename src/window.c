@@ -1180,14 +1180,17 @@ static GtkWidget *tool_button(const char *icon, const char *tip)
     return b;
 }
 
-static void menu_toggled(GtkToggleButton *b, Win *w)
+/* places menus are rebuilt BEFORE they pop up; filling them while already shown made GTK
+ * open them at the old size, then resize and leave them scrolled */
+static void places_clicked(GtkButton *b, Win *w)
 {
-    if (!gtk_toggle_button_get_active(b))
-        return;
-    if (g_object_get_data(G_OBJECT(b), "bm"))
+    GtkWidget *menu = g_object_get_data(G_OBJECT(b), "bm") ? w->bm_menu : w->dev_menu;
+    if (menu == w->bm_menu)
         places_fill_bookmarks(w);
     else
         places_fill_devices(w);
+    gtk_menu_popup_at_widget(GTK_MENU(menu), GTK_WIDGET(b), GDK_GRAVITY_SOUTH_WEST,
+                             GDK_GRAVITY_NORTH_WEST, NULL);
 }
 
 static GtkWidget *menu_button(GtkWidget *menu, const char *icon, const char *tip)
@@ -1254,12 +1257,14 @@ Win *win_new(GtkApplication *app, GFile *start)
     GtkWidget *root = tool_button("computer", "File system / (Alt+/)");
     g_signal_connect(root, "clicked", G_CALLBACK(on_root), w);
     w->bm_menu = gtk_menu_new();
-    GtkWidget *bm = menu_button(w->bm_menu, "user-bookmarks", "Bookmarks (Ctrl+D adds this folder)");
+    gtk_menu_attach_to_widget(GTK_MENU(w->bm_menu), w->window, NULL);
+    GtkWidget *bm = tool_button("user-bookmarks", "Bookmarks (Ctrl+D adds this folder)");
     g_object_set_data(G_OBJECT(bm), "bm", GINT_TO_POINTER(1));
-    g_signal_connect(bm, "toggled", G_CALLBACK(menu_toggled), w);
+    g_signal_connect(bm, "clicked", G_CALLBACK(places_clicked), w);
     w->dev_menu = gtk_menu_new();
-    GtkWidget *dev = menu_button(w->dev_menu, "drive-removable-media", "Drives: mount, open, eject");
-    g_signal_connect(dev, "toggled", G_CALLBACK(menu_toggled), w);
+    gtk_menu_attach_to_widget(GTK_MENU(w->dev_menu), w->window, NULL);
+    GtkWidget *dev = tool_button("drive-removable-media", "Drives: mount, open, eject");
+    g_signal_connect(dev, "clicked", G_CALLBACK(places_clicked), w);
     GtkWidget *main_menu = gtk_menu_new();
     GtkWidget *mi;
     if (!is_root()) {
