@@ -278,7 +278,7 @@ static Column *add_column(Win *w, GFile *f, GPtrArray *chain)
     return c;
 }
 
-/* show the whole chain of folders from / down to f (Finder style) */
+/* show the whole chain of folders from / down to f, one column each */
 void win_open_path(Win *w, GFile *f)
 {
     GFile *keep = g_object_ref(f);     /* f may belong to a column we're about to drop */

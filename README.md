@@ -4,6 +4,17 @@ A small, native file browser with **Miller columns**: every folder from `/` down
 where you are sits in its own column, and the selected file is previewed on the right.
 Like a mind map of your disk. Written in C with GTK 3 and GIO.
 
+### Miller columns
+
+Miller columns, also called *cascading lists*, show a tree one level per column:
+pick a folder and its contents open in the next column to the right, while every
+level above stays visible. You always see where you are and how you got there,
+and moving up or sideways is a single click or arrow key.
+
+The technique is credited to **Mark S. Miller**, who came up with it in 1980 at
+Yale University; it was later used at Project Xanadu, Datapoint and NeXT.
+millerX carries his name, and the X is for X11.
+
 ![millerX](docs/screenshot.png)
 
 ## What it does
