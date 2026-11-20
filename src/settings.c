@@ -66,6 +66,7 @@ void look_load(void)
     LOOK.fade = style && !strcmp(style, "fade");
     g_free(style);
     LOOK.preview_width = get_int(kf, "look", "preview_width", PREVIEW_DEFAULT, 200, 900);
+    LOOK.gallery_names = get_bool(kf, "look", "gallery_names", FALSE);
     LOOK.folders_first = get_bool(kf, "browse", "folders_first", TRUE);
     LOOK.show_hidden = get_bool(kf, "browse", "show_hidden", FALSE);
     LOOK.cache_max_mb = get_int(kf, "thumbnails", "max_mb", 1024, 50, 100000);
@@ -85,6 +86,7 @@ gboolean look_save(GError **err)
     g_key_file_set_integer(kf, "look", "divider_width", LOOK.divider_width);
     g_key_file_set_string(kf, "look", "divider_style", LOOK.fade ? "fade" : "solid");
     g_key_file_set_integer(kf, "look", "preview_width", LOOK.preview_width);
+    g_key_file_set_boolean(kf, "look", "gallery_names", LOOK.gallery_names);
     g_key_file_set_boolean(kf, "browse", "folders_first", LOOK.folders_first);
     g_key_file_set_boolean(kf, "browse", "show_hidden", LOOK.show_hidden);
     g_key_file_set_integer(kf, "thumbnails", "max_mb", LOOK.cache_max_mb);

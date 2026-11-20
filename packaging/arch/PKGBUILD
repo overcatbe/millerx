@@ -1,6 +1,6 @@
 # Maintainer: overcatbe <1771834+overcatbe@users.noreply.github.com>
 pkgname=millerx
-pkgver=0.6
+pkgver=0.6.1
 pkgrel=1
 pkgdesc="Small native file browser with Miller columns (GTK 3)"
 arch=('x86_64' 'aarch64')
@@ -10,6 +10,7 @@ depends=('gtk3' 'glib2' 'libarchive' 'libwebp' 'hicolor-icon-theme')
 makedepends=('meson' 'ninja')
 options=('!debug')
 optdepends=('poppler: PDF preview (pdftoppm)'
+            'ffmpeg: AVIF, HEIC and other pictures gdk-pixbuf cannot read'
             'polkit: "Open as root" (needs a polkit authentication agent)')
 source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
 sha256sums=('SKIP')

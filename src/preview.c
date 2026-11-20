@@ -208,6 +208,8 @@ static GdkPixbuf *load_webp(const char *path, int max_w, int max_h)
 }
 #endif
 
+static GdkPixbuf *render_ffmpeg(const char *path, int max_w, int max_h, int timeout_ms);
+
 /* A picture no bigger than max_w x max_h; small pictures keep their own size. */
 static GdkPixbuf *load_fitted(const char *path, int max_w, int max_h)
 {
@@ -218,7 +220,7 @@ static GdkPixbuf *load_fitted(const char *path, int max_w, int max_h)
     int w = 0, h = 0;
     GdkPixbuf *pb = NULL;
     if (!gdk_pixbuf_get_file_info(path, &w, &h))
-        return NULL;
+        return render_ffmpeg(path, max_w, max_h, 8000);     /* AVIF, HEIC, … */
     if (w > max_w || h > max_h)
         pb = gdk_pixbuf_new_from_file_at_scale(path, max_w, max_h, TRUE, NULL);
     else
@@ -401,7 +403,7 @@ static gboolean thumb_done(gpointer data)
         if (c) {
             g_object_set_data(G_OBJECT(c), "state", GINT_TO_POINTER(j->skipped ? 0 : 2));
             if (j->pixbuf)
-                gtk_image_set_from_pixbuf(GTK_IMAGE(gtk_bin_get_child(GTK_BIN(c))), j->pixbuf);
+                gtk_image_set_from_pixbuf(GTK_IMAGE(g_object_get_data(G_OBJECT(c), "img")), j->pixbuf);
         }
     }
     g_clear_object(&j->pixbuf);
@@ -437,6 +439,9 @@ static gboolean queue_visible_now(gpointer data)
     if (page < 1)
         page = 800;
     int rowh = p->tile + 2 * THUMB_PAD + THUMB_GAP;
+    GtkFlowBoxChild *first = gtk_flow_box_get_child_at_index(GTK_FLOW_BOX(p->grid), 0);
+    if (first && gtk_widget_get_allocated_height(GTK_WIDGET(first)) > 1)
+        rowh = gtk_widget_get_allocated_height(GTK_WIDGET(first)) + THUMB_GAP;
     int lo = (int) (top / rowh) * p->cols;
     int hi = ((int) ((top + 2 * page) / rowh) + 1) * p->cols - 1;   /* the screen + one page ahead */
     g_atomic_int_set(&p->vis_lo, lo);
@@ -489,10 +494,29 @@ static gboolean add_batch(gpointer data)
         gtk_image_set_pixel_size(GTK_IMAGE(img), p->tile / 2);
         gtk_widget_set_size_request(img, p->tile, p->tile);
         char *disp = g_filename_display_name(e->name);
-        gtk_widget_set_tooltip_text(img, disp);
-        g_free(disp);
         GtkWidget *child = gtk_flow_box_child_new();
-        gtk_container_add(GTK_CONTAINER(child), img);
+        gtk_widget_set_tooltip_text(child, disp);
+        g_object_set_data(G_OBJECT(child), "img", img);
+        if (LOOK.gallery_names) {
+            /* one line, cut in the middle so the extension stays: long-na…me.jpg */
+            GtkWidget *l = gtk_label_new(disp);
+            gtk_label_set_ellipsize(GTK_LABEL(l), PANGO_ELLIPSIZE_MIDDLE);
+            gtk_label_set_max_width_chars(GTK_LABEL(l), 1);
+            gtk_widget_set_size_request(l, p->tile, -1);
+            gtk_widget_set_opacity(l, 0.8);
+            PangoAttrList *at = pango_attr_list_new();
+            pango_attr_list_insert(at, pango_attr_scale_new(0.85));
+            gtk_label_set_attributes(GTK_LABEL(l), at);
+            pango_attr_list_unref(at);
+            g_object_set_data(G_OBJECT(child), "label", l);
+            GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
+            gtk_box_pack_start(GTK_BOX(box), img, FALSE, FALSE, 0);
+            gtk_box_pack_start(GTK_BOX(box), l, FALSE, FALSE, 0);
+            gtk_container_add(GTK_CONTAINER(child), box);
+        } else {
+            gtk_container_add(GTK_CONTAINER(child), img);
+        }
+        g_free(disp);
         g_object_set_data_full(G_OBJECT(child), "path", g_build_filename(p->pending_dir, e->name, NULL), g_free);
         g_object_set_data_full(G_OBJECT(child), "ct", g_strdup(e->ct), g_free);
         g_object_set_data(G_OBJECT(child), "state", GINT_TO_POINTER(!e->dir && thumbable(e->ct) ? 0 : 2));
@@ -704,7 +728,10 @@ static void on_grid_changed(GFileMonitor *m, GFile *f, GFile *other, GFileMonito
         if (t && np && (base[0] != '.' || p->win->show_hidden)) {
             g_object_set_data_full(G_OBJECT(t), "path", g_strdup(np), g_free);
             char *disp = g_filename_display_name(base);
-            gtk_widget_set_tooltip_text(gtk_bin_get_child(GTK_BIN(t)), disp);
+            gtk_widget_set_tooltip_text(t, disp);
+            GtkWidget *l = g_object_get_data(G_OBJECT(t), "label");
+            if (l)
+                gtk_label_set_text(GTK_LABEL(l), disp);
             g_free(disp);
         } else if (t) {
             gtk_widget_destroy(t);
@@ -860,17 +887,11 @@ static void on_thumb_activated(GtkFlowBox *box, GtkFlowBoxChild *child, Preview 
 }
 
 /* Page 1 of a PDF, fitted into max_w x max_h; pdftoppm (poppler) gets timeout_ms, then is killed. */
-static GdkPixbuf *render_pdf(const char *path, int max_w, int max_h, int timeout_ms)
+/* Runs argv (which writes png), waits up to timeout_ms (then kills it) and loads the result
+ * fitted into max_w x max_h. */
+static GdkPixbuf *run_to_png(char **argv, const char *png, int max_w, int max_h, int timeout_ms)
 {
     GdkPixbuf *pb = NULL;
-    char *dir = g_dir_make_tmp("millerx-XXXXXX", NULL);
-    if (!dir)
-        return NULL;
-    char *out = g_build_filename(dir, "p", NULL);
-    char *png = g_strconcat(out, ".png", NULL);
-    char *w = g_strdup_printf("%d", MAX(max_w, max_h));
-    char *argv[] = { (char *) "pdftoppm", (char *) "-f", (char *) "1", (char *) "-l", (char *) "1",
-                     (char *) "-png", (char *) "-singlefile", (char *) "-scale-to", w, (char *) path, out, NULL };
     GPid pid;
     if (g_spawn_async(NULL, argv, NULL,
                       G_SPAWN_SEARCH_PATH | G_SPAWN_DO_NOT_REAP_CHILD | G_SPAWN_STDOUT_TO_DEV_NULL
@@ -894,10 +915,56 @@ static GdkPixbuf *render_pdf(const char *path, int max_w, int max_h, int timeout
             pb = fit_pixbuf(pb, max_w, max_h);
     }
     g_unlink(png);
+    return pb;
+}
+
+/* Page 1 of a PDF, fitted into max_w x max_h; pdftoppm (poppler). */
+static GdkPixbuf *render_pdf(const char *path, int max_w, int max_h, int timeout_ms)
+{
+    char *dir = g_dir_make_tmp("millerx-XXXXXX", NULL);
+    if (!dir)
+        return NULL;
+    char *out = g_build_filename(dir, "p", NULL);
+    char *png = g_strconcat(out, ".png", NULL);
+    char *w = g_strdup_printf("%d", MAX(max_w, max_h));
+    char *argv[] = { (char *) "pdftoppm", (char *) "-f", (char *) "1", (char *) "-l", (char *) "1",
+                     (char *) "-png", (char *) "-singlefile", (char *) "-scale-to", w, (char *) path, out, NULL };
+    GdkPixbuf *pb = run_to_png(argv, png, max_w, max_h, timeout_ms);
     g_rmdir(dir);
     g_free(w);
     g_free(png);
     g_free(out);
+    g_free(dir);
+    return pb;
+}
+
+/* Pictures gdk-pixbuf can't read (AVIF, HEIC, …) through ffmpeg, if it is installed: scaled
+ * down to fit (never up), first frame only. */
+static GdkPixbuf *render_ffmpeg(const char *path, int max_w, int max_h, int timeout_ms)
+{
+    static int have = -1;
+    if (have < 0) {
+        char *f = g_find_program_in_path("ffmpeg");
+        have = f != NULL;
+        g_free(f);
+    }
+    if (!have)
+        return NULL;
+    char *dir = g_dir_make_tmp("millerx-XXXXXX", NULL);
+    if (!dir)
+        return NULL;
+    char *png = g_build_filename(dir, "p.png", NULL);
+    char *in = g_strconcat("file:", path, NULL);          /* never read as an ffmpeg protocol */
+    char *vf = g_strdup_printf("scale='min(%d,iw)':'min(%d,ih)':force_original_aspect_ratio=decrease",
+                               max_w, max_h);
+    char *argv[] = { (char *) "ffmpeg", (char *) "-nostdin", (char *) "-hide_banner", (char *) "-loglevel",
+                     (char *) "error", (char *) "-i", in, (char *) "-frames:v", (char *) "1", (char *) "-vf", vf,
+                     (char *) "-y", png, NULL };
+    GdkPixbuf *pb = run_to_png(argv, png, max_w, max_h, timeout_ms);
+    g_rmdir(dir);
+    g_free(vf);
+    g_free(in);
+    g_free(png);
     g_free(dir);
     return pb;
 }

@@ -1528,13 +1528,20 @@ Win *win_new(GtkApplication *app, GFile *start)
 void app_apply_look(GtkApplication *app, const Look *nl)
 {
     gboolean resort = nl->folders_first != LOOK.folders_first;
+    gboolean names = nl->gallery_names != LOOK.gallery_names;
     char *col = g_strdup(nl->divider_color);
     g_free(LOOK.divider_color);
     LOOK = *nl;
     LOOK.divider_color = col;
     for (GList *l = gtk_application_get_windows(app); l; l = l->next) {
         Win *w = g_object_get_data(G_OBJECT(l->data), "millerx-win");
-        if (w && !w->dead)
+        if (w && !w->dead) {
             win_look_changed(w, resort);
+            if (names && w->preview->current) {      /* gallery tiles with or without names */
+                GFile *f = g_object_ref(w->preview->current);
+                preview_show_file(w->preview, f);
+                g_object_unref(f);
+            }
+        }
     }
 }

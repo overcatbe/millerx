@@ -1,5 +1,5 @@
 project('millerx', 'c',
-  version : '0.6',
+  version : '0.6.1',
   license : 'GPL-2.0-or-later',
   meson_version : '>= 0.60',
   default_options : ['c_std=gnu11', 'warning_level=2', 'buildtype=release'])

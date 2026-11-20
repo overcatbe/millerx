@@ -1,3 +1,12 @@
+millerx (0.6.1) unstable; urgency=medium
+
+  * AVIF, HEIC and other pictures gdk-pixbuf can't read are shown through
+    ffmpeg (optional), in the preview and the gallery.
+  * Setting: show names under the gallery's thumbnails (one line, cut in the
+    middle so the extension stays).
+
+ -- overcatbe <1771834+overcatbe@users.noreply.github.com>  Fri, 20 Nov 2026 10:26:56 +0200
+
 millerx (0.6) unstable; urgency=medium
 
   * Preview takes the rest of the window; its width setting is now the minimum.

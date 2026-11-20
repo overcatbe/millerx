@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.1 (2026-11-20)
+
+- **AVIF, HEIC and other pictures** that gdk-pixbuf can't read are shown through
+  **ffmpeg**, if it is installed, in the preview and in the gallery.
+- **Names under thumbnails** (Settings → Gallery): one line under each tile, cut in the
+  middle so the extension stays visible (`a-very-lo…nal-v2.jpg`). Off by default.
+
 ## 0.6 (2026-11-20)
 
 ### The preview pane

@@ -364,7 +364,7 @@ typedef struct {
     Win *w;
     GtkWidget *auto_rb, *own_rb, *colour, *width, *style, *pw, *ff, *sh;
     GtkWidget *cache_size, *cache_clear, *cache_mb, *cache_days, *cache_auto;
-    GtkWidget *sort_list;
+    GtkWidget *sort_list, *names;
 } Set;
 
 static void fill_sort_list(Set *s);
@@ -388,6 +388,7 @@ static void settings_changed(GtkWidget *any, Set *s)
     nl.preview_width = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(s->pw));
     nl.folders_first = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->ff));
     nl.show_hidden = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->sh));
+    nl.gallery_names = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->names));
     nl.cache_max_mb = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(s->cache_mb));
     nl.cache_days = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(s->cache_days));
     nl.cache_auto = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->cache_auto));
@@ -573,6 +574,9 @@ void dialog_settings(Win *w)
     s->pw = gtk_spin_button_new_with_range(200, 900, 10);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(s->pw), LOOK.preview_width);
     srow(grid, &r, "Minimum width (px)", s->pw);   /* it takes the rest of the window */
+    s->names = gtk_check_button_new_with_label("Show names under thumbnails");
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(s->names), LOOK.gallery_names);
+    srow(grid, &r, "Gallery", s->names);
     section(grid, &r, "Browsing");
     s->ff = gtk_check_button_new_with_label("Folders first");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(s->ff), LOOK.folders_first);
@@ -615,6 +619,7 @@ void dialog_settings(Win *w)
     g_signal_connect(s->pw, "value-changed", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->ff, "toggled", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->sh, "toggled", G_CALLBACK(settings_changed), s);
+    g_signal_connect(s->names, "toggled", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->cache_mb, "value-changed", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->cache_days, "value-changed", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->cache_auto, "toggled", G_CALLBACK(settings_changed), s);

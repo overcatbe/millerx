@@ -11,7 +11,7 @@ Rules-Requires-Root: no
 Package: millerx
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, hicolor-icon-theme
-Recommends: poppler-utils, pkexec
+Recommends: poppler-utils, pkexec, ffmpeg
 Description: small native file browser with Miller columns
  millerX shows folders as columns from / to the current folder, with a
  preview on the right: pictures, PDF pages, text, archive contents and

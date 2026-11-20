@@ -12,7 +12,7 @@
 #include <gtk/gtk.h>
 
 #ifndef MILLERX_VERSION
-#define MILLERX_VERSION "0.6"
+#define MILLERX_VERSION "0.6.1"
 #endif
 
 #define COL_WIDTH 230
@@ -37,6 +37,7 @@ typedef struct {
     int preview_width;      /* 200-900 */
     gboolean folders_first;
     gboolean show_hidden;   /* at start */
+    gboolean gallery_names; /* a line with the name under each thumbnail */
     int cache_max_mb;       /* thumbnail cache: shrink to this, least used first */
     int cache_days;         /* forget thumbnails unused this long */
     gboolean cache_auto;    /* clean once a day when millerX starts */

@@ -4,6 +4,9 @@ A small, native file browser with **Miller columns**: every folder from `/` down
 where you are sits in its own column, and the selected file is previewed on the right.
 Like a mind map of your disk. Written in C with GTK 3 and GIO.
 
+> **New in 0.6.1:** AVIF and HEIC pictures (through ffmpeg) · optional names under the
+> gallery's thumbnails.
+>
 > **New in 0.6:** the preview takes the rest of the window and fits pictures into it ·
 > a fast gallery of a folder's pictures and PDFs, with its own right-click menu ·
 > thumbnails shared with Thunar in `~/.cache/thumbnails`, cleaned up automatically ·
@@ -27,11 +30,12 @@ millerX carries his name.
 
 - **Columns from `/`** to the current folder; ← → and the mouse move through them,
   the newest column always stays in view.
-- **Preview** in the rest of the window: pictures (WebP too) fitted to the pane, the first
+- **Preview** in the rest of the window: pictures (WebP, AVIF and HEIC too) fitted to the pane, the first
   page of PDFs, text, the contents of zip/tar archives, folder sizes counted in the background.
 - **Gallery**: a folder's pictures and PDFs as thumbnails under its details. Opens at once
   even with thousands of files, loads only what is on screen, and right-click gives each
-  thumbnail its own menu (open, show in column, rename, trash, …).
+  thumbnail its own menu (open, show in column, rename, trash, …). Names under the
+  thumbnails if you like (one line, cut in the middle so the extension stays).
 - **Shared thumbnail cache** (`~/.cache/thumbnails`, like Thunar and the file dialogs),
   cleaned up automatically: files that are gone, unused for 180 days, above 1 GB.
 - **Sorting per folder**: everything is sorted by name, so your eye learns where things are.
@@ -92,7 +96,8 @@ Packages for **Slackware**, **Debian/Ubuntu** and **Arch** are attached to every
 ### Build from source (any distro)
 
 Needs GTK 3, GLib/GIO, libarchive, meson and ninja. Optional: libwebp (WebP pictures;
-found automatically when building), `pdftoppm` (poppler) for PDF previews, polkit plus an
+found automatically when building), `pdftoppm` (poppler) for PDF previews, `ffmpeg` for
+AVIF, HEIC and other pictures gdk-pixbuf can't read, polkit plus an
 authentication agent for "Open as root".
 
 ```sh
@@ -111,6 +116,7 @@ divider_color = auto     # auto = theme background 20 % lighter (dark) / darker 
 divider_width = 2        # 1-12
 divider_style = solid    # solid | fade
 preview_width = 340      # 200-900, the least the preview gets; it takes the rest
+gallery_names = false    # a line with the name under each thumbnail
 
 [browse]
 folders_first = true
