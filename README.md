@@ -88,6 +88,32 @@ What changed in each version: [CHANGELOG](CHANGELOG.md).
 On a selected thumbnail in the gallery: Enter opens it in its column, Delete / Shift+Delete,
 F2, the Menu key and Alt+Enter work as in a column.
 
+## What it needs
+
+One program of about 170 KB. Everything it links is already on any desktop that runs
+GTK 3 programs:
+
+```
+millerx
+├── GTK 3            the window, columns and dialogs
+│   └── GLib/GIO, Pango, Cairo, gdk-pixbuf   (come with GTK)
+├── libarchive       looking into zip and tar files
+└── libwebp          WebP pictures (optional: left out if it isn't there when building)
+```
+
+Programs it uses **if they are installed**, nothing breaks without them:
+
+| For | Program | Without it |
+| --- | --- | --- |
+| PDF previews | `pdftoppm` (poppler) | the PDF's icon |
+| AVIF, HEIC and other pictures | `ffmpeg` | the picture's icon |
+| Open as root | `pkexec` + a polkit agent | no root window |
+| USB sticks and other drives | gvfs / udisks2 | only drives already mounted |
+| Open terminal here | any terminal (`$TERMINAL` or one of 17 known) | a message saying none was found |
+
+No Qt, no KDE or GNOME libraries, no Python, no thumbnailer service, nothing running in
+the background. It works with any window manager or desktop on X11.
+
 ## Install
 
 Packages for **Slackware**, **Debian/Ubuntu** and **Arch** are attached to every
