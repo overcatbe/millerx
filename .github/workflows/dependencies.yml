@@ -1,0 +1,67 @@
+# GitHub can't read meson.build, so its dependency graph would only list this repo's CI actions.
+# This tells it what millerX really needs, as Debian package names; the optional ones carry
+# "optional": "true" (millerX works without them, see README "What it needs").
+name: dependency graph
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write     # needed to submit a dependency snapshot
+
+jobs:
+  submit:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Submit millerX's dependencies
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+          REF: ${{ github.ref }}
+          RUN: ${{ github.run_id }}
+        run: |
+          dep() {  # name, scope, optional
+            printf '"%s": {"package_url": "pkg:deb/debian/%s", "relationship": "direct", "scope": "%s", "metadata": {"optional": "%s"}}' \
+              "$1" "$1" "$2" "$3"
+          }
+          deps=$(printf '%s,' \
+            "$(dep libgtk-3-0 runtime false)" \
+            "$(dep libglib2.0-0 runtime false)" \
+            "$(dep libpango-1.0-0 runtime false)" \
+            "$(dep libcairo2 runtime false)" \
+            "$(dep libgdk-pixbuf-2.0-0 runtime false)" \
+            "$(dep libarchive13 runtime false)" \
+            "$(dep libwebp7 runtime true)" \
+            "$(dep poppler-utils runtime true)" \
+            "$(dep ffmpeg runtime true)" \
+            "$(dep pkexec runtime true)" \
+            "$(dep gvfs runtime true)" \
+            "$(dep meson development false)" \
+            "$(dep ninja-build development false)")
+          cat > snapshot.json <<EOF
+          {
+            "version": 0,
+            "sha": "$SHA",
+            "ref": "$REF",
+            "job": {"correlator": "millerx-dependencies", "id": "$RUN"},
+            "detector": {"name": "millerx-meson", "version": "1.0", "url": "https://github.com/$REPO"},
+            "scanned": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "manifests": {
+              "meson.build": {
+                "name": "meson.build",
+                "file": {"source_location": "meson.build"},
+                "resolved": {${deps%,}}
+              }
+            }
+          }
+          EOF
+          python3 -m json.tool snapshot.json > /dev/null   # stop here if the JSON is broken
+          curl --fail-with-body -sS -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/$REPO/dependency-graph/snapshots" \
+            --data @snapshot.json
