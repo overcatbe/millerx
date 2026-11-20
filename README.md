@@ -4,6 +4,9 @@ A small, native file browser with **Miller columns**: every folder from `/` down
 where you are sits in its own column, and the selected file is previewed on the right.
 Like a mind map of your disk. Written in C with GTK 3 and GIO.
 
+> **New in 0.6.2:** your own highlight colour, picked live in the settings, and if you
+> like for all GTK programs.
+>
 > **New in 0.6.1:** AVIF and HEIC pictures (through ffmpeg) · optional names under the
 > gallery's thumbnails.
 >
@@ -53,6 +56,8 @@ millerX carries his name.
 - **Properties** with editable permissions, free space and folder totals.
 - **Open as root** through polkit (`pkexec`): the password is asked by your polkit agent,
   millerX never sees it. A root window shows a red warning bar.
+- **Highlight colour** of your own, chosen live in the settings, for millerX or for every
+  GTK 3 program (a marked block in `~/.config/gtk-3.0/gtk.css`, removable again).
 - Columns follow changes on disk. Names sort case-insensitive and naturally (file2 before
   file10), folders first (optional).
 
@@ -117,6 +122,7 @@ divider_width = 2        # 1-12
 divider_style = solid    # solid | fade
 preview_width = 340      # 200-900, the least the preview gets; it takes the rest
 gallery_names = false    # a line with the name under each thumbnail
+highlight_color = auto   # auto = the theme's, or #rrggbb
 
 [browse]
 folders_first = true

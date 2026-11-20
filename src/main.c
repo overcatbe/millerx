@@ -10,6 +10,7 @@ static void on_startup(GApplication *app, gpointer d)
     look_load();
     sorting_load();
     thumbcache_auto_clean();
+    highlight_apply();
     gtk_window_set_default_icon_name("millerx");
 }
 

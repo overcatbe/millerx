@@ -1,5 +1,5 @@
 project('millerx', 'c',
-  version : '0.6.1',
+  version : '0.6.2',
   license : 'GPL-2.0-or-later',
   meson_version : '>= 0.60',
   default_options : ['c_std=gnu11', 'warning_level=2', 'buildtype=release'])
@@ -26,7 +26,7 @@ add_project_arguments(
 
 executable('millerx',
   'src/main.c', 'src/settings.c', 'src/util.c', 'src/column.c', 'src/preview.c',
-  'src/job.c', 'src/window.c', 'src/places.c', 'src/dialogs.c', 'src/thumbcache.c', 'src/sorting.c',
+  'src/job.c', 'src/window.c', 'src/places.c', 'src/dialogs.c', 'src/thumbcache.c', 'src/sorting.c', 'src/highlight.c',
   dependencies : deps,
   install : true)
 

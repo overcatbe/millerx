@@ -365,6 +365,7 @@ typedef struct {
     GtkWidget *auto_rb, *own_rb, *colour, *width, *style, *pw, *ff, *sh;
     GtkWidget *cache_size, *cache_clear, *cache_mb, *cache_days, *cache_auto;
     GtkWidget *sort_list, *names;
+    GtkWidget *hl_auto, *hl_own, *hl_colour, *hl_sys, *hl_unsys;
 } Set;
 
 static void fill_sort_list(Set *s);
@@ -383,6 +384,17 @@ static void settings_changed(GtkWidget *any, Set *s)
                               (int) (c.blue * 255 + 0.5));
     }
     nl.divider_color = col ? col : (char *) "auto";
+    gboolean hown = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->hl_own));
+    gtk_widget_set_sensitive(s->hl_colour, hown);
+    gtk_widget_set_sensitive(s->hl_sys, hown);
+    char *hcol = NULL;
+    if (hown) {
+        GdkRGBA c;
+        gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(s->hl_colour), &c);
+        hcol = g_strdup_printf("#%02x%02x%02x", (int) (c.red * 255 + 0.5), (int) (c.green * 255 + 0.5),
+                               (int) (c.blue * 255 + 0.5));
+    }
+    nl.highlight = hcol ? hcol : (char *) "auto";
     nl.divider_width = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(s->width));
     nl.fade = !g_strcmp0(gtk_combo_box_get_active_id(GTK_COMBO_BOX(s->style)), "fade");
     nl.preview_width = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(s->pw));
@@ -394,6 +406,7 @@ static void settings_changed(GtkWidget *any, Set *s)
     nl.cache_auto = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->cache_auto));
     app_apply_look(s->w->app, &nl);
     g_free(col);
+    g_free(hcol);
 }
 
 static void settings_close(GtkDialog *d, int r, Set *s)
@@ -528,6 +541,76 @@ static void fill_sort_list(Set *s)
     gtk_widget_show_all(s->sort_list);
 }
 
+/* ---- highlight swatches: one click and the window shows it --------------------------------- */
+static const char *SWATCHES[] = { "#d4ff02", "#4c566a", "#6c5a9c", "#2a9d8f", "#e9a23b", "#d1495b",
+                                  "#5b8c5a", "#d16ba5", "#8a8a8a" };
+
+static void swatch_clicked(GtkButton *b, Set *s)
+{
+    GdkRGBA c;
+    gdk_rgba_parse(&c, g_object_get_data(G_OBJECT(b), "colour"));
+    gtk_color_chooser_set_rgba(GTK_COLOR_CHOOSER(s->hl_colour), &c);
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->hl_own)))
+        settings_changed(NULL, s);
+    else
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(s->hl_own), TRUE);   /* calls it via "toggled" */
+}
+
+static GtkWidget *swatches(Set *s)
+{
+    static GtkCssProvider *css;
+    GString *rules = NULL;
+    if (!css) {
+        css = gtk_css_provider_new();
+        rules = g_string_new(".millerx-swatch { min-width: 18px; min-height: 18px; padding: 0; "
+                             "border-radius: 3px; }\n");
+    }
+    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+    for (guint i = 0; i < G_N_ELEMENTS(SWATCHES); i++) {
+        GtkWidget *b = gtk_button_new();
+        char cls[24];
+        g_snprintf(cls, sizeof cls, "millerx-swatch-%u", i);
+        GtkStyleContext *sc = gtk_widget_get_style_context(b);
+        gtk_style_context_add_class(sc, "millerx-swatch");
+        gtk_style_context_add_class(sc, cls);
+        gtk_style_context_add_provider(sc, GTK_STYLE_PROVIDER(css), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION + 1);
+        if (rules)
+            g_string_append_printf(rules, ".%s { background: %s; }\n", cls, SWATCHES[i]);
+        g_object_set_data(G_OBJECT(b), "colour", (gpointer) SWATCHES[i]);
+        gtk_widget_set_tooltip_text(b, SWATCHES[i]);
+        g_signal_connect(b, "clicked", G_CALLBACK(swatch_clicked), s);
+        gtk_box_pack_start(GTK_BOX(box), b, FALSE, FALSE, 0);
+    }
+    if (rules) {
+        gtk_css_provider_load_from_data(css, rules->str, -1, NULL);
+        g_string_free(rules, TRUE);
+    }
+    return box;
+}
+
+/* ---- highlight for every GTK 3 program ------------------------------------------------- */
+static void hl_system_clicked(GtkButton *b, Set *s)
+{
+    gboolean add = GTK_WIDGET(b) == s->hl_sys;
+    char *msg = add ? g_strdup_printf("%s goes into ~/.config/gtk-3.0/gtk.css, in a block marked as "
+                                      "millerX's; the rest of that file stays as it is. GTK 3 programs "
+                                      "use it the next time they start. You can remove it here again.",
+                                      LOOK.highlight)
+                    : g_strdup("millerX's block is taken out of ~/.config/gtk-3.0/gtk.css; the rest of "
+                               "that file stays. GTK 3 programs use the theme's colour again the next "
+                               "time they start.");
+    if (win_confirm(s->w, add ? "Use this highlight in all GTK programs?" : "Remove it from all GTK programs?",
+                    msg, add ? "Use it" : "Remove")) {
+        GError *err = NULL;
+        if (!highlight_system_set(add ? LOOK.highlight : NULL, &err)) {
+            win_error(s->w, "Couldn't write ~/.config/gtk-3.0/gtk.css", err->message);
+            g_error_free(err);
+        }
+        gtk_widget_set_sensitive(s->hl_unsys, highlight_system_has());
+    }
+    g_free(msg);
+}
+
 void dialog_settings(Win *w)
 {
     GtkWidget *d = gtk_dialog_new_with_buttons("millerX settings", GTK_WINDOW(w->window), 0, "Close",
@@ -570,6 +653,33 @@ void dialog_settings(Win *w)
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->style), "fade", "Fading at the ends");
     gtk_combo_box_set_active_id(GTK_COMBO_BOX(s->style), LOOK.fade ? "fade" : "solid");
     srow(grid, &r, "Style", s->style);
+    section(grid, &r, "Highlight colour");
+    s->hl_auto = gtk_radio_button_new_with_label(NULL, "Follow the theme");
+    s->hl_own = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(s->hl_auto), "Own colour");
+    s->hl_colour = gtk_color_button_new();
+    GdkRGBA hrgba;
+    gboolean hown = strcmp(LOOK.highlight, "auto") && gdk_rgba_parse(&hrgba, LOOK.highlight);
+    if (!hown)
+        gdk_rgba_parse(&hrgba, "#d4ff02");
+    gtk_color_chooser_set_rgba(GTK_COLOR_CHOOSER(s->hl_colour), &hrgba);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(hown ? s->hl_own : s->hl_auto), TRUE);
+    gtk_widget_set_sensitive(s->hl_colour, hown);
+    GtkWidget *hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+    gtk_box_pack_start(GTK_BOX(hbox), s->hl_own, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), s->hl_colour, FALSE, FALSE, 0);
+    GtkWidget *hvb = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
+    gtk_box_pack_start(GTK_BOX(hvb), s->hl_auto, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(hvb), hbox, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(hvb), swatches(s), FALSE, FALSE, 0);
+    srow(grid, &r, "millerX", hvb);
+    s->hl_sys = gtk_button_new_with_label("Use for all GTK programs…");
+    s->hl_unsys = gtk_button_new_with_label("Remove from all");
+    gtk_widget_set_sensitive(s->hl_sys, hown);
+    gtk_widget_set_sensitive(s->hl_unsys, highlight_system_has());
+    GtkWidget *sysb = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+    gtk_box_pack_start(GTK_BOX(sysb), s->hl_sys, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(sysb), s->hl_unsys, FALSE, FALSE, 0);
+    srow(grid, &r, "System", sysb);
     section(grid, &r, "Preview");
     s->pw = gtk_spin_button_new_with_range(200, 900, 10);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(s->pw), LOOK.preview_width);
@@ -620,6 +730,10 @@ void dialog_settings(Win *w)
     g_signal_connect(s->ff, "toggled", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->sh, "toggled", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->names, "toggled", G_CALLBACK(settings_changed), s);
+    g_signal_connect(s->hl_auto, "toggled", G_CALLBACK(settings_changed), s);
+    g_signal_connect(s->hl_colour, "color-set", G_CALLBACK(settings_changed), s);
+    g_signal_connect(s->hl_sys, "clicked", G_CALLBACK(hl_system_clicked), s);
+    g_signal_connect(s->hl_unsys, "clicked", G_CALLBACK(hl_system_clicked), s);
     g_signal_connect(s->cache_mb, "value-changed", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->cache_days, "value-changed", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->cache_auto, "toggled", G_CALLBACK(settings_changed), s);

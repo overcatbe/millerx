@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.2 (2026-11-20)
+
+- **Your own highlight colour** (Settings → Highlight colour). Click a swatch or pick any
+  colour and the window shows it at once; the text on it turns dark or light by itself.
+  "Follow the theme" brings back the theme's colour.
+- **For all GTK programs too**, if you like: *Use for all GTK programs…* writes the colour
+  into `~/.config/gtk-3.0/gtk.css`, in a block marked as millerX's. Everything else in that
+  file stays as it is, and *Remove from all* takes only that block out again.
+  Programs pick it up the next time they start.
+
 ## 0.6.1 (2026-11-20)
 
 - **AVIF, HEIC and other pictures** that gdk-pixbuf can't read are shown through

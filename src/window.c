@@ -1529,14 +1529,30 @@ void app_apply_look(GtkApplication *app, const Look *nl)
 {
     gboolean resort = nl->folders_first != LOOK.folders_first;
     gboolean names = nl->gallery_names != LOOK.gallery_names;
-    char *col = g_strdup(nl->divider_color);
+    char *col = g_strdup(nl->divider_color), *hl = g_strdup(nl->highlight);
+    gboolean hl_changed = g_strcmp0(nl->highlight, LOOK.highlight);
     g_free(LOOK.divider_color);
+    g_free(LOOK.highlight);
     LOOK = *nl;
     LOOK.divider_color = col;
+    LOOK.highlight = hl;
+    if (hl_changed)
+        highlight_apply();           /* live: the open windows change at once */
     for (GList *l = gtk_application_get_windows(app); l; l = l->next) {
         Win *w = g_object_get_data(G_OBJECT(l->data), "millerx-win");
         if (w && !w->dead) {
             win_look_changed(w, resort);
+            if (hl_changed) {
+                /* tree views keep the look of rows that were already selected: restyle each */
+                gtk_widget_reset_style(w->window);
+                for (GList *k = w->columns; k; k = k->next) {
+                    Column *c = k->data;
+                    gtk_widget_reset_style(c->view);
+                    gtk_widget_queue_draw(c->view);
+                }
+                gtk_widget_reset_style(w->preview->grid);
+                gtk_widget_queue_draw(w->window);
+            }
             if (names && w->preview->current) {      /* gallery tiles with or without names */
                 GFile *f = g_object_ref(w->preview->current);
                 preview_show_file(w->preview, f);

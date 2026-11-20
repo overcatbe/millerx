@@ -12,7 +12,7 @@
 #include <gtk/gtk.h>
 
 #ifndef MILLERX_VERSION
-#define MILLERX_VERSION "0.6.1"
+#define MILLERX_VERSION "0.6.2"
 #endif
 
 #define COL_WIDTH 230
@@ -38,6 +38,7 @@ typedef struct {
     gboolean folders_first;
     gboolean show_hidden;   /* at start */
     gboolean gallery_names; /* a line with the name under each thumbnail */
+    char *highlight;        /* selection colour: "auto" (the theme's) or #rrggbb */
     int cache_max_mb;       /* thumbnail cache: shrink to this, least used first */
     int cache_days;         /* forget thumbnails unused this long */
     gboolean cache_auto;    /* clean once a day when millerX starts */
@@ -222,6 +223,11 @@ void places_fill_bookmarks(Win *w);
 void places_fill_devices(Win *w);
 void places_bookmark_add(Win *w, GFile *folder);
 void places_watch_volumes(Win *w);
+
+/* ---- highlight colour (highlight.c) ------------------------------------------------ */
+void highlight_apply(void);
+gboolean highlight_system_has(void);
+gboolean highlight_system_set(const char *colour, GError **err);    /* NULL removes */
 
 /* ---- thumbnail cache (thumbcache.c) ------------------------------------------------ */
 typedef void (*ThumbcacheDone)(guint64 bytes, guint files, guint removed, gpointer data);

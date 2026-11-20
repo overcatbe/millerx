@@ -1,3 +1,12 @@
+millerx (0.6.2) unstable; urgency=medium
+
+  * Own highlight (selection) colour in the settings, shown live while you
+    pick it (swatches or any colour); the text on it picks itself.
+  * Optionally for all GTK 3 programs: a marked block in
+    ~/.config/gtk-3.0/gtk.css, added and removed from the settings.
+
+ -- overcatbe <1771834+overcatbe@users.noreply.github.com>  Fri, 20 Nov 2026 10:42:20 +0200
+
 millerx (0.6.1) unstable; urgency=medium
 
   * AVIF, HEIC and other pictures gdk-pixbuf can't read are shown through
