@@ -4,6 +4,12 @@ A small, native file browser with **Miller columns**: every folder from `/` down
 where you are sits in its own column, and the selected file is previewed on the right.
 Like a mind map of your disk. Written in C with GTK 3 and GIO.
 
+> **New in 0.6:** the preview takes the rest of the window and fits pictures into it ·
+> a fast gallery of a folder's pictures and PDFs, with its own right-click menu ·
+> thumbnails shared with Thunar in `~/.cache/thumbnails`, cleaned up automatically ·
+> WebP pictures · sorting per folder (date, size, type), clearly marked.
+> All the details: [CHANGELOG](CHANGELOG.md).
+
 ### Miller columns
 
 Miller columns, also called *cascading lists*, show a tree one level per column:
