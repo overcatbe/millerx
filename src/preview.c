@@ -5,6 +5,9 @@
 #include <glib/gstdio.h>
 #include <archive.h>
 #include <archive_entry.h>
+#ifdef HAVE_WEBP
+#include <webp/decode.h>
+#endif
 #include <dirent.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -36,10 +39,8 @@ static Bg *bg_new(Preview *p, const char *path)
     b->win = win_ref(p->win);
     b->token = p->token;
     b->path = g_strdup(path);
-    b->width = p->width;
-    /* the picture may use the pane's height, minus room for the name and the details below it */
-    int h = gtk_widget_get_allocated_height(p->box);
-    b->max_height = MAX(240, h - 260);
+    b->width = MAX(64, p->image_w);
+    b->max_height = MAX(64, p->image_h);
     return b;
 }
 
@@ -67,19 +68,24 @@ static void spawn_bg(Bg *b, GThreadFunc fn)
     g_thread_unref(t);
 }
 
+static void grid_stop(Preview *p);
+
 void preview_clear(Preview *p)
 {
     g_atomic_int_inc((gint *) &p->token);
     g_clear_object(&p->current);
     gtk_image_clear(GTK_IMAGE(p->image));
-    gtk_widget_hide(p->image);
+    gtk_widget_hide(p->image_scroll);
+    gtk_widget_hide(p->sep);
+    g_clear_pointer(&p->image_path, g_free);
+    if (p->image_timer) {
+        g_source_remove(p->image_timer);
+        p->image_timer = 0;
+    }
     gtk_image_clear(GTK_IMAGE(p->icon));
     gtk_widget_hide(p->icon);
     gtk_widget_hide(p->text_scroll);
-    if (p->grid_timer) {
-        g_source_remove(p->grid_timer);
-        p->grid_timer = 0;
-    }
+    grid_stop(p);
     gtk_widget_hide(p->grid_scroll);
     GList *thumbs = gtk_container_get_children(GTK_CONTAINER(p->grid));
     for (GList *l = thumbs; l; l = l->next)
@@ -117,11 +123,13 @@ static GtkWidget *row(Preview *p, int n, const char *key, const char *value)
     return v;
 }
 
+#define ICON_PX 96             /* the type/folder icon left in the header */
+
 static void show_icon(Preview *p, GIcon *gicon)
 {
     if (gicon) {
         gtk_image_set_from_gicon(GTK_IMAGE(p->icon), gicon, GTK_ICON_SIZE_DIALOG);
-        gtk_image_set_pixel_size(GTK_IMAGE(p->icon), 128);
+        gtk_image_set_pixel_size(GTK_IMAGE(p->icon), ICON_PX);
         gtk_widget_show(p->icon);
     }
 }
@@ -132,16 +140,81 @@ static gboolean set_pixbuf(gpointer data)
     Bg *b = data;
     if (bg_current(b) && b->pixbuf) {
         gtk_image_set_from_pixbuf(GTK_IMAGE(b->p->image), b->pixbuf);
-        gtk_widget_show(b->p->image);
-        gtk_widget_hide(b->p->icon);
     }
     bg_free(b);
     return G_SOURCE_REMOVE;
 }
 
+/* pb scaled down to fit max_w x max_h (never up); takes pb's reference */
+static GdkPixbuf *fit_pixbuf(GdkPixbuf *pb, int max_w, int max_h)
+{
+    int w = gdk_pixbuf_get_width(pb), h = gdk_pixbuf_get_height(pb);
+    if (w <= max_w && h <= max_h)
+        return pb;
+    double sc = MIN((double) max_w / w, (double) max_h / h);
+    GdkPixbuf *s = gdk_pixbuf_scale_simple(pb, MAX(1, (int) (w * sc)), MAX(1, (int) (h * sc)),
+                                           GDK_INTERP_BILINEAR);
+    g_object_unref(pb);
+    return s;
+}
+
+#ifdef HAVE_WEBP
+#define WEBP_MAX_BYTES (256u << 20)
+
+static gboolean is_webp(const char *path)
+{
+    unsigned char h[12];
+    FILE *fh = fopen(path, "rb");
+    if (!fh)
+        return FALSE;
+    gboolean yes = fread(h, 1, 12, fh) == 12 && !memcmp(h, "RIFF", 4) && !memcmp(h + 8, "WEBP", 4);
+    fclose(fh);
+    return yes;
+}
+
+/* libwebp decodes straight to the wanted size (never up); animated WebP isn't handled: NULL */
+static GdkPixbuf *load_webp(const char *path, int max_w, int max_h)
+{
+    gchar *data = NULL;
+    gsize len = 0;
+    struct stat st;
+    if (g_stat(path, &st) || (guint64) st.st_size > WEBP_MAX_BYTES || !g_file_get_contents(path, &data, &len, NULL))
+        return NULL;
+    GdkPixbuf *pb = NULL;
+    WebPDecoderConfig cfg;
+    if (WebPInitDecoderConfig(&cfg) && WebPGetFeatures((const uint8_t *) data, len, &cfg.input) == VP8_STATUS_OK) {
+        int w = cfg.input.width, h = cfg.input.height;
+        if (w > max_w || h > max_h) {
+            double sc = MIN((double) max_w / w, (double) max_h / h);
+            cfg.options.use_scaling = 1;
+            cfg.options.scaled_width = MAX(1, (int) (w * sc));
+            cfg.options.scaled_height = MAX(1, (int) (h * sc));
+        }
+        cfg.output.colorspace = MODE_RGBA;
+        if (WebPDecode((const uint8_t *) data, len, &cfg) == VP8_STATUS_OK) {
+            int ow = cfg.output.width, oh = cfg.output.height;
+            pb = gdk_pixbuf_new(GDK_COLORSPACE_RGB, TRUE, 8, ow, oh);
+            if (pb) {
+                guchar *dst = gdk_pixbuf_get_pixels(pb);
+                int ds = gdk_pixbuf_get_rowstride(pb), ss = cfg.output.u.RGBA.stride;
+                for (int y = 0; y < oh; y++)
+                    memcpy(dst + (gsize) y * ds, cfg.output.u.RGBA.rgba + (gsize) y * ss, (gsize) ow * 4);
+            }
+            WebPFreeDecBuffer(&cfg.output);
+        }
+    }
+    g_free(data);
+    return pb;
+}
+#endif
+
 /* A picture no bigger than max_w x max_h; small pictures keep their own size. */
 static GdkPixbuf *load_fitted(const char *path, int max_w, int max_h)
 {
+#ifdef HAVE_WEBP
+    if (is_webp(path))
+        return load_webp(path, max_w, max_h);
+#endif
     int w = 0, h = 0;
     GdkPixbuf *pb = NULL;
     if (!gdk_pixbuf_get_file_info(path, &w, &h))
@@ -169,56 +242,273 @@ static GdkPixbuf *load_fitted(const char *path, int max_w, int max_h)
 static gpointer image_thread(gpointer data)
 {
     Bg *b = data;
-    b->pixbuf = load_fitted(b->path, b->width - 24, b->max_height);
+    b->pixbuf = load_fitted(b->path, b->width, b->max_height);
     g_idle_add(set_pixbuf, b);
     return NULL;
 }
 
 /* ---- folder contents as a thumbnail grid ----------------------------------------- */
-#define THUMB_COLS 3
-#define THUMB_MAX 1000          /* a folder with more shows the first ones */
+static GdkPixbuf *render_pdf(const char *path, int max_w, int max_h, int timeout_ms);
+#define THUMB_COLS 3            /* at least */
+#define THUMB_TARGET 200        /* wanted tile size: a wide pane gets more columns, not bigger tiles */
+#define THUMB_GAP 2             /* between thumbnails */
+#define THUMB_PAD 2             /* around each one: room for the selection colour */
+#define THUMB_MAX 5000          /* a folder with more shows the first ones */
+#define THUMB_WORKERS 4         /* pictures decoded at the same time */
+#define ADD_BATCH 400           /* tiles created per main-loop turn */
 
+/* Same order as the column: folders first (if set), then names, case-insensitive. */
+typedef struct {
+    char *name, *key, *ct, *ext;
+    gboolean dir;
+    gint64 mtime;
+    guint64 size;
+} Entry;
+
+static void entry_free(Entry *e)
+{
+    g_free(e->name);
+    g_free(e->key);
+    g_free(e->ct);
+    g_free(e->ext);
+    g_free(e);
+}
+
+/* the column's order: by name, or this folder's own */
+static int by_folder_sort(gconstpointer a, gconstpointer b, gpointer data)
+{
+    const Entry *x = *(Entry **) a, *y = *(Entry **) b;
+    return sorting_compare(*(FolderSort *) data, x->dir, y->dir, x->key, y->key, x->mtime, y->mtime,
+                           x->size, y->size, x->ext, y->ext);
+}
+
+static gboolean thumbable(const char *ct)
+{
+    return g_str_has_prefix(ct, "image/") || !strcmp(ct, "application/pdf");
+}
+
+/* ---- the freedesktop thumbnail cache (~/.cache/thumbnails), shared with Thunar & co. ---- */
+static const struct { const char *dir, *path_attr, *valid_attr; int px; } BUCKETS[] = {
+    { "normal", G_FILE_ATTRIBUTE_THUMBNAIL_PATH_NORMAL, G_FILE_ATTRIBUTE_THUMBNAIL_IS_VALID_NORMAL, 128 },
+    { "large", G_FILE_ATTRIBUTE_THUMBNAIL_PATH_LARGE, G_FILE_ATTRIBUTE_THUMBNAIL_IS_VALID_LARGE, 256 },
+    { "x-large", G_FILE_ATTRIBUTE_THUMBNAIL_PATH_XLARGE, G_FILE_ATTRIBUTE_THUMBNAIL_IS_VALID_XLARGE, 512 },
+    { "xx-large", G_FILE_ATTRIBUTE_THUMBNAIL_PATH_XXLARGE, G_FILE_ATTRIBUTE_THUMBNAIL_IS_VALID_XXLARGE, 1024 },
+};
+
+/* a valid cached thumbnail at least size big, or NULL */
+static GdkPixbuf *cached_thumb(const char *path, int size)
+{
+    GdkPixbuf *pb = NULL;
+    GFile *gf = g_file_new_for_path(path);
+    GFileInfo *ti = g_file_query_info(gf, "thumbnail::*", G_FILE_QUERY_INFO_NONE, NULL, NULL);
+    for (guint k = 0; ti && !pb && k < G_N_ELEMENTS(BUCKETS); k++) {
+        if (BUCKETS[k].px < size)
+            continue;
+        const char *tp = g_file_info_get_attribute_byte_string(ti, BUCKETS[k].path_attr);
+        gboolean valid = !g_file_info_has_attribute(ti, BUCKETS[k].valid_attr)
+                         || g_file_info_get_attribute_boolean(ti, BUCKETS[k].valid_attr);
+        if (tp && valid)
+            pb = load_fitted(tp, size, size);
+    }
+    g_clear_object(&ti);
+    g_object_unref(gf);
+    return pb;
+}
+
+/* Saves pb as the bucket-size thumbnail of path, the way the spec wants it (written to a temporary
+ * name, then renamed, so other programs never read half a file). */
+static void save_thumb(const char *path, int k, GdkPixbuf *pb)
+{
+    struct stat st;
+    if (g_stat(path, &st))
+        return;
+    char *base = g_build_filename(g_get_user_cache_dir(), "thumbnails", NULL);
+    if (g_str_has_prefix(path, base)) {          /* no thumbnails of thumbnails */
+        g_free(base);
+        return;
+    }
+    char *uri = g_filename_to_uri(path, NULL, NULL);
+    char *dir = g_build_filename(base, BUCKETS[k].dir, NULL);
+    if (uri && g_mkdir_with_parents(dir, 0700) == 0) {
+        char *md5 = g_compute_checksum_for_string(G_CHECKSUM_MD5, uri, -1);
+        char *final = g_strdup_printf("%s/%s.png", dir, md5);
+        char *tmp = g_strdup_printf("%s/.millerx-XXXXXX", dir);
+        int fd = g_mkstemp_full(tmp, O_WRONLY, 0600);
+        if (fd >= 0) {
+            close(fd);
+            char *mt = g_strdup_printf("%" G_GINT64_FORMAT, (gint64) st.st_mtime);
+            char *sz = g_strdup_printf("%" G_GINT64_FORMAT, (gint64) st.st_size);
+            if (gdk_pixbuf_save(pb, tmp, "png", NULL, "tEXt::Thumb::URI", uri, "tEXt::Thumb::MTime", mt,
+                                "tEXt::Thumb::Size", sz, "tEXt::Software", "millerX", NULL)
+                && g_rename(tmp, final) == 0) {
+                /* saved */
+            } else {
+                g_unlink(tmp);
+            }
+            g_free(mt);
+            g_free(sz);
+        }
+        g_free(tmp);
+        g_free(final);
+        g_free(md5);
+    }
+    g_free(dir);
+    g_free(uri);
+    g_free(base);
+}
+
+/* A tile's picture: from the cache if one is big enough, else made at the next cache size, saved
+ * there for next time (and for Thunar), and fitted to the tile. */
+static GdkPixbuf *make_thumb(const char *path, const char *ct, int size)
+{
+    GdkPixbuf *pb = cached_thumb(path, size);
+    if (pb)
+        return pb;
+    gboolean pdf = !strcmp(ct, "application/pdf");
+    int k = 0;
+    while (k < (int) G_N_ELEMENTS(BUCKETS) && BUCKETS[k].px < size)
+        k++;
+    if (k == G_N_ELEMENTS(BUCKETS))              /* tile bigger than any cache size: no saving */
+        return pdf ? render_pdf(path, size, size, 4000) : load_fitted(path, size, size);
+    int px = BUCKETS[k].px;
+    GdkPixbuf *big = pdf ? render_pdf(path, px, px, 4000) : load_fitted(path, px, px);
+    if (!big)
+        return NULL;
+    save_thumb(path, k, big);
+    return fit_pixbuf(big, size, size);
+}
+
+/* ---- worker pool: only tiles on screen (and one page ahead) get their picture ---------- */
+static GtkWidget *thumb_for(Preview *p, const char *path);
 typedef struct {
     Preview *p;
     Win *win;
     guint token;
-    char *path;                 /* the file */
-    char *name;
-    GdkPixbuf *pixbuf;          /* a picture's thumbnail, or */
-    GIcon *icon;                /* the type icon */
-    int size;
-} Thumb;
+    int index, size;
+    char *path, *ct;
+    GdkPixbuf *pixbuf;
+    gboolean skipped;
+} ThumbJob;
 
-static void thumb_free(Thumb *t)
+static gboolean thumb_done(gpointer data)
 {
-    g_free(t->path);
-    g_free(t->name);
-    g_clear_object(&t->pixbuf);
-    g_clear_object(&t->icon);
-    win_unref(t->win);
-    g_free(t);
+    ThumbJob *j = data;
+    Preview *p = j->p;
+    if (!j->win->dead && p->grid_token == j->token) {
+        GtkFlowBoxChild *c = gtk_flow_box_get_child_at_index(GTK_FLOW_BOX(p->grid), j->index);
+        if (!c || g_strcmp0(g_object_get_data(G_OBJECT(c), "path"), j->path))
+            c = (GtkFlowBoxChild *) thumb_for(p, j->path);      /* tiles moved (one was deleted) */
+        if (c) {
+            g_object_set_data(G_OBJECT(c), "state", GINT_TO_POINTER(j->skipped ? 0 : 2));
+            if (j->pixbuf)
+                gtk_image_set_from_pixbuf(GTK_IMAGE(gtk_bin_get_child(GTK_BIN(c))), j->pixbuf);
+        }
+    }
+    g_clear_object(&j->pixbuf);
+    g_free(j->path);
+    g_free(j->ct);
+    win_unref(j->win);
+    g_free(j);
+    return G_SOURCE_REMOVE;
 }
 
-static gboolean add_thumb(gpointer data)
+static void thumb_work(gpointer data, gpointer user)
 {
-    Thumb *t = data;
-    Preview *p = t->p;
-    if (!t->win->dead && p->token == t->token) {
-        GtkWidget *img = t->pixbuf ? gtk_image_new_from_pixbuf(t->pixbuf)
-                                   : gtk_image_new_from_gicon(t->icon, GTK_ICON_SIZE_DIALOG);
-        if (!t->pixbuf)
-            gtk_image_set_pixel_size(GTK_IMAGE(img), t->size / 2);
-        gtk_widget_hide(p->icon);     /* the folder has contents: the grid replaces the big icon */
-        gtk_widget_show(p->grid_scroll);
-        gtk_widget_set_size_request(img, t->size, t->size);
-        gtk_widget_set_tooltip_text(img, t->name);
+    ThumbJob *j = data;
+    Preview *p = j->p;
+    gboolean current = !j->win->dead && (guint) g_atomic_int_get((gint *) &p->grid_token) == j->token;
+    /* scrolled past while waiting: skip it, it is queued again when it comes back into view */
+    gboolean wanted = current && j->index >= g_atomic_int_get(&p->vis_lo)
+                      && j->index <= g_atomic_int_get(&p->vis_hi);
+    if (wanted)
+        j->pixbuf = make_thumb(j->path, j->ct, j->size);
+    j->skipped = current && !wanted;
+    g_idle_add(thumb_done, j);
+}
+
+static gboolean queue_visible_now(gpointer data)
+{
+    Preview *p = data;
+    p->vis_idle = 0;
+    if (p->win->dead || !gtk_widget_get_visible(p->grid_scroll) || p->tile <= 0)
+        return G_SOURCE_REMOVE;
+    GtkAdjustment *va = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(p->grid_scroll));
+    double top = gtk_adjustment_get_value(va), page = gtk_adjustment_get_page_size(va);
+    if (page < 1)
+        page = 800;
+    int rowh = p->tile + 2 * THUMB_PAD + THUMB_GAP;
+    int lo = (int) (top / rowh) * p->cols;
+    int hi = ((int) ((top + 2 * page) / rowh) + 1) * p->cols - 1;   /* the screen + one page ahead */
+    g_atomic_int_set(&p->vis_lo, lo);
+    g_atomic_int_set(&p->vis_hi, hi);
+    for (int i = lo; i <= hi; i++) {
+        GtkFlowBoxChild *c = gtk_flow_box_get_child_at_index(GTK_FLOW_BOX(p->grid), i);
+        if (!c)
+            break;
+        if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(c), "state")) != 0)
+            continue;
+        g_object_set_data(G_OBJECT(c), "state", GINT_TO_POINTER(1));
+        ThumbJob *j = g_new0(ThumbJob, 1);
+        j->p = p;
+        j->win = win_ref(p->win);
+        j->token = p->grid_token;
+        j->index = i;
+        j->size = p->tile;
+        j->path = g_strdup(g_object_get_data(G_OBJECT(c), "path"));
+        j->ct = g_strdup(g_object_get_data(G_OBJECT(c), "ct"));
+        g_thread_pool_push(p->pool, j, NULL);
+    }
+    return G_SOURCE_REMOVE;
+}
+
+static void queue_visible(Preview *p)
+{
+    if (!p->vis_idle)
+        p->vis_idle = g_idle_add(queue_visible_now, p);
+}
+
+static void on_grid_scrolled(GtkAdjustment *a, Preview *p)
+{
+    (void) a;
+    queue_visible(p);
+}
+
+/* ---- the tiles themselves: all at once as type icons, pictures come later -------------- */
+static gboolean add_batch(gpointer data)
+{
+    Preview *p = data;
+    if (p->win->dead || !p->pending) {
+        p->add_idle = 0;
+        return G_SOURCE_REMOVE;
+    }
+    for (int k = 0; k < ADD_BATCH && p->pending_pos < p->pending->len; k++, p->pending_pos++) {
+        Entry *e = g_ptr_array_index(p->pending, p->pending_pos);
+        GIcon *ic = g_content_type_get_icon(e->ct);
+        GtkWidget *img = gtk_image_new_from_gicon(ic, GTK_ICON_SIZE_DIALOG);
+        g_object_unref(ic);
+        gtk_image_set_pixel_size(GTK_IMAGE(img), p->tile / 2);
+        gtk_widget_set_size_request(img, p->tile, p->tile);
+        char *disp = g_filename_display_name(e->name);
+        gtk_widget_set_tooltip_text(img, disp);
+        g_free(disp);
         GtkWidget *child = gtk_flow_box_child_new();
         gtk_container_add(GTK_CONTAINER(child), img);
-        g_object_set_data_full(G_OBJECT(child), "path", g_strdup(t->path), g_free);
+        g_object_set_data_full(G_OBJECT(child), "path", g_build_filename(p->pending_dir, e->name, NULL), g_free);
+        g_object_set_data_full(G_OBJECT(child), "ct", g_strdup(e->ct), g_free);
+        g_object_set_data(G_OBJECT(child), "state", GINT_TO_POINTER(!e->dir && thumbable(e->ct) ? 0 : 2));
         gtk_container_add(GTK_CONTAINER(p->grid), child);
         gtk_widget_show_all(child);
     }
-    thumb_free(t);
+    if (p->pending->len) {
+        gtk_widget_show(p->sep);
+        gtk_widget_show(p->grid_scroll);
+    }
+    queue_visible(p);
+    if (p->pending_pos < p->pending->len)
+        return G_SOURCE_CONTINUE;
+    g_clear_pointer(&p->pending, g_ptr_array_unref);
+    g_clear_pointer(&p->pending_dir, g_free);
+    p->add_idle = 0;
     return G_SOURCE_REMOVE;
 }
 
@@ -227,45 +517,56 @@ typedef struct {
     Win *win;
     guint token;
     char *dir;
-    int size;
     gboolean hidden;
-} GridJob;
+    FolderSort sort;
+    GPtrArray *entries;
+} ListJob;
 
-/* Same order as the column: folders first (if set), then names, case-insensitive. */
-typedef struct {
-    char *name, *key;
-    gboolean dir;
-} Entry;
-
-static void entry_free(Entry *e)
+static gboolean list_done(gpointer data)
 {
-    g_free(e->name);
-    g_free(e->key);
-    g_free(e);
+    ListJob *j = data;
+    Preview *p = j->p;
+    if (!j->win->dead && p->grid_token == j->token) {
+        if (p->add_idle)
+            g_source_remove(p->add_idle);
+        g_clear_pointer(&p->pending, g_ptr_array_unref);
+        g_free(p->pending_dir);
+        p->pending = j->entries;
+        j->entries = NULL;
+        p->pending_dir = g_strdup(j->dir);
+        p->pending_pos = 0;
+        p->add_idle = g_idle_add(add_batch, p);
+    }
+    if (j->entries)
+        g_ptr_array_unref(j->entries);
+    win_unref(j->win);
+    g_free(j->dir);
+    g_free(j);
+    return G_SOURCE_REMOVE;
 }
 
-static int by_name(gconstpointer a, gconstpointer b)
+/* reads and sorts the folder; names and types only (by name, no file is opened) */
+static gpointer list_thread(gpointer data)
 {
-    const Entry *x = *(Entry **) a, *y = *(Entry **) b;
-    if (LOOK.folders_first && x->dir != y->dir)
-        return x->dir ? -1 : 1;
-    return g_strcmp0(x->key, y->key);
-}
-
-static gpointer grid_thread(gpointer data)
-{
-    GridJob *j = data;
+    ListJob *j = data;
     GPtrArray *names = g_ptr_array_new_with_free_func((GDestroyNotify) entry_free);
     GDir *d = g_dir_open(j->dir, 0, NULL);
     if (d) {
         const char *n;
-        while ((n = g_dir_read_name(d)) && names->len < THUMB_MAX)
+        while ((n = g_dir_read_name(d)))
             if (j->hidden || n[0] != '.') {
                 Entry *e = g_new0(Entry, 1);
                 e->name = g_strdup(n);
                 char *full = g_build_filename(j->dir, n, NULL);
-                e->dir = g_file_test(full, G_FILE_TEST_IS_DIR);
+                GStatBuf st;
+                if (g_stat(full, &st) == 0) {
+                    e->dir = S_ISDIR(st.st_mode);
+                    e->mtime = st.st_mtime;
+                    e->size = st.st_size;
+                }
                 g_free(full);
+                e->ext = e->dir ? g_strdup("") : sorting_ext(n);
+                e->ct = e->dir ? g_strdup("inode/directory") : g_content_type_guess(n, NULL, 0, NULL);
                 char *disp = g_filename_display_name(n), *fold = g_utf8_casefold(disp, -1);
                 e->key = g_utf8_collate_key_for_filename(fold, -1);
                 g_free(disp);
@@ -274,43 +575,11 @@ static gpointer grid_thread(gpointer data)
             }
         g_dir_close(d);
     }
-    g_ptr_array_sort(names, by_name);
-    for (guint i = 0; i < names->len; i++) {
-        if (j->win->dead || (guint) g_atomic_int_get((gint *) &j->p->token) != j->token)
-            break;      /* the preview shows something else now */
-        const char *n = ((Entry *) g_ptr_array_index(names, i))->name;
-        Thumb *t = g_new0(Thumb, 1);
-        t->p = j->p;
-        t->win = win_ref(j->win);
-        t->token = j->token;
-        t->path = g_build_filename(j->dir, n, NULL);
-        t->name = g_filename_display_name(n);
-        t->size = j->size;
-        gboolean isdir = g_file_test(t->path, G_FILE_TEST_IS_DIR);
-        char *ct = isdir ? g_strdup("inode/directory") : g_content_type_guess(n, NULL, 0, NULL);
-        if (!isdir && g_str_has_prefix(ct, "image/")) {
-            /* a thumbnail Thunar or a file dialog already made is far cheaper than the picture */
-            GFile *gf = g_file_new_for_path(t->path);
-            GFileInfo *ti = g_file_query_info(gf, G_FILE_ATTRIBUTE_THUMBNAIL_PATH, G_FILE_QUERY_INFO_NONE,
-                                              NULL, NULL);
-            const char *tp = ti ? g_file_info_get_attribute_byte_string(ti, G_FILE_ATTRIBUTE_THUMBNAIL_PATH)
-                                : NULL;
-            if (tp)
-                t->pixbuf = load_fitted(tp, j->size, j->size);
-            if (!t->pixbuf)
-                t->pixbuf = load_fitted(t->path, j->size, j->size);
-            g_clear_object(&ti);
-            g_object_unref(gf);
-        }
-        if (!t->pixbuf)
-            t->icon = g_content_type_get_icon(ct);
-        g_free(ct);
-        g_idle_add(add_thumb, t);
-    }
-    g_ptr_array_unref(names);
-    win_unref(j->win);
-    g_free(j->dir);
-    g_free(j);
+    g_ptr_array_sort_with_data(names, by_folder_sort, &j->sort);
+    if (names->len > THUMB_MAX)
+        g_ptr_array_set_size(names, THUMB_MAX);
+    j->entries = names;
+    g_idle_add(list_done, j);
     return NULL;
 }
 
@@ -322,15 +591,263 @@ static gboolean start_grid(gpointer data)
     char *dir = p->current ? g_file_get_path(p->current) : NULL;
     if (!dir)
         return G_SOURCE_REMOVE;
-    GridJob *j = g_new0(GridJob, 1);
+    /* the pane is often wider than preview_width (the window gives it the rest): use what it has */
+    int avail = gtk_widget_get_allocated_width(p->box);
+    if (avail < 100)
+        avail = p->width - 24;
+    p->grid_w = avail;
+    p->cols = MAX(THUMB_COLS, (avail + THUMB_GAP) / (THUMB_TARGET + THUMB_GAP + 2 * THUMB_PAD));
+    gtk_flow_box_set_min_children_per_line(GTK_FLOW_BOX(p->grid), p->cols);
+    gtk_flow_box_set_max_children_per_line(GTK_FLOW_BOX(p->grid), p->cols);
+    p->tile = (avail - (p->cols - 1) * THUMB_GAP) / p->cols - 2 * THUMB_PAD;
+    g_atomic_int_set(&p->vis_lo, 0);
+    g_atomic_int_set(&p->vis_hi, -1);
+    GtkAdjustment *va = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(p->grid_scroll));
+    gtk_adjustment_set_value(va, 0);
+    ListJob *j = g_new0(ListJob, 1);
     j->p = p;
     j->win = win_ref(p->win);
-    j->token = p->token;
+    j->token = p->grid_token;
     j->dir = dir;
-    j->size = (p->width - 24 - (THUMB_COLS - 1) * 6) / THUMB_COLS - 4;
     j->hidden = p->win->show_hidden;
-    g_thread_unref(g_thread_new("millerx-grid", grid_thread, j));
+    sorting_get(dir, &j->sort);
+    g_thread_unref(g_thread_new("millerx-grid", list_thread, j));
     return G_SOURCE_REMOVE;
+}
+
+/* Stops loading and watching the grid's folder. */
+static void grid_stop(Preview *p)
+{
+    g_atomic_int_inc((gint *) &p->grid_token);
+    if (p->add_idle) {
+        g_source_remove(p->add_idle);
+        p->add_idle = 0;
+    }
+    if (p->vis_idle) {
+        g_source_remove(p->vis_idle);
+        p->vis_idle = 0;
+    }
+    g_clear_pointer(&p->pending, g_ptr_array_unref);
+    g_clear_pointer(&p->pending_dir, g_free);
+    if (p->grid_timer) {
+        g_source_remove(p->grid_timer);
+        p->grid_timer = 0;
+    }
+    if (p->grid_refresh) {
+        g_source_remove(p->grid_refresh);
+        p->grid_refresh = 0;
+    }
+    if (p->grid_monitor) {
+        g_signal_handlers_disconnect_by_data(p->grid_monitor, p);
+        g_file_monitor_cancel(p->grid_monitor);
+        g_clear_object(&p->grid_monitor);
+    }
+}
+
+static GtkWidget *thumb_for(Preview *p, const char *path)
+{
+    GtkWidget *found = NULL;
+    GList *kids = gtk_container_get_children(GTK_CONTAINER(p->grid));
+    for (GList *l = kids; l && !found; l = l->next)
+        if (!g_strcmp0(g_object_get_data(G_OBJECT(l->data), "path"), path))
+            found = l->data;
+    g_list_free(kids);
+    return found;
+}
+
+static void grid_empty_check(Preview *p)
+{
+    GList *kids = gtk_container_get_children(GTK_CONTAINER(p->grid));
+    if (!kids) {                  /* last one gone: no line, no grid */
+        gtk_widget_hide(p->grid_scroll);
+        gtk_widget_hide(p->sep);
+    }
+    g_list_free(kids);
+}
+
+/* something new in the folder: load the grid again (the scroll position can't be kept then) */
+static gboolean grid_reload(gpointer data)
+{
+    Preview *p = data;
+    p->grid_refresh = 0;
+    g_atomic_int_inc((gint *) &p->grid_token);
+    if (p->add_idle) {
+        g_source_remove(p->add_idle);
+        p->add_idle = 0;
+    }
+    g_clear_pointer(&p->pending, g_ptr_array_unref);
+    g_clear_pointer(&p->pending_dir, g_free);
+    GList *kids = gtk_container_get_children(GTK_CONTAINER(p->grid));
+    for (GList *l = kids; l; l = l->next)
+        gtk_widget_destroy(l->data);
+    g_list_free(kids);
+    start_grid(p);
+    return G_SOURCE_REMOVE;
+}
+
+/* Gone or renamed thumbnails are changed in place, so the grid doesn't jump back to the top. */
+static void on_grid_changed(GFileMonitor *m, GFile *f, GFile *other, GFileMonitorEvent ev, Preview *p)
+{
+    (void) m;
+    char *path = g_file_get_path(f);
+    GtkWidget *t = path ? thumb_for(p, path) : NULL;
+    switch (ev) {
+    case G_FILE_MONITOR_EVENT_DELETED:
+    case G_FILE_MONITOR_EVENT_MOVED_OUT:
+        if (t) {
+            gtk_widget_destroy(t);
+            grid_empty_check(p);
+        }
+        break;
+    case G_FILE_MONITOR_EVENT_RENAMED: {
+        char *np = other ? g_file_get_path(other) : NULL, *base = other ? g_file_get_basename(other) : NULL;
+        if (t && np && (base[0] != '.' || p->win->show_hidden)) {
+            g_object_set_data_full(G_OBJECT(t), "path", g_strdup(np), g_free);
+            char *disp = g_filename_display_name(base);
+            gtk_widget_set_tooltip_text(gtk_bin_get_child(GTK_BIN(t)), disp);
+            g_free(disp);
+        } else if (t) {
+            gtk_widget_destroy(t);
+            grid_empty_check(p);
+        } else if (!p->grid_refresh) {
+            p->grid_refresh = g_timeout_add(400, grid_reload, p);
+        }
+        g_free(np);
+        g_free(base);
+        break;
+    }
+    case G_FILE_MONITOR_EVENT_CREATED:
+    case G_FILE_MONITOR_EVENT_MOVED_IN:
+        if (!p->grid_refresh)
+            p->grid_refresh = g_timeout_add(400, grid_reload, p);
+        break;
+    default:
+        break;
+    }
+    g_free(path);
+}
+
+static void grid_watch(Preview *p)
+{
+    p->grid_monitor = g_file_monitor_directory(p->current, G_FILE_MONITOR_WATCH_MOVES, NULL, NULL);
+    if (p->grid_monitor)
+        g_signal_connect(p->grid_monitor, "changed", G_CALLBACK(on_grid_changed), p);
+}
+
+static GFile *thumb_file(GtkFlowBoxChild *child)
+{
+    return g_file_new_for_path(g_object_get_data(G_OBJECT(child), "path"));
+}
+
+static GtkFlowBoxChild *thumb_selected(Preview *p)
+{
+    GList *sel = gtk_flow_box_get_selected_children(GTK_FLOW_BOX(p->grid));
+    GtkFlowBoxChild *c = sel ? sel->data : NULL;
+    g_list_free(sel);
+    return c;
+}
+
+/* right-click on a thumbnail: the file menu for that one file */
+static gboolean on_grid_button(GtkWidget *grid, GdkEventButton *ev, Preview *p)
+{
+    if (ev->type != GDK_BUTTON_PRESS || ev->button != GDK_BUTTON_SECONDARY)
+        return FALSE;
+    GtkWidget *from = NULL;
+    gdk_window_get_user_data(ev->window, (gpointer *) &from);
+    int x = (int) ev->x, y = (int) ev->y;
+    if (from && from != grid)
+        gtk_widget_translate_coordinates(from, grid, x, y, &x, &y);
+    GtkFlowBoxChild *child = gtk_flow_box_get_child_at_pos(GTK_FLOW_BOX(grid), x, y);
+    if (!child)
+        return FALSE;
+    gtk_flow_box_select_child(GTK_FLOW_BOX(grid), child);
+    gtk_widget_grab_focus(GTK_WIDGET(child));
+    GFile *f = thumb_file(child);
+    win_file_menu(p->win, f, ev, grid);
+    g_object_unref(f);
+    return TRUE;
+}
+
+/* keys on a selected thumbnail: menu key, F2, Delete, Shift+Delete, Alt+Return */
+static gboolean on_grid_key(GtkWidget *grid, GdkEventKey *ev, Preview *p)
+{
+    GtkFlowBoxChild *child = thumb_selected(p);
+    if (!child)
+        return FALSE;
+    gboolean shift = ev->state & GDK_SHIFT_MASK, alt = ev->state & GDK_MOD1_MASK;
+    guint k = ev->keyval;
+    GFile *f = thumb_file(child);
+    GList *one = g_list_append(NULL, f);
+    gboolean done = TRUE;
+    if (k == GDK_KEY_Menu || (shift && k == GDK_KEY_F10))
+        win_file_menu(p->win, f, NULL, GTK_WIDGET(child));
+    else if (k == GDK_KEY_F2)
+        win_rename_file(p->win, f);
+    else if (k == GDK_KEY_Delete && shift)
+        win_delete_forever(p->win, one);
+    else if (k == GDK_KEY_Delete)
+        win_trash(p->win, one);
+    else if (alt && (k == GDK_KEY_Return || k == GDK_KEY_KP_Enter))
+        dialog_properties(p->win, f);
+    else
+        done = FALSE;
+    (void) grid;
+    g_list_free(one);
+    g_object_unref(f);
+    return done;
+}
+
+/* ---- the picture area follows the pane's size ----------------------------------------- */
+static gpointer pdf_thread(gpointer data);
+static gboolean image_load(gpointer data)
+{
+    Preview *p = data;
+    p->image_timer = 0;
+    if (!p->image_path)
+        return G_SOURCE_REMOVE;
+    p->image_w = gtk_widget_get_allocated_width(p->image_scroll);
+    p->image_h = gtk_widget_get_allocated_height(p->image_scroll);
+    if (p->image_w < 64)                         /* not laid out yet */
+        p->image_w = p->width - 24;
+    if (p->image_h < 64)
+        p->image_h = 400;
+    Bg *b = bg_new(p, p->image_path);
+    spawn_bg(b, p->image_pdf ? pdf_thread : image_thread);
+    return G_SOURCE_REMOVE;
+}
+
+static void image_schedule(Preview *p, guint ms)
+{
+    if (p->image_timer)
+        g_source_remove(p->image_timer);
+    p->image_timer = g_timeout_add(ms, image_load, p);
+}
+
+static void on_image_area(GtkWidget *wid, GdkRectangle *a, Preview *p)
+{
+    (void) wid;
+    if (p->image_path && (abs(a->width - p->image_w) >= 8 || abs(a->height - p->image_h) >= 8))
+        image_schedule(p, 150);
+}
+
+static gboolean grid_resized(gpointer data)
+{
+    Preview *p = data;
+    p->resize_timer = 0;
+    if (gtk_widget_get_visible(p->grid_scroll))
+        grid_reload(p);
+    return G_SOURCE_REMOVE;
+}
+
+/* the thumbnails are made for one width: a clearly different one makes them again */
+static void on_pane_size(GtkWidget *wid, GdkRectangle *a, Preview *p)
+{
+    (void) wid;
+    if (p->grid_w && abs(a->width - p->grid_w) >= 12 && gtk_widget_get_visible(p->grid_scroll)) {
+        if (p->resize_timer)
+            g_source_remove(p->resize_timer);
+        p->resize_timer = g_timeout_add(300, grid_resized, p);
+    }
 }
 
 /* double-click (or Enter) on a thumbnail: go to that file */
@@ -342,43 +859,53 @@ static void on_thumb_activated(GtkFlowBox *box, GtkFlowBoxChild *child, Preview 
     g_object_unref(f);
 }
 
+/* Page 1 of a PDF, fitted into max_w x max_h; pdftoppm (poppler) gets timeout_ms, then is killed. */
+static GdkPixbuf *render_pdf(const char *path, int max_w, int max_h, int timeout_ms)
+{
+    GdkPixbuf *pb = NULL;
+    char *dir = g_dir_make_tmp("millerx-XXXXXX", NULL);
+    if (!dir)
+        return NULL;
+    char *out = g_build_filename(dir, "p", NULL);
+    char *png = g_strconcat(out, ".png", NULL);
+    char *w = g_strdup_printf("%d", MAX(max_w, max_h));
+    char *argv[] = { (char *) "pdftoppm", (char *) "-f", (char *) "1", (char *) "-l", (char *) "1",
+                     (char *) "-png", (char *) "-singlefile", (char *) "-scale-to", w, (char *) path, out, NULL };
+    GPid pid;
+    if (g_spawn_async(NULL, argv, NULL,
+                      G_SPAWN_SEARCH_PATH | G_SPAWN_DO_NOT_REAP_CHILD | G_SPAWN_STDOUT_TO_DEV_NULL
+                      | G_SPAWN_STDERR_TO_DEV_NULL, NULL, NULL, &pid, NULL)) {
+        int status = -1;
+        for (int i = 0; i < timeout_ms / 50; i++) {
+            if (waitpid(pid, &status, WNOHANG) == pid)
+                break;
+            status = -1;
+            g_usleep(50000);
+        }
+        if (status == -1) {
+            kill(pid, SIGKILL);
+            waitpid(pid, &status, 0);
+            status = -1;
+        }
+        g_spawn_close_pid(pid);
+        if (status != -1 && WIFEXITED(status) && WEXITSTATUS(status) == 0)
+            pb = gdk_pixbuf_new_from_file(png, NULL);
+        if (pb)
+            pb = fit_pixbuf(pb, max_w, max_h);
+    }
+    g_unlink(png);
+    g_rmdir(dir);
+    g_free(w);
+    g_free(png);
+    g_free(out);
+    g_free(dir);
+    return pb;
+}
+
 static gpointer pdf_thread(gpointer data)
 {
     Bg *b = data;
-    char *dir = g_dir_make_tmp("millerx-XXXXXX", NULL);
-    if (dir) {
-        char *out = g_build_filename(dir, "p", NULL);
-        char *png = g_strconcat(out, ".png", NULL);
-        char *w = g_strdup_printf("%d", b->width - 24);
-        char *argv[] = { (char *) "pdftoppm", (char *) "-f", (char *) "1", (char *) "-l", (char *) "1",
-                         (char *) "-png", (char *) "-singlefile", (char *) "-scale-to", w, b->path, out, NULL };
-        GPid pid;
-        if (g_spawn_async(NULL, argv, NULL,
-                          G_SPAWN_SEARCH_PATH | G_SPAWN_DO_NOT_REAP_CHILD | G_SPAWN_STDOUT_TO_DEV_NULL
-                          | G_SPAWN_STDERR_TO_DEV_NULL, NULL, NULL, &pid, NULL)) {
-            int status = -1;
-            for (int i = 0; i < 300; i++) {
-                if (waitpid(pid, &status, WNOHANG) == pid)
-                    break;
-                status = -1;
-                g_usleep(50000);
-            }
-            if (status == -1) {
-                kill(pid, SIGKILL);
-                waitpid(pid, &status, 0);
-                status = -1;
-            }
-            g_spawn_close_pid(pid);
-            if (status != -1 && WIFEXITED(status) && WEXITSTATUS(status) == 0)
-                b->pixbuf = gdk_pixbuf_new_from_file(png, NULL);
-        }
-        g_unlink(png);
-        g_rmdir(dir);
-        g_free(w);
-        g_free(png);
-        g_free(out);
-        g_free(dir);
-    }
+    b->pixbuf = render_pdf(b->path, b->width, b->max_height, 15000);
     g_idle_add(set_pixbuf, b);
     return NULL;
 }
@@ -388,6 +915,7 @@ static gboolean set_text(gpointer data)
     Bg *b = data;
     if (bg_current(b) && b->text && *b->text) {
         gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(b->p->text)), b->text, -1);
+        gtk_widget_show(b->p->sep);
         gtk_widget_show_all(b->p->text_scroll);
     }
     bg_free(b);
@@ -592,7 +1120,7 @@ static void show_text_file(Preview *p, const char *path)
     fclose(fh);
     if (n && !memchr(buf, 0, n)) {
         char *txt = g_utf8_make_valid(buf, n);
-        gtk_widget_hide(p->icon);
+        gtk_widget_show(p->sep);
         gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(p->text)), txt, -1);
         gtk_widget_show_all(p->text_scroll);
         g_free(txt);
@@ -662,13 +1190,16 @@ void preview_show_file(Preview *p, GFile *f)
     if (path) {
         if (isdir) {
             p->grid_timer = g_timeout_add(250, start_grid, p);
+            grid_watch(p);
             GPtrArray *paths = g_ptr_array_new_with_free_func(g_free);
             g_ptr_array_add(paths, g_strdup(path));
             start_sizes(p, paths, size_l, count_l, path);
-        } else if (g_str_has_prefix(ct, "image/")) {
-            spawn_bg(bg_new(p, path), image_thread);
-        } else if (!strcmp(ct, "application/pdf")) {
-            spawn_bg(bg_new(p, path), pdf_thread);
+        } else if (g_str_has_prefix(ct, "image/") || !strcmp(ct, "application/pdf")) {
+            p->image_path = g_strdup(path);
+            p->image_pdf = !g_str_has_prefix(ct, "image/");
+            gtk_widget_show(p->sep);
+            gtk_widget_show(p->image_scroll);
+            image_schedule(p, 30);      /* after the area got its size */
         } else if (is_archive_type(ct)) {
             spawn_bg(bg_new(p, path), archive_thread);
         } else if (g_content_type_is_a(ct, "text/plain") || g_str_has_prefix(ct, "text/")) {
@@ -686,11 +1217,24 @@ Preview *preview_new(Win *w)
     p->width = LOOK.preview_width;
     p->box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
     g_object_set(p->box, "margin", 12, NULL);
-    gtk_widget_set_size_request(p->box, p->width, -1);
-    gtk_widget_set_hexpand(p->box, FALSE);
+    gtk_widget_set_size_request(p->box, p->width, -1);   /* the least it gets; it takes the rest */
+    gtk_widget_set_hexpand(p->box, TRUE);
+    g_signal_connect(p->box, "size-allocate", G_CALLBACK(on_pane_size), p);
     p->image = gtk_image_new();
+    gtk_widget_set_halign(p->image, GTK_ALIGN_CENTER);
+    gtk_widget_set_valign(p->image, GTK_ALIGN_START);
+    /* EXTERNAL: the picture never sets the pane's size, the pane sets the picture's */
+    p->image_scroll = gtk_scrolled_window_new(NULL, NULL);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(p->image_scroll), GTK_POLICY_EXTERNAL,
+                                   GTK_POLICY_EXTERNAL);
+    gtk_widget_set_vexpand(p->image_scroll, TRUE);
+    gtk_container_add(GTK_CONTAINER(p->image_scroll), p->image);
+    gtk_widget_set_no_show_all(p->image_scroll, TRUE);
+    gtk_widget_show(p->image);
+    g_signal_connect(p->image_scroll, "size-allocate", G_CALLBACK(on_image_area), p);
     p->icon = gtk_image_new();
-    gtk_image_set_pixel_size(GTK_IMAGE(p->icon), 128);
+    gtk_image_set_pixel_size(GTK_IMAGE(p->icon), ICON_PX);
+    gtk_widget_set_valign(p->icon, GTK_ALIGN_START);
     p->text = gtk_text_view_new();
     g_object_set(p->text, "editable", FALSE, "cursor-visible", FALSE, "monospace", TRUE,
                  "wrap-mode", GTK_WRAP_CHAR, NULL);
@@ -701,34 +1245,66 @@ Preview *preview_new(Win *w)
     gtk_flow_box_set_homogeneous(GTK_FLOW_BOX(p->grid), TRUE);
     gtk_flow_box_set_min_children_per_line(GTK_FLOW_BOX(p->grid), THUMB_COLS);
     gtk_flow_box_set_max_children_per_line(GTK_FLOW_BOX(p->grid), THUMB_COLS);
-    gtk_flow_box_set_column_spacing(GTK_FLOW_BOX(p->grid), 6);
-    gtk_flow_box_set_row_spacing(GTK_FLOW_BOX(p->grid), 6);
+    gtk_flow_box_set_column_spacing(GTK_FLOW_BOX(p->grid), THUMB_GAP);
+    gtk_flow_box_set_row_spacing(GTK_FLOW_BOX(p->grid), THUMB_GAP);
+    /* the theme's padding around flow box children ate a good part of the thumbnails' room */
+    static GtkCssProvider *css;
+    if (!css) {
+        css = gtk_css_provider_new();
+        char *rule = g_strdup_printf(".millerx-thumbs flowboxchild { padding: %dpx; margin: 0; }", THUMB_PAD);
+        gtk_css_provider_load_from_data(css, rule, -1, NULL);
+        g_free(rule);
+        gtk_style_context_add_provider_for_screen(gdk_screen_get_default(), GTK_STYLE_PROVIDER(css),
+                                                  GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+    }
+    gtk_style_context_add_class(gtk_widget_get_style_context(p->grid), "millerx-thumbs");
     gtk_flow_box_set_activate_on_single_click(GTK_FLOW_BOX(p->grid), FALSE);
     gtk_widget_set_valign(p->grid, GTK_ALIGN_START);
     g_signal_connect(p->grid, "child-activated", G_CALLBACK(on_thumb_activated), p);
+    g_signal_connect(p->grid, "button-press-event", G_CALLBACK(on_grid_button), p);
+    g_signal_connect(p->grid, "key-press-event", G_CALLBACK(on_grid_key), p);
     p->grid_scroll = gtk_scrolled_window_new(NULL, NULL);
-    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(p->grid_scroll), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(p->grid_scroll), GTK_POLICY_EXTERNAL, GTK_POLICY_AUTOMATIC);
     gtk_widget_set_vexpand(p->grid_scroll, TRUE);
     gtk_container_add(GTK_CONTAINER(p->grid_scroll), p->grid);
+    GtkAdjustment *va = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(p->grid_scroll));
+    g_signal_connect(va, "value-changed", G_CALLBACK(on_grid_scrolled), p);
+    g_signal_connect(va, "changed", G_CALLBACK(on_grid_scrolled), p);
+    p->pool = g_thread_pool_new(thumb_work, NULL, THUMB_WORKERS, FALSE, NULL);
     gtk_widget_set_no_show_all(p->grid_scroll, TRUE);
     gtk_widget_show(p->grid);
     p->title = wrap_label("");
     p->details = gtk_grid_new();
     gtk_grid_set_column_spacing(GTK_GRID(p->details), 10);
     gtk_grid_set_row_spacing(GTK_GRID(p->details), 3);
-    gtk_box_pack_start(GTK_BOX(p->box), p->image, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(p->box), p->icon, FALSE, FALSE, 0);
+    /* header: icon left, name + details right; then a line; then picture, text or gallery */
+    GtkWidget *info = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
+    gtk_widget_set_hexpand(info, TRUE);
+    gtk_box_pack_start(GTK_BOX(info), p->title, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(info), p->details, FALSE, FALSE, 0);
+    p->header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 12);
+    gtk_box_pack_start(GTK_BOX(p->header), p->icon, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(p->header), info, TRUE, TRUE, 0);
+    p->sep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+    gtk_widget_set_no_show_all(p->sep, TRUE);
+    gtk_box_pack_start(GTK_BOX(p->box), p->header, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(p->box), p->sep, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(p->box), p->image_scroll, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(p->box), p->text_scroll, TRUE, TRUE, 0);
-    gtk_box_pack_start(GTK_BOX(p->box), p->title, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(p->box), p->details, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(p->box), p->grid_scroll, TRUE, TRUE, 0);
     return p;
 }
 
 void preview_free(Preview *p)
 {
-    if (p->grid_timer)
-        g_source_remove(p->grid_timer);
+    grid_stop(p);
+    /* every job holds a reference on the window, so none is left when we get here */
+    g_thread_pool_free(p->pool, TRUE, TRUE);
+    if (p->image_timer)
+        g_source_remove(p->image_timer);
+    if (p->resize_timer)
+        g_source_remove(p->resize_timer);
+    g_free(p->image_path);
     g_clear_object(&p->current);
     g_free(p);
 }

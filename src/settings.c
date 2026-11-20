@@ -68,6 +68,9 @@ void look_load(void)
     LOOK.preview_width = get_int(kf, "look", "preview_width", PREVIEW_DEFAULT, 200, 900);
     LOOK.folders_first = get_bool(kf, "browse", "folders_first", TRUE);
     LOOK.show_hidden = get_bool(kf, "browse", "show_hidden", FALSE);
+    LOOK.cache_max_mb = get_int(kf, "thumbnails", "max_mb", 1024, 50, 100000);
+    LOOK.cache_days = get_int(kf, "thumbnails", "max_days", 180, 7, 3650);
+    LOOK.cache_auto = get_bool(kf, "thumbnails", "auto_clean", TRUE);
     g_free(path);
     g_key_file_unref(kf);
 }
@@ -84,6 +87,9 @@ gboolean look_save(GError **err)
     g_key_file_set_integer(kf, "look", "preview_width", LOOK.preview_width);
     g_key_file_set_boolean(kf, "browse", "folders_first", LOOK.folders_first);
     g_key_file_set_boolean(kf, "browse", "show_hidden", LOOK.show_hidden);
+    g_key_file_set_integer(kf, "thumbnails", "max_mb", LOOK.cache_max_mb);
+    g_key_file_set_integer(kf, "thumbnails", "max_days", LOOK.cache_days);
+    g_key_file_set_boolean(kf, "thumbnails", "auto_clean", LOOK.cache_auto);
     char *dir = g_path_get_dirname(path);
     g_mkdir_with_parents(dir, 0755);
     gboolean ok = g_key_file_save_to_file(kf, path, err);

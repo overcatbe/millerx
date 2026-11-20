@@ -49,8 +49,16 @@ static GtkTreeIter *append_info(Column *c, GFileInfo *info, GFile *child, GtkTre
     gboolean isdir = g_file_info_get_file_type(info) == G_FILE_TYPE_DIRECTORY;
     const char *name = g_file_info_get_display_name(info);
     char *key = sort_key(name, isdir);
+    char *ext = isdir ? g_strdup("") : sorting_ext(name);
+    GDateTime *mt = g_file_info_get_modification_date_time(info);
+    gint64 mtime = mt ? g_date_time_to_unix(mt) : 0;
+    if (mt)
+        g_date_time_unref(mt);
     gtk_list_store_insert_with_values(c->store, out, -1, C_ICON, g_file_info_get_icon(info),
-                                      C_NAME, name, C_ISDIR, isdir, C_FILE, child, C_SORT, key, -1);
+                                      C_NAME, name, C_ISDIR, isdir, C_FILE, child, C_SORT, key,
+                                      C_MTIME, mtime, C_SIZE, (guint64) g_file_info_get_size(info),
+                                      C_EXT, ext, -1);
+    g_free(ext);
     g_free(key);
     return out;
 }
@@ -218,6 +226,17 @@ static void on_changed(GFileMonitor *mon, GFile *f, GFile *other, GFileMonitorEv
         break;
     }
     case G_FILE_MONITOR_EVENT_CHANGES_DONE_HINT: {
+        GtkTreeIter it;
+        GFileInfo *fi = find_iter(c, f, &it) ? g_file_query_info(f, ATTRS, G_FILE_QUERY_INFO_NONE, NULL, NULL)
+                                              : NULL;
+        if (fi) {
+            GDateTime *mt = g_file_info_get_modification_date_time(fi);
+            gtk_list_store_set(c->store, &it, C_MTIME, mt ? g_date_time_to_unix(mt) : (gint64) 0,
+                               C_SIZE, (guint64) g_file_info_get_size(fi), -1);
+            if (mt)
+                g_date_time_unref(mt);
+            g_object_unref(fi);
+        }
         GFile *sel;
         if (column_selected_single(c, &sel, NULL)) {
             if (g_file_equal(sel, f))
@@ -232,6 +251,30 @@ static void on_changed(GFileMonitor *mon, GFile *f, GFile *other, GFileMonitorEv
 }
 
 /* ---- selection ------------------------------------------------------------------ */
+/* Scrolling right after a column was made can use its old (tiny) height and do nothing:
+ * once layout has run, scroll to the cursor again. */
+static gboolean rescroll(gpointer data)
+{
+    Column *c = data;
+    if (!c->closed && !c->win->dead) {
+        GtkTreePath *p = NULL;
+        gtk_tree_view_get_cursor(GTK_TREE_VIEW(c->view), &p, NULL);
+        if (p) {
+            GdkRectangle vis, row;
+            gtk_tree_view_get_visible_rect(GTK_TREE_VIEW(c->view), &vis);
+            gtk_tree_view_get_background_area(GTK_TREE_VIEW(c->view), p, NULL, &row);
+            /* row in tree coordinates: visible if inside the visible rect */
+            int ty;
+            gtk_tree_view_convert_bin_window_to_tree_coords(GTK_TREE_VIEW(c->view), 0, row.y, NULL, &ty);
+            if (ty < vis.y || ty + row.height > vis.y + vis.height)
+                gtk_tree_view_scroll_to_cell(GTK_TREE_VIEW(c->view), p, NULL, TRUE, 0.33, 0);
+            gtk_tree_path_free(p);
+        }
+    }
+    column_unref(c);
+    return G_SOURCE_REMOVE;
+}
+
 void column_select_iter(Column *c, GtkTreeIter *it)
 {
     GtkTreeSelection *sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(c->view));
@@ -241,6 +284,8 @@ void column_select_iter(Column *c, GtkTreeIter *it)
     gtk_tree_view_set_cursor(GTK_TREE_VIEW(c->view), p, NULL, FALSE);
     gtk_tree_view_scroll_to_cell(GTK_TREE_VIEW(c->view), p, NULL, FALSE, 0, 0);
     gtk_tree_path_free(p);
+    column_ref(c);
+    g_timeout_add(60, rescroll, c);        /* after GTK's resize + redraw */
 }
 
 gboolean column_select_name(Column *c, const char *name)
@@ -565,14 +610,59 @@ static void on_drag_delete(GtkWidget *view, GdkDragContext *ctx, gpointer d)
 /* ---- construction ------------------------------------------------------------------ */
 static int sort_func(GtkTreeModel *m, GtkTreeIter *a, GtkTreeIter *b, gpointer d)
 {
-    (void) d;
+    Column *c = d;
     char *ka, *kb;
-    gtk_tree_model_get(m, a, C_SORT, &ka, -1);
-    gtk_tree_model_get(m, b, C_SORT, &kb, -1);
-    int r = g_strcmp0(ka, kb);    /* collate keys compare with strcmp */
+    if (!c->custom) {
+        gtk_tree_model_get(m, a, C_SORT, &ka, -1);
+        gtk_tree_model_get(m, b, C_SORT, &kb, -1);
+        int r = g_strcmp0(ka, kb);    /* collate keys compare with strcmp */
+        g_free(ka);
+        g_free(kb);
+        return r;
+    }
+    gboolean da, db;
+    gint64 ma, mb;
+    guint64 sa, sb;
+    char *ea, *eb;
+    gtk_tree_model_get(m, a, C_SORT, &ka, C_ISDIR, &da, C_MTIME, &ma, C_SIZE, &sa, C_EXT, &ea, -1);
+    gtk_tree_model_get(m, b, C_SORT, &kb, C_ISDIR, &db, C_MTIME, &mb, C_SIZE, &sb, C_EXT, &eb, -1);
+    int r = sorting_compare(c->sort, da, db, ka, kb, ma, mb, sa, sb, ea, eb);
     g_free(ka);
     g_free(kb);
+    g_free(ea);
+    g_free(eb);
     return r;
+}
+
+/* this folder's order from sorting.conf, the bar on top showing it, and the rows in that order */
+void column_apply_sort(Column *c)
+{
+    char *path = g_file_get_path(c->gfile);
+    c->custom = sorting_get(path, &c->sort);
+    g_free(path);
+    if (c->custom) {
+        char *d = sorting_describe(c->sort);
+        char *m = g_markup_printf_escaped("<small>sorted by %s</small>", d);
+        gtk_label_set_markup(GTK_LABEL(c->sortlabel), m);
+        g_free(m);
+        g_free(d);
+        gtk_widget_show(c->sortbar);
+    } else {
+        gtk_widget_hide(c->sortbar);
+    }
+    /* setting the function again for the current sort column sorts the rows again */
+    gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(c->store), C_SORT, sort_func, c, NULL);
+}
+
+static void sortbar_reset(GtkButton *b, Column *c)
+{
+    (void) b;
+    char *path = g_file_get_path(c->gfile);
+    if (path) {
+        sorting_clear(path);
+        app_sorting_changed(c->win->app, path);
+    }
+    g_free(path);
 }
 
 static void arrow_func(GtkTreeViewColumn *col, GtkCellRenderer *cell, GtkTreeModel *m,
@@ -580,8 +670,15 @@ static void arrow_func(GtkTreeViewColumn *col, GtkCellRenderer *cell, GtkTreeMod
 {
     (void) col; (void) d;
     gboolean isdir;
-    gtk_tree_model_get(m, it, C_ISDIR, &isdir, -1);
-    g_object_set(cell, "text", isdir ? "›" : "", NULL);
+    GFile *f = NULL;
+    gtk_tree_model_get(m, it, C_ISDIR, &isdir, C_FILE, &f, -1);
+    char *path = isdir && f ? g_file_get_path(f) : NULL;
+    if (path && sorting_get(path, NULL))
+        g_object_set(cell, "markup", "<span alpha='45%'>⇅</span> ›", NULL);
+    else
+        g_object_set(cell, "text", isdir ? "›" : "", NULL);
+    g_free(path);
+    g_clear_object(&f);
 }
 
 void column_set_width(Column *c, int w)
@@ -608,8 +705,11 @@ Column *column_new(Win *w, GFile *gfile, GPtrArray *chain)
     c->typed = g_string_new(NULL);
     c->drag_start = -1;
     c->store = gtk_list_store_new(C_N, G_TYPE_ICON, G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_FILE,
-                                  G_TYPE_STRING);
-    gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(c->store), C_SORT, sort_func, NULL, NULL);
+                                  G_TYPE_STRING, G_TYPE_INT64, G_TYPE_UINT64, G_TYPE_STRING);
+    char *own = g_file_get_path(gfile);
+    c->custom = sorting_get(own, &c->sort);
+    g_free(own);
+    gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(c->store), C_SORT, sort_func, c, NULL);
     gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(c->store), C_SORT, GTK_SORT_ASCENDING);
 
     /* own type-to-jump instead of GTK's search popup */
@@ -642,9 +742,29 @@ Column *column_new(Win *w, GFile *gfile, GPtrArray *chain)
     c->width = wv ? GPOINTER_TO_INT(wv) : COL_WIDTH;
     gtk_widget_set_size_request(c->scroller, c->width, -1);
     gtk_container_add(GTK_CONTAINER(c->scroller), c->view);
+    /* a thin bar on top when this folder is sorted its own way; its x goes back to by name */
+    c->sortlabel = gtk_label_new(NULL);
+    gtk_label_set_xalign(GTK_LABEL(c->sortlabel), 0);
+    gtk_label_set_ellipsize(GTK_LABEL(c->sortlabel), PANGO_ELLIPSIZE_END);
+    gtk_widget_set_opacity(c->sortlabel, 0.7);
+    GtkWidget *x = gtk_button_new_from_icon_name("window-close-symbolic", GTK_ICON_SIZE_MENU);
+    gtk_button_set_relief(GTK_BUTTON(x), GTK_RELIEF_NONE);
+    gtk_widget_set_tooltip_text(x, "Sort by name again");
+    g_signal_connect(x, "clicked", G_CALLBACK(sortbar_reset), c);
+    c->sortbar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+    g_object_set(c->sortbar, "margin-start", 6, NULL);
+    gtk_box_pack_start(GTK_BOX(c->sortbar), c->sortlabel, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(c->sortbar), x, FALSE, FALSE, 0);
+    gtk_widget_show_all(c->sortbar);              /* its insides now; the bar itself only when needed */
+    gtk_widget_hide(c->sortbar);
+    gtk_widget_set_no_show_all(c->sortbar, TRUE);
+    GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), c->sortbar, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), c->scroller, TRUE, TRUE, 0);
     c->frame = gtk_frame_new(NULL);
     gtk_frame_set_shadow_type(GTK_FRAME(c->frame), GTK_SHADOW_NONE);
-    gtk_container_add(GTK_CONTAINER(c->frame), c->scroller);
+    gtk_container_add(GTK_CONTAINER(c->frame), vbox);
+    column_apply_sort(c);
 
     g_signal_connect(gtk_tree_view_get_selection(GTK_TREE_VIEW(c->view)), "changed",
                      G_CALLBACK(on_selection), c);

@@ -1,5 +1,5 @@
 project('millerx', 'c',
-  version : '0.5.6',
+  version : '0.6',
   license : 'GPL-2.0-or-later',
   meson_version : '>= 0.60',
   default_options : ['c_std=gnu11', 'warning_level=2', 'buildtype=release'])
@@ -7,6 +7,13 @@ project('millerx', 'c',
 gtk = dependency('gtk+-3.0', version : '>= 3.22')
 archive = dependency('libarchive')
 threads = dependency('threads')
+# WebP pictures: gdk-pixbuf has no WebP loader on many systems (Slackware), so we decode it ourselves
+webp = dependency('libwebp', required : false)
+deps = [gtk, archive, threads]
+if webp.found()
+  deps += webp
+  add_project_arguments('-DHAVE_WEBP', language : 'c')
+endif
 
 bindir = get_option('prefix') / get_option('bindir')
 datadir = get_option('prefix') / get_option('datadir')
@@ -19,8 +26,8 @@ add_project_arguments(
 
 executable('millerx',
   'src/main.c', 'src/settings.c', 'src/util.c', 'src/column.c', 'src/preview.c',
-  'src/job.c', 'src/window.c', 'src/places.c', 'src/dialogs.c',
-  dependencies : [gtk, archive, threads],
+  'src/job.c', 'src/window.c', 'src/places.c', 'src/dialogs.c', 'src/thumbcache.c', 'src/sorting.c',
+  dependencies : deps,
   install : true)
 
 install_data('data/millerx.desktop', install_dir : datadir / 'applications')

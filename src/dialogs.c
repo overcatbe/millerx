@@ -363,7 +363,11 @@ void dialog_properties(Win *w, GFile *f)
 typedef struct {
     Win *w;
     GtkWidget *auto_rb, *own_rb, *colour, *width, *style, *pw, *ff, *sh;
+    GtkWidget *cache_size, *cache_clear, *cache_mb, *cache_days, *cache_auto;
+    GtkWidget *sort_list;
 } Set;
+
+static void fill_sort_list(Set *s);
 
 static void settings_changed(GtkWidget *any, Set *s)
 {
@@ -384,6 +388,9 @@ static void settings_changed(GtkWidget *any, Set *s)
     nl.preview_width = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(s->pw));
     nl.folders_first = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->ff));
     nl.show_hidden = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->sh));
+    nl.cache_max_mb = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(s->cache_mb));
+    nl.cache_days = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(s->cache_days));
+    nl.cache_auto = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->cache_auto));
     app_apply_look(s->w->app, &nl);
     g_free(col);
 }
@@ -419,6 +426,105 @@ static void section(GtkWidget *grid, int *r, const char *text)
         gtk_widget_set_margin_top(l, 6);
     gtk_grid_attach(GTK_GRID(grid), l, 0, *r, 2, 1);
     (*r)++;
+}
+
+/* the size label is ours (a reference) even if the dialog was closed meanwhile */
+static void cache_measured(guint64 bytes, guint files, guint removed, gpointer data)
+{
+    GtkWidget *l = data;
+    char *sz = g_format_size(bytes);
+    char *t = removed ? g_strdup_printf("%s in %u thumbnails (%u deleted)", sz, files, removed)
+                      : g_strdup_printf("%s in %u thumbnails", sz, files);
+    gtk_label_set_text(GTK_LABEL(l), t);
+    g_free(t);
+    g_free(sz);
+    g_object_unref(l);
+}
+
+static void cache_clear_clicked(GtkButton *b, Set *s)
+{
+    (void) b;
+    if (!win_confirm(s->w, "Clear the thumbnail cache?",
+                     "All thumbnails in ~/.cache/thumbnails are deleted. Thunar and file dialogs use them "
+                     "too; everything is made again when it's needed.", "Clear"))
+        return;
+    gtk_label_set_text(GTK_LABEL(s->cache_size), "clearing…");
+    thumbcache_clear(cache_measured, g_object_ref(s->cache_size));
+}
+
+/* ---- folders sorted their own way: one row each, no table ------------------------------------ */
+static void sortrow_changed(GtkWidget *any, Set *s)
+{
+    GtkWidget *row = g_object_get_data(G_OBJECT(any), "row");
+    const char *path = g_object_get_data(G_OBJECT(row), "path");
+    GtkWidget *combo = g_object_get_data(G_OBJECT(row), "combo"), *rev = g_object_get_data(G_OBJECT(row), "rev");
+    sorting_set(path, gtk_combo_box_get_active(GTK_COMBO_BOX(combo)),
+                gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(rev)));
+    app_sorting_changed(s->w->app, path);
+    if (!sorting_get(path, NULL))       /* set back to plain name order: the row goes */
+        fill_sort_list(s);
+}
+
+static void sortrow_remove(GtkButton *b, Set *s)
+{
+    GtkWidget *row = g_object_get_data(G_OBJECT(b), "row");
+    char *path = g_strdup(g_object_get_data(G_OBJECT(row), "path"));
+    sorting_clear(path);
+    app_sorting_changed(s->w->app, path);
+    g_free(path);
+    fill_sort_list(s);
+}
+
+static void fill_sort_list(Set *s)
+{
+    GList *kids = gtk_container_get_children(GTK_CONTAINER(s->sort_list));
+    for (GList *l = kids; l; l = l->next)
+        gtk_widget_destroy(l->data);
+    g_list_free(kids);
+    GList *paths = sorting_paths();
+    if (!paths) {
+        GtkWidget *l = gtk_label_new("None. Right-click a folder → Sort … to give it its own order.");
+        gtk_label_set_xalign(GTK_LABEL(l), 0);
+        gtk_widget_set_opacity(l, 0.7);
+        gtk_box_pack_start(GTK_BOX(s->sort_list), l, FALSE, FALSE, 0);
+    }
+    for (GList *p = paths; p; p = p->next) {
+        FolderSort fs;
+        sorting_get(p->data, &fs);
+        GtkWidget *row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+        g_object_set_data_full(G_OBJECT(row), "path", g_strdup(p->data), g_free);
+        GtkWidget *name = gtk_label_new(p->data);
+        gtk_label_set_xalign(GTK_LABEL(name), 0);
+        gtk_label_set_ellipsize(GTK_LABEL(name), PANGO_ELLIPSIZE_MIDDLE);
+        gtk_label_set_width_chars(GTK_LABEL(name), 24);
+        gtk_widget_set_tooltip_text(name, p->data);
+        GtkWidget *combo = gtk_combo_box_text_new();
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), "Name");
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), "Date (newest first)");
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), "Size (largest first)");
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), "Type");
+        gtk_combo_box_set_active(GTK_COMBO_BOX(combo), fs.by);
+        GtkWidget *rev = gtk_check_button_new_with_label("Reversed");
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rev), fs.reverse);
+        GtkWidget *x = gtk_button_new_from_icon_name("window-close-symbolic", GTK_ICON_SIZE_MENU);
+        gtk_button_set_relief(GTK_BUTTON(x), GTK_RELIEF_NONE);
+        gtk_widget_set_tooltip_text(x, "Sort by name again");
+        g_object_set_data(G_OBJECT(row), "combo", combo);
+        g_object_set_data(G_OBJECT(row), "rev", rev);
+        g_object_set_data(G_OBJECT(combo), "row", row);
+        g_object_set_data(G_OBJECT(rev), "row", row);
+        g_object_set_data(G_OBJECT(x), "row", row);
+        g_signal_connect(combo, "changed", G_CALLBACK(sortrow_changed), s);
+        g_signal_connect(rev, "toggled", G_CALLBACK(sortrow_changed), s);
+        g_signal_connect(x, "clicked", G_CALLBACK(sortrow_remove), s);
+        gtk_box_pack_start(GTK_BOX(row), name, TRUE, TRUE, 0);
+        gtk_box_pack_start(GTK_BOX(row), combo, FALSE, FALSE, 0);
+        gtk_box_pack_start(GTK_BOX(row), rev, FALSE, FALSE, 0);
+        gtk_box_pack_start(GTK_BOX(row), x, FALSE, FALSE, 0);
+        gtk_box_pack_start(GTK_BOX(s->sort_list), row, FALSE, FALSE, 0);
+    }
+    g_list_free_full(paths, g_free);
+    gtk_widget_show_all(s->sort_list);
 }
 
 void dialog_settings(Win *w)
@@ -466,7 +572,7 @@ void dialog_settings(Win *w)
     section(grid, &r, "Preview");
     s->pw = gtk_spin_button_new_with_range(200, 900, 10);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(s->pw), LOOK.preview_width);
-    srow(grid, &r, "Width (px)", s->pw);
+    srow(grid, &r, "Minimum width (px)", s->pw);   /* it takes the rest of the window */
     section(grid, &r, "Browsing");
     s->ff = gtk_check_button_new_with_label("Folders first");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(s->ff), LOOK.folders_first);
@@ -474,6 +580,33 @@ void dialog_settings(Win *w)
     s->sh = gtk_check_button_new_with_label("Show hidden files when millerX starts");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(s->sh), LOOK.show_hidden);
     srow(grid, &r, "Hidden files", s->sh);
+    section(grid, &r, "Thumbnail cache (shared with Thunar)");
+    s->cache_size = gtk_label_new("measuring…");
+    gtk_label_set_xalign(GTK_LABEL(s->cache_size), 0);
+    s->cache_clear = gtk_button_new_with_label("Clear…");
+    GtkWidget *sbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
+    gtk_box_pack_start(GTK_BOX(sbox), s->cache_size, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(sbox), s->cache_clear, FALSE, FALSE, 0);
+    srow(grid, &r, "Now", sbox);
+    s->cache_mb = gtk_spin_button_new_with_range(50, 100000, 50);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(s->cache_mb), LOOK.cache_max_mb);
+    srow(grid, &r, "Keep at most (MB)", s->cache_mb);
+    s->cache_days = gtk_spin_button_new_with_range(7, 3650, 1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(s->cache_days), LOOK.cache_days);
+    srow(grid, &r, "Forget unused after (days)", s->cache_days);
+    s->cache_auto = gtk_check_button_new_with_label("Once a day when millerX starts");
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(s->cache_auto), LOOK.cache_auto);
+    srow(grid, &r, "Clean up", s->cache_auto);
+    thumbcache_measure(cache_measured, g_object_ref(s->cache_size));
+    section(grid, &r, "Folders sorted their own way (all others: by name)");
+    s->sort_list = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
+    GtkWidget *sl_scroll = gtk_scrolled_window_new(NULL, NULL);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sl_scroll), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+    gtk_scrolled_window_set_propagate_natural_height(GTK_SCROLLED_WINDOW(sl_scroll), TRUE);
+    gtk_scrolled_window_set_max_content_height(GTK_SCROLLED_WINDOW(sl_scroll), 220);
+    gtk_container_add(GTK_CONTAINER(sl_scroll), s->sort_list);
+    gtk_grid_attach(GTK_GRID(grid), sl_scroll, 0, r++, 2, 1);
+    fill_sort_list(s);
 
     g_signal_connect(s->auto_rb, "toggled", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->colour, "color-set", G_CALLBACK(settings_changed), s);
@@ -482,6 +615,10 @@ void dialog_settings(Win *w)
     g_signal_connect(s->pw, "value-changed", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->ff, "toggled", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->sh, "toggled", G_CALLBACK(settings_changed), s);
+    g_signal_connect(s->cache_mb, "value-changed", G_CALLBACK(settings_changed), s);
+    g_signal_connect(s->cache_days, "value-changed", G_CALLBACK(settings_changed), s);
+    g_signal_connect(s->cache_auto, "toggled", G_CALLBACK(settings_changed), s);
+    g_signal_connect(s->cache_clear, "clicked", G_CALLBACK(cache_clear_clicked), s);
     g_signal_connect(d, "response", G_CALLBACK(settings_close), s);
     gtk_widget_show_all(d);
 }

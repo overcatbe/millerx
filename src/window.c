@@ -465,10 +465,12 @@ static void preview_drag(double dx, gpointer data)
 {
     Win *w = data;
     if (w->pv_start < 0) {
-        w->pv_start = w->preview->width;
+        w->pv_start = gtk_widget_get_allocated_width(w->preview->box);
         w->resizing = TRUE;
     }
-    int nw = CLAMP((int) (w->pv_start - dx), 200, 900);   /* dragging left makes it wider */
+    /* dragging left makes it wider; the width is the preview's minimum, it still takes the rest */
+    int most = CLAMP(gtk_widget_get_allocated_width(w->window) - 200, 200, 900);   /* 900: settings cap */
+    int nw = CLAMP((int) (w->pv_start - dx), 200, most);
     w->preview->width = nw;
     gtk_widget_set_size_request(w->preview->box, nw, -1);
 }
@@ -623,13 +625,10 @@ void win_new_folder(Win *w, Column *c)
     g_free(name);
 }
 
-void win_rename(Win *w, Column *c)
+/* Asks for a new name and renames f; the renamed file, or NULL. */
+static GFile *rename_file(Win *w, GFile *f)
 {
-    GFile *f;
-    if (!column_selected_single(c, &f, NULL)) {
-        g_clear_object(&f);
-        return;
-    }
+    GFile *result = NULL;
     GFileInfo *info = g_file_query_info(f, "standard::display-name", G_FILE_QUERY_INFO_NONE, NULL, NULL);
     char *old = info ? g_strdup(g_file_info_get_display_name(info)) : g_file_get_basename(f);
     g_clear_object(&info);
@@ -648,11 +647,7 @@ void win_rename(Win *w, Column *c)
                                g_error_matches(err, G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED) ? parent : NULL);
                 g_error_free(err);
             } else {
-                column_remove_file(c, f);
-                g_free(c->pending_select);
-                c->pending_select = g_strdup(name);
-                column_add_file(c, nf);
-                g_object_unref(nf);
+                result = nf;
             }
         }
         g_object_unref(exist);
@@ -660,7 +655,33 @@ void win_rename(Win *w, Column *c)
     }
     g_free(name);
     g_free(old);
+    return result;
+}
+
+void win_rename(Win *w, Column *c)
+{
+    GFile *f;
+    if (!column_selected_single(c, &f, NULL)) {
+        g_clear_object(&f);
+        return;
+    }
+    GFile *nf = rename_file(w, f);
+    if (nf) {
+        column_remove_file(c, f);
+        char *name = g_file_get_basename(nf);
+        g_free(c->pending_select);
+        c->pending_select = name;
+        column_add_file(c, nf);
+        g_object_unref(nf);
+    }
     g_object_unref(f);
+}
+
+/* the same for a file that isn't in a column (a thumbnail); folder monitors show the change */
+void win_rename_file(Win *w, GFile *f)
+{
+    GFile *nf = rename_file(w, f);
+    g_clear_object(&nf);
 }
 
 typedef struct {
@@ -910,7 +931,7 @@ typedef struct {
 } Act;
 
 enum { A_OPEN_DIR, A_OPEN, A_OPEN_WITH, A_CUT, A_COPY, A_PASTE_INTO, A_PASTE, A_RENAME, A_TRASH,
-       A_DELETE, A_NEW_FOLDER, A_TERMINAL, A_COPY_PATH, A_BOOKMARK, A_PROPERTIES, A_ROOT };
+       A_DELETE, A_NEW_FOLDER, A_TERMINAL, A_COPY_PATH, A_BOOKMARK, A_PROPERTIES, A_ROOT, A_SHOW };
 
 static void act_free(gpointer data, GClosure *cl)
 {
@@ -919,7 +940,8 @@ static void act_free(gpointer data, GClosure *cl)
     g_list_free_full(a->files, g_object_unref);
     g_clear_object(&a->folder);
     g_clear_object(&a->app);
-    column_unref(a->c);
+    if (a->c)       /* NULL: a menu for one file outside the columns (a thumbnail) */
+        column_unref(a->c);
     g_free(a);
 }
 
@@ -928,7 +950,7 @@ static void act_run(GtkMenuItem *mi, Act *a)
     (void) mi;
     Win *w = a->w;
     Column *c = a->c;
-    if (w->dead || c->closed)
+    if (w->dead || (c && c->closed))
         return;
     switch (a->action) {
     case A_OPEN_DIR: win_focus_next(w, c); break;
@@ -940,7 +962,13 @@ static void act_run(GtkMenuItem *mi, Act *a)
         break;
     case A_PASTE_INTO: win_paste_into(w, a->files->data); break;
     case A_PASTE: win_paste_into(w, c->gfile); break;
-    case A_RENAME: win_rename(w, c); break;
+    case A_RENAME:
+        if (c)
+            win_rename(w, c);
+        else
+            win_rename_file(w, a->files->data);
+        break;
+    case A_SHOW: win_open_path(w, a->files->data); break;
     case A_TRASH: win_trash(w, a->files); break;
     case A_DELETE: win_delete_forever(w, a->files); break;
     case A_NEW_FOLDER: win_new_folder(w, c); break;
@@ -959,7 +987,7 @@ static void act_run(GtkMenuItem *mi, Act *a)
     case A_BOOKMARK: places_bookmark_add(w, a->folder); break;
     case A_ROOT: win_open_as_root(w, a->folder); break;
     case A_PROPERTIES:
-        dialog_properties(w, a->files && !a->files->next ? a->files->data : c->gfile);
+        dialog_properties(w, a->files && (!a->files->next || !c) ? a->files->data : c->gfile);
         break;
     }
 }
@@ -978,7 +1006,8 @@ static GtkWidget *item(GtkWidget *menu, Win *w, Column *c, GList *files, GFile *
     Act *a = g_new0(Act, 1);
     a->w = w;
     a->c = c;
-    column_ref(c);
+    if (c)
+        column_ref(c);
     a->files = g_list_copy_deep(files, obj_copy, NULL);
     a->folder = folder ? g_object_ref(folder) : NULL;
     a->action = action;
@@ -1010,6 +1039,101 @@ static void on_hidden_toggled(GtkCheckMenuItem *mi, Win *w)
 {
     (void) mi;
     win_toggle_hidden(w);
+}
+
+/* ---- per-folder sorting ------------------------------------------------------------ */
+/* a folder's order changed: its columns resort, every column redraws its ⇅ marks, and a gallery
+ * showing that folder is made again */
+void app_sorting_changed(GtkApplication *app, const char *path)
+{
+    for (GList *l = gtk_application_get_windows(app); l; l = l->next) {
+        Win *w = g_object_get_data(G_OBJECT(l->data), "millerx-win");
+        if (!w || w->dead)
+            continue;
+        for (GList *k = w->columns; k; k = k->next) {
+            Column *c = k->data;
+            char *cp = g_file_get_path(c->gfile);
+            if (!g_strcmp0(cp, path))
+                column_apply_sort(c);
+            g_free(cp);
+            gtk_widget_queue_draw(c->view);
+        }
+        char *pp = w->preview->current ? g_file_get_path(w->preview->current) : NULL;
+        if (!g_strcmp0(pp, path)) {
+            GFile *f = g_object_ref(w->preview->current);
+            preview_show_file(w->preview, f);
+            g_object_unref(f);
+        }
+        g_free(pp);
+    }
+}
+
+static void sort_pick(GtkCheckMenuItem *mi, Win *w)
+{
+    if (!gtk_check_menu_item_get_active(mi))
+        return;                  /* radio items: only the newly chosen one counts */
+    const char *path = g_object_get_data(G_OBJECT(mi), "path");
+    FolderSort cur;
+    sorting_get(path, &cur);
+    sorting_set(path, GPOINTER_TO_INT(g_object_get_data(G_OBJECT(mi), "by")), cur.reverse);
+    app_sorting_changed(w->app, path);
+}
+
+static void sort_reverse(GtkCheckMenuItem *mi, Win *w)
+{
+    const char *path = g_object_get_data(G_OBJECT(mi), "path");
+    FolderSort cur;
+    sorting_get(path, &cur);
+    sorting_set(path, cur.by, gtk_check_menu_item_get_active(mi));
+    app_sorting_changed(w->app, path);
+}
+
+static void sort_reset(GtkMenuItem *mi, Win *w)
+{
+    const char *path = g_object_get_data(G_OBJECT(mi), "path");
+    sorting_clear(path);
+    app_sorting_changed(w->app, path);
+}
+
+static void sort_menu(GtkWidget *menu, Win *w, GFile *folder)
+{
+    char *path = folder ? g_file_get_path(folder) : NULL;
+    if (!path)
+        return;
+    FolderSort cur;
+    gboolean custom = sorting_get(path, &cur);
+    GtkWidget *sub = gtk_menu_new();
+    static const char *labels[] = { "Name", "Date modified (newest first)", "Size (largest first)", "Type" };
+    GSList *group = NULL;
+    for (int b = 0; b < 4; b++) {
+        GtkWidget *mi = gtk_radio_menu_item_new_with_label(group, labels[b]);
+        group = gtk_radio_menu_item_get_group(GTK_RADIO_MENU_ITEM(mi));
+        gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mi), (int) cur.by == b);
+        g_object_set_data_full(G_OBJECT(mi), "path", g_strdup(path), g_free);
+        g_object_set_data(G_OBJECT(mi), "by", GINT_TO_POINTER(b));
+        g_signal_connect(mi, "toggled", G_CALLBACK(sort_pick), w);
+        gtk_menu_shell_append(GTK_MENU_SHELL(sub), mi);
+    }
+    sep(sub);
+    GtkWidget *rev = gtk_check_menu_item_new_with_label("Reversed");
+    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(rev), cur.reverse);
+    g_object_set_data_full(G_OBJECT(rev), "path", g_strdup(path), g_free);
+    g_signal_connect(rev, "toggled", G_CALLBACK(sort_reverse), w);
+    gtk_menu_shell_append(GTK_MENU_SHELL(sub), rev);
+    sep(sub);
+    GtkWidget *back = gtk_menu_item_new_with_label("Back to name");
+    gtk_widget_set_sensitive(back, custom);
+    g_object_set_data_full(G_OBJECT(back), "path", g_strdup(path), g_free);
+    g_signal_connect(back, "activate", G_CALLBACK(sort_reset), w);
+    gtk_menu_shell_append(GTK_MENU_SHELL(sub), back);
+    char *base = g_file_get_basename(folder);
+    char *l = g_strdup_printf("Sort “%s”", base);
+    GtkWidget *top = gtk_menu_item_new_with_label(l);
+    gtk_menu_item_set_submenu(GTK_MENU_ITEM(top), sub);
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), top);
+    g_free(l);
+    g_free(base);
+    g_free(path);
 }
 
 void win_context_menu(Win *w, Column *c, GdkEventButton *ev)
@@ -1070,6 +1194,7 @@ void win_context_menu(Win *w, Column *c, GdkEventButton *ev)
         sep(menu);
     }
     item(menu, w, c, NULL, NULL, A_NEW_FOLDER, "New folder…", "<Control><Shift>n", TRUE);
+    sort_menu(menu, w, folder);       /* the highlighted folder, else this column's own */
     item(menu, w, c, NULL, folder, A_TERMINAL, "Open terminal here", NULL, TRUE);
     if (files)
         item(menu, w, c, files, NULL, A_COPY_PATH, "Copy path", NULL, TRUE);
@@ -1091,6 +1216,57 @@ void win_context_menu(Win *w, Column *c, GdkEventButton *ev)
     else
         gtk_menu_popup_at_widget(GTK_MENU(menu), c->view, GDK_GRAVITY_CENTER, GDK_GRAVITY_NORTH_WEST, NULL);
     g_list_free_full(files, g_object_unref);
+}
+
+/* Menu for one file that isn't a row in a column: a thumbnail in the preview's grid.
+ * ev = the right-click, or NULL (menu key) to open it at the widget. */
+void win_file_menu(Win *w, GFile *f, GdkEventButton *ev, GtkWidget *attach)
+{
+    GList *files = g_list_append(NULL, f);
+    GFileInfo *info = g_file_query_info(f, "standard::content-type,standard::type", G_FILE_QUERY_INFO_NONE,
+                                        NULL, NULL);
+    gboolean isdir = info && g_file_info_get_file_type(info) == G_FILE_TYPE_DIRECTORY;
+    GtkWidget *menu = gtk_menu_new();
+    if (isdir)
+        item(menu, w, NULL, files, NULL, A_SHOW, "Open", NULL, TRUE);
+    else
+        item(menu, w, NULL, files, NULL, A_OPEN, "Open", NULL, TRUE);
+    const char *ct = info ? g_file_info_get_content_type(info) : NULL;
+    GList *apps = ct && !isdir ? g_app_info_get_all_for_type(ct) : NULL;
+    if (apps) {
+        GtkWidget *sub = gtk_menu_new();
+        for (GList *l = apps; l; l = l->next) {
+            GtkWidget *mi = item(sub, w, NULL, files, NULL, A_OPEN_WITH,
+                                 g_app_info_get_display_name(l->data), NULL, TRUE);
+            Act *a = g_object_get_data(G_OBJECT(mi), "act");
+            a->app = g_object_ref(l->data);
+        }
+        GtkWidget *ow = gtk_menu_item_new_with_label("Open with");
+        gtk_menu_item_set_submenu(GTK_MENU_ITEM(ow), sub);
+        gtk_menu_shell_append(GTK_MENU_SHELL(menu), ow);
+        g_list_free_full(apps, g_object_unref);
+    }
+    g_clear_object(&info);
+    if (!isdir)
+        item(menu, w, NULL, files, NULL, A_SHOW, "Show in column", NULL, TRUE);
+    sep(menu);
+    item(menu, w, NULL, files, NULL, A_CUT, "Cut", NULL, TRUE);
+    item(menu, w, NULL, files, NULL, A_COPY, "Copy", NULL, TRUE);
+    sep(menu);
+    item(menu, w, NULL, files, NULL, A_RENAME, "Rename…", "F2", TRUE);
+    item(menu, w, NULL, files, NULL, A_TRASH, "Move to trash", "Delete", TRUE);
+    item(menu, w, NULL, files, NULL, A_DELETE, "Delete permanently…", "<Shift>Delete", TRUE);
+    sep(menu);
+    item(menu, w, NULL, files, NULL, A_COPY_PATH, "Copy path", NULL, TRUE);
+    item(menu, w, NULL, files, NULL, A_PROPERTIES, "Properties…", "<Alt>Return", TRUE);
+    gtk_widget_show_all(menu);
+    gtk_menu_attach_to_widget(GTK_MENU(menu), attach, NULL);
+    g_signal_connect(menu, "deactivate", G_CALLBACK(menu_done), NULL);
+    if (ev)
+        gtk_menu_popup_at_pointer(GTK_MENU(menu), (GdkEvent *) ev);
+    else
+        gtk_menu_popup_at_widget(GTK_MENU(menu), attach, GDK_GRAVITY_CENTER, GDK_GRAVITY_NORTH_WEST, NULL);
+    g_list_free(files);
 }
 
 /* ---- keys -------------------------------------------------------------------------------- */
@@ -1293,16 +1469,18 @@ Win *win_new(GtkApplication *app, GFile *start)
     w->colbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
     w->hscroll = gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(w->hscroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_NEVER);
-    gtk_widget_set_hexpand(w->hscroll, TRUE);
+    /* the columns take what they need; the preview gets the rest of the window */
+    gtk_widget_set_hexpand(w->hscroll, FALSE);
+    gtk_scrolled_window_set_propagate_natural_width(GTK_SCROLLED_WINDOW(w->hscroll), TRUE);
     gtk_container_add(GTK_CONTAINER(w->hscroll), w->colbox);
     g_signal_connect(gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(w->hscroll)), "changed",
                      G_CALLBACK(on_hadj_changed), w);
     w->preview = preview_new(w);
     w->pane_divider = divider_new(preview_drag, preview_reset, preview_drag_done, w, FALSE);
     GtkWidget *pane = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-    gtk_box_pack_start(GTK_BOX(pane), w->hscroll, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(pane), w->hscroll, FALSE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(pane), w->pane_divider, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(pane), w->preview->box, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(pane), w->preview->box, TRUE, TRUE, 0);
 
     w->statusbar = gtk_label_new(NULL);
     gtk_label_set_xalign(GTK_LABEL(w->statusbar), 0);

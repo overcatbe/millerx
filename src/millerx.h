@@ -12,7 +12,7 @@
 #include <gtk/gtk.h>
 
 #ifndef MILLERX_VERSION
-#define MILLERX_VERSION "0.5.6"
+#define MILLERX_VERSION "0.6"
 #endif
 
 #define COL_WIDTH 230
@@ -27,7 +27,7 @@
               "standard::content-type,time::modified,unix::mode"
 
 /* list store columns */
-enum { C_ICON, C_NAME, C_ISDIR, C_FILE, C_SORT, C_N };
+enum { C_ICON, C_NAME, C_ISDIR, C_FILE, C_SORT, C_MTIME, C_SIZE, C_EXT, C_N };
 
 /* ---- settings (settings.c) --------------------------------------------- */
 typedef struct {
@@ -37,6 +37,9 @@ typedef struct {
     int preview_width;      /* 200-900 */
     gboolean folders_first;
     gboolean show_hidden;   /* at start */
+    int cache_max_mb;       /* thumbnail cache: shrink to this, least used first */
+    int cache_days;         /* forget thumbnails unused this long */
+    gboolean cache_auto;    /* clean once a day when millerX starts */
 } Look;
 
 extern Look LOOK;
@@ -63,6 +66,22 @@ GtkWidget *menu_item_new(const char *label, GIcon *gicon, const char *icon_name)
 gpointer obj_copy(gconstpointer src, gpointer data);   /* GCopyFunc for g_list_copy_deep */
 
 /* ---- window (window.c) --------------------------------------------------- */
+/* ---- per-folder sorting (sorting.c) ------------------------------------------------ */
+typedef enum { SORT_NAME, SORT_DATE, SORT_SIZE, SORT_TYPE } SortBy;
+typedef struct {
+    SortBy by;
+    gboolean reverse;       /* against the natural direction (date/size: newest/largest first) */
+} FolderSort;
+void sorting_load(void);
+gboolean sorting_get(const char *path, FolderSort *out);     /* TRUE: the folder has its own */
+void sorting_set(const char *path, SortBy by, gboolean reverse);
+void sorting_clear(const char *path);
+GList *sorting_paths(void);                                  /* new strings, sorted */
+char *sorting_describe(FolderSort s);
+char *sorting_ext(const char *name);
+int sorting_compare(FolderSort s, gboolean da, gboolean db, const char *ka, const char *kb,
+                    gint64 ma, gint64 mb, guint64 sa, guint64 sb, const char *ea, const char *eb);
+
 typedef struct Win Win;
 typedef struct Column Column;
 typedef struct Preview Preview;
@@ -82,13 +101,33 @@ struct Column {
     double drag_start;         /* width when a divider drag started, < 0 = not dragging */
     GString *typed;
     gint64 typed_at;
+    FolderSort sort;           /* this folder's own order, if custom */
+    gboolean custom;
+    GtkWidget *sortbar, *sortlabel;
 };
 
 struct Preview {
     Win *win;
     GtkWidget *box, *image, *icon, *text, *text_scroll, *title, *details;
     GtkWidget *grid_scroll, *grid;   /* a folder's contents as thumbnails, under its details */
+    GtkWidget *header, *sep;         /* icon left + name and details right; a line under it */
+    GtkWidget *image_scroll;         /* the picture's area: takes the room left, never grows the window */
+    char *image_path;                /* picture or PDF shown now, NULL if none */
+    gboolean image_pdf;
+    int image_w, image_h;            /* the area size it was drawn for */
+    guint image_timer, resize_timer;
+    int grid_w;                      /* pane width the thumbnails were made for */
+    int cols, tile;                  /* tiles per row, tile size in px */
+    GThreadPool *pool;               /* makes the tiles' pictures */
+    gint vis_lo, vis_hi;             /* tile indexes on screen + one page ahead (read by the workers) */
+    guint vis_idle, add_idle;
+    GPtrArray *pending;              /* folder entries still to become tiles */
+    guint pending_pos;
+    char *pending_dir;
     guint grid_timer;
+    guint grid_token;          /* the grid's own: reloading it must not stop the size count */
+    GFileMonitor *grid_monitor;
+    guint grid_refresh;
     guint token;
     int width;
     GFile *current;
@@ -135,7 +174,10 @@ void win_reload_all(Win *w);
 GFile *win_current_folder(Win *w);
 GdkModifierType win_pointer_mask(Win *w);
 void win_look_changed(Win *w, gboolean resort);
+void app_sorting_changed(GtkApplication *app, const char *path);
 void win_context_menu(Win *w, Column *c, GdkEventButton *ev);
+void win_file_menu(Win *w, GFile *f, GdkEventButton *ev, GtkWidget *attach);
+void win_rename_file(Win *w, GFile *f);
 void win_open_default(Win *w, GFile *f);
 void win_trash(Win *w, GList *files);
 void win_delete_forever(Win *w, GList *files);
@@ -148,6 +190,7 @@ void app_apply_look(GtkApplication *app, const Look *nl);
 
 /* ---- column (column.c) ----------------------------------------------------- */
 Column *column_new(Win *w, GFile *gfile, GPtrArray *chain);
+void column_apply_sort(Column *c);
 void column_ref(Column *c);
 void column_unref(Column *c);
 void column_close(Column *c);
@@ -178,6 +221,13 @@ void places_fill_bookmarks(Win *w);
 void places_fill_devices(Win *w);
 void places_bookmark_add(Win *w, GFile *folder);
 void places_watch_volumes(Win *w);
+
+/* ---- thumbnail cache (thumbcache.c) ------------------------------------------------ */
+typedef void (*ThumbcacheDone)(guint64 bytes, guint files, guint removed, gpointer data);
+void thumbcache_measure(ThumbcacheDone done, gpointer data);
+void thumbcache_clean(ThumbcacheDone done, gpointer data);
+void thumbcache_clear(ThumbcacheDone done, gpointer data);
+void thumbcache_auto_clean(void);
 
 /* ---- dialogs (dialogs.c) ------------------------------------------------------- */
 typedef enum { CH_CANCEL, CH_SKIP, CH_BOTH, CH_REPLACE } Choice;

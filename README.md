@@ -21,8 +21,16 @@ millerX carries his name.
 
 - **Columns from `/`** to the current folder; ← → and the mouse move through them,
   the newest column always stays in view.
-- **Preview**: pictures, the first page of PDFs, text, the contents of zip/tar
-  archives, folder sizes counted in the background. Fixed width, drag its edge to resize.
+- **Preview** in the rest of the window: pictures (WebP too) fitted to the pane, the first
+  page of PDFs, text, the contents of zip/tar archives, folder sizes counted in the background.
+- **Gallery**: a folder's pictures and PDFs as thumbnails under its details. Opens at once
+  even with thousands of files, loads only what is on screen, and right-click gives each
+  thumbnail its own menu (open, show in column, rename, trash, …).
+- **Shared thumbnail cache** (`~/.cache/thumbnails`, like Thunar and the file dialogs),
+  cleaned up automatically: files that are gone, unused for 180 days, above 1 GB.
+- **Sorting per folder**: everything is sorted by name, so your eye learns where things are.
+  A folder can have its own order (date, size, type, reversed), shown by a bar on top of
+  its column and a ⇅ next to its name.
 - **Resizable columns**: drag a divider for long names, double-click for the default width.
 - **Open, Open with, Open terminal here** (your `$TERMINAL`, or the first of 17 known terminals).
 - **Cut, copy, paste**, compatible with Thunar's clipboard. A highlighted folder receives the paste.
@@ -35,7 +43,12 @@ millerX carries his name.
 - **Properties** with editable permissions, free space and folder totals.
 - **Open as root** through polkit (`pkexec`): the password is asked by your polkit agent,
   millerX never sees it. A root window shows a red warning bar.
-- Columns follow changes on disk. Sorted by name, case-insensitive, folders first (optional).
+- Columns follow changes on disk. Names sort case-insensitive and naturally (file2 before
+  file10), folders first (optional).
+
+![The preview fits a picture into the rest of the window](docs/preview.png)
+
+What changed in each version: [CHANGELOG](CHANGELOG.md).
 
 ## Keys
 
@@ -57,6 +70,9 @@ millerX carries his name.
 | F5 | reload |
 | Ctrl+Q, Ctrl+W | close |
 
+On a selected thumbnail in the gallery: Enter opens it in its column, Delete / Shift+Delete,
+F2, the Menu key and Alt+Enter work as in a column.
+
 ## Install
 
 Packages for **Slackware**, **Debian/Ubuntu** and **Arch** are attached to every
@@ -69,8 +85,9 @@ Packages for **Slackware**, **Debian/Ubuntu** and **Arch** are attached to every
 
 ### Build from source (any distro)
 
-Needs GTK 3, GLib/GIO, libarchive, meson and ninja. Optional: `pdftoppm` (poppler)
-for PDF previews, polkit plus an authentication agent for "Open as root".
+Needs GTK 3, GLib/GIO, libarchive, meson and ninja. Optional: libwebp (WebP pictures;
+found automatically when building), `pdftoppm` (poppler) for PDF previews, polkit plus an
+authentication agent for "Open as root".
 
 ```sh
 meson setup build --prefix=/usr
@@ -87,12 +104,23 @@ Menu → Settings (Ctrl+,), or `~/.config/millerx/millerx.conf`:
 divider_color = auto     # auto = theme background 20 % lighter (dark) / darker (light), or #rrggbb
 divider_width = 2        # 1-12
 divider_style = solid    # solid | fade
-preview_width = 340      # 200-900
+preview_width = 340      # 200-900, the least the preview gets; it takes the rest
 
 [browse]
 folders_first = true
 show_hidden = false
+
+[thumbnails]
+max_mb = 1024            # cache size to shrink to, least used first
+max_days = 180           # forget thumbnails unused this long
+auto_clean = true        # once a day when millerX starts
 ```
+
+Folders with their own sorting are kept in `~/.config/millerx/sorting.conf`, one per line
+(`date`, `size`, `type` or `name`, a tab, `1` if reversed, a tab, the folder). The settings
+list them too, to change or remove.
+
+![Settings](docs/settings.png)
 
 ## Bugs and wishes
 

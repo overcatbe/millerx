@@ -1,3 +1,22 @@
+millerx (0.6) unstable; urgency=medium
+
+  * Preview takes the rest of the window; its width setting is now the minimum.
+  * Header (icon left, details right), a line, then the picture, text or gallery.
+  * One picture always fits the pane and is never enlarged.
+  * Gallery: more columns on wide panes, tiles are created at once, pictures load
+    only for what is on screen (4 at a time), up to 5000 files per folder.
+  * Thumbnails are saved to the shared freedesktop cache (~/.cache/thumbnails);
+    automatic clean-up (gone originals, 180 days, 1 GB) and Clear in the settings.
+  * WebP pictures through libwebp; PDFs show their first page in the gallery.
+  * Right-click a thumbnail: open, open with, show in column, cut, copy, rename,
+    trash, delete, copy path, properties. Delete, F2, Menu keys work there too.
+  * The gallery follows its folder: deleted and renamed files change in place.
+  * Sorting per folder (name, date, size, type, reversed), marked by a bar on top
+    of its column and ⇅ next to its name; listed in the settings.
+  * "Show in column" and opening a path scroll the row into view.
+
+ -- overcatbe <1771834+overcatbe@users.noreply.github.com>  Fri, 20 Nov 2026 10:11:14 +0200
+
 millerx (0.5.6) unstable; urgency=medium
 
   * Pictures in the preview as big as the pane allows; small ones keep their size.
