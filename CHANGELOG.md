@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.4 (2026-11-21)
+
+- **New window**: Ctrl+N or Menu → New window opens a second window at the same folder;
+  right-click a folder → *Open in new window*, or middle-click it. Handy for comparing two
+  folders. (Idea from a LinuxQuestions user who asked for tabs.)
+
 ## 0.6.3 (2026-11-21)
 
 - **Builds on Slackware 15.0 again** (and anything else with GLib 2.70 or newer).

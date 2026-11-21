@@ -4,6 +4,8 @@ A small, native file browser with **Miller columns**: every folder from `/` down
 where you are sits in its own column, and the selected file is previewed on the right.
 Like a mind map of your disk. Written in C with GTK 3 and GIO.
 
+> **New in 0.6.4:** more windows: Ctrl+N, Menu → New window, or middle-click a folder.
+>
 > **New in 0.6.3:** builds on Slackware 15.0 (GLib 2.70) again.
 >
 > **New in 0.6.2:** your own highlight colour, picked live in the settings, and if you
@@ -47,6 +49,8 @@ millerX carries his name.
   A folder can have its own order (date, size, type, reversed), shown by a bar on top of
   its column and a ⇅ next to its name.
 - **Resizable columns**: drag a divider for long names, double-click for the default width.
+- **More windows**: Ctrl+N, Menu → New window, or middle-click a folder. Copy, paste and
+  drag & drop work between them, e.g. one window above the other to compare two folders.
 - **Open, Open with, Open terminal here** (your `$TERMINAL`, or the first of 17 known terminals).
 - **Cut, copy, paste**, compatible with Thunar's clipboard. A highlighted folder receives the paste.
 - **Drag & drop**: same file system moves, otherwise copies; Ctrl copies, Shift moves.
@@ -83,9 +87,12 @@ What changed in each version: [CHANGELOG](CHANGELOG.md).
 | Ctrl+H | show hidden files |
 | Ctrl+L | location bar |
 | Alt+Enter | properties |
+| Ctrl+N | new window at this folder |
 | Ctrl+, | settings |
 | F5 | reload |
 | Ctrl+Q, Ctrl+W | close |
+
+Middle-click a folder (or right-click → Open in new window) to open it in a second window.
 
 On a selected thumbnail in the gallery: Enter opens it in its column, Delete / Shift+Delete,
 F2, the Menu key and Alt+Enter work as in a column.

@@ -378,9 +378,27 @@ static gboolean on_focus(GtkWidget *w, GdkEvent *ev, Column *c)
 
 static gboolean on_button(GtkWidget *view, GdkEventButton *ev, Column *c)
 {
+    GtkTreePath *p = NULL;
+    if (ev->type == GDK_BUTTON_PRESS && ev->button == 2) {      /* middle-click a folder: new window */
+        gboolean done = FALSE;
+        if (gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(view), ev->x, ev->y, &p, NULL, NULL, NULL)) {
+            GtkTreeModel *m = gtk_tree_view_get_model(GTK_TREE_VIEW(view));
+            GtkTreeIter it;
+            GFile *f = NULL;
+            gboolean isdir = FALSE;
+            if (gtk_tree_model_get_iter(m, &it, p))
+                gtk_tree_model_get(m, &it, C_FILE, &f, C_ISDIR, &isdir, -1);
+            if (f && isdir) {
+                win_new(c->win->app, f);
+                done = TRUE;
+            }
+            g_clear_object(&f);
+            gtk_tree_path_free(p);
+        }
+        return done;
+    }
     if (ev->type != GDK_BUTTON_PRESS || ev->button != 3)
         return FALSE;
-    GtkTreePath *p = NULL;
     GtkTreeSelection *sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
     if (gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(view), ev->x, ev->y, &p, NULL, NULL, NULL)) {
         if (!gtk_tree_selection_path_is_selected(sel, p)) {

@@ -931,7 +931,8 @@ typedef struct {
 } Act;
 
 enum { A_OPEN_DIR, A_OPEN, A_OPEN_WITH, A_CUT, A_COPY, A_PASTE_INTO, A_PASTE, A_RENAME, A_TRASH,
-       A_DELETE, A_NEW_FOLDER, A_TERMINAL, A_COPY_PATH, A_BOOKMARK, A_PROPERTIES, A_ROOT, A_SHOW };
+       A_DELETE, A_NEW_FOLDER, A_TERMINAL, A_COPY_PATH, A_BOOKMARK, A_PROPERTIES, A_ROOT, A_SHOW,
+       A_NEW_WINDOW };
 
 static void act_free(gpointer data, GClosure *cl)
 {
@@ -986,6 +987,7 @@ static void act_run(GtkMenuItem *mi, Act *a)
     }
     case A_BOOKMARK: places_bookmark_add(w, a->folder); break;
     case A_ROOT: win_open_as_root(w, a->folder); break;
+    case A_NEW_WINDOW: win_new(w->app, a->folder); break;
     case A_PROPERTIES:
         dialog_properties(w, a->files && (!a->files->next || !c) ? a->files->data : c->gfile);
         break;
@@ -1150,9 +1152,10 @@ void win_context_menu(Win *w, Column *c, GdkEventButton *ev)
     GFile *folder = single_dir ? files->data : c->gfile;
 
     if (files) {
-        if (single_dir)
+        if (single_dir) {
             item(menu, w, c, files, NULL, A_OPEN_DIR, "Open", NULL, TRUE);
-        else if (n == 1)
+            item(menu, w, c, NULL, files->data, A_NEW_WINDOW, "Open in new window", NULL, TRUE);
+        } else if (n == 1)
             item(menu, w, c, files, NULL, A_OPEN, "Open", "Return", TRUE);
         GFileInfo *info = g_file_query_info(files->data, "standard::content-type", G_FILE_QUERY_INFO_NONE,
                                             NULL, NULL);
@@ -1269,12 +1272,31 @@ void win_file_menu(Win *w, GFile *f, GdkEventButton *ev, GtkWidget *attach)
     g_list_free(files);
 }
 
+/* a second window at the folder this one shows (Ctrl+N, Menu -> New window) */
+static void new_window_here(Win *w)
+{
+    GFile *cur = win_current_folder(w);
+    win_new(w->app, cur);
+    g_object_unref(cur);
+}
+
+static void on_new_window(GtkMenuItem *mi, Win *w)
+{
+    (void) mi;
+    new_window_here(w);
+}
+
 /* ---- keys -------------------------------------------------------------------------------- */
 static gboolean on_key(GtkWidget *win, GdkEventKey *ev, Win *w)
 {
     (void) win;
     gboolean ctrl = ev->state & GDK_CONTROL_MASK, alt = ev->state & GDK_MOD1_MASK;
+    gboolean shift = ev->state & GDK_SHIFT_MASK;
     guint k = ev->keyval;
+    if (ctrl && !shift && (k == GDK_KEY_n || k == GDK_KEY_N)) {
+        new_window_here(w);
+        return TRUE;
+    }
     if (ctrl && (k == GDK_KEY_h || k == GDK_KEY_H)) {
         win_toggle_hidden(w);
         return TRUE;
@@ -1442,7 +1464,11 @@ Win *win_new(GtkApplication *app, GFile *start)
     GtkWidget *dev = tool_button("drive-removable-media", "Drives: mount, open, eject");
     g_signal_connect(dev, "clicked", G_CALLBACK(places_clicked), w);
     GtkWidget *main_menu = gtk_menu_new();
-    GtkWidget *mi;
+    GtkWidget *mi = gtk_menu_item_new_with_label("New window");
+    gtk_accel_label_set_accel(GTK_ACCEL_LABEL(gtk_bin_get_child(GTK_BIN(mi))), GDK_KEY_n, GDK_CONTROL_MASK);
+    g_signal_connect(mi, "activate", G_CALLBACK(on_new_window), w);
+    gtk_menu_shell_append(GTK_MENU_SHELL(main_menu), mi);
+    gtk_menu_shell_append(GTK_MENU_SHELL(main_menu), gtk_separator_menu_item_new());
     if (!is_root()) {
         mi = gtk_menu_item_new_with_label("Open this folder as root…");
         g_signal_connect(mi, "activate", G_CALLBACK(on_root_here), w);

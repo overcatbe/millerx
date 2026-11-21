@@ -1,3 +1,10 @@
+millerx (0.6.4) unstable; urgency=medium
+
+  * New window: Ctrl+N or Menu -> New window opens a second window at the
+    same folder; right-click a folder -> Open in new window, or middle-click.
+
+ -- overcatbe <1771834+overcatbe@users.noreply.github.com>  Sat, 21 Nov 2026 08:17:27 +0200
+
 millerx (0.6.3) unstable; urgency=medium
 
   * Builds with GLib 2.70 again (Slackware 15.0): cached thumbnails are
