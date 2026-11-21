@@ -263,7 +263,7 @@ static void col_done(gpointer data)
 
 static void col_reset(gpointer data)
 {
-    column_set_width(data, COL_WIDTH);
+    column_set_width(data, LOOK.column_width);
 }
 
 static Column *add_column(Win *w, GFile *f, GPtrArray *chain)
@@ -506,6 +506,13 @@ void win_look_changed(Win *w, gboolean resort)
         Column *c = l->data;
         gtk_widget_set_size_request(c->divider, dw, -1);
         gtk_widget_queue_draw(c->divider);
+        /* columns not dragged by hand follow the column width setting */
+        char *uri = g_file_get_uri(c->gfile);
+        if (!g_hash_table_contains(w->col_widths, uri) && c->width != LOOK.column_width) {
+            c->width = LOOK.column_width;
+            gtk_widget_set_size_request(c->scroller, c->width, -1);
+        }
+        g_free(uri);
     }
     gtk_widget_set_size_request(w->pane_divider, dw, -1);
     if (w->preview->width != LOOK.preview_width) {

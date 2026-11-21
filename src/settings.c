@@ -4,7 +4,7 @@
 #include "millerx.h"
 #include <string.h>
 
-Look LOOK = { NULL, 2, FALSE, PREVIEW_DEFAULT, TRUE, FALSE };
+Look LOOK = { NULL, 2, FALSE, PREVIEW_DEFAULT, TRUE, FALSE, .column_width = COL_DEFAULT };
 
 static char *config_file(void)
 {
@@ -66,6 +66,7 @@ void look_load(void)
     LOOK.fade = style && !strcmp(style, "fade");
     g_free(style);
     LOOK.preview_width = get_int(kf, "look", "preview_width", PREVIEW_DEFAULT, 200, 900);
+    LOOK.column_width = get_int(kf, "look", "column_width", COL_DEFAULT, COL_MIN, 600);
     LOOK.gallery_names = get_bool(kf, "look", "gallery_names", FALSE);
     char *hl = get_str(kf, "look", "highlight_color");
     GdkRGBA hc;
@@ -95,6 +96,7 @@ gboolean look_save(GError **err)
     g_key_file_set_integer(kf, "look", "divider_width", LOOK.divider_width);
     g_key_file_set_string(kf, "look", "divider_style", LOOK.fade ? "fade" : "solid");
     g_key_file_set_integer(kf, "look", "preview_width", LOOK.preview_width);
+    g_key_file_set_integer(kf, "look", "column_width", LOOK.column_width);
     g_key_file_set_boolean(kf, "look", "gallery_names", LOOK.gallery_names);
     g_key_file_set_string(kf, "look", "highlight_color", LOOK.highlight);
     g_key_file_set_boolean(kf, "browse", "folders_first", LOOK.folders_first);

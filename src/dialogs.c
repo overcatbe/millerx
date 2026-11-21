@@ -362,7 +362,7 @@ void dialog_properties(Win *w, GFile *f)
 /* ---- settings --------------------------------------------------------------------------------- */
 typedef struct {
     Win *w;
-    GtkWidget *auto_rb, *own_rb, *colour, *width, *style, *pw, *ff, *sh;
+    GtkWidget *auto_rb, *own_rb, *colour, *width, *style, *pw, *cw, *ff, *sh;
     GtkWidget *cache_size, *cache_clear, *cache_mb, *cache_days, *cache_auto;
     GtkWidget *sort_list, *names;
     GtkWidget *hl_auto, *hl_own, *hl_colour, *hl_sys, *hl_unsys;
@@ -398,6 +398,7 @@ static void settings_changed(GtkWidget *any, Set *s)
     nl.divider_width = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(s->width));
     nl.fade = !g_strcmp0(gtk_combo_box_get_active_id(GTK_COMBO_BOX(s->style)), "fade");
     nl.preview_width = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(s->pw));
+    nl.column_width = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(s->cw));
     nl.folders_first = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->ff));
     nl.show_hidden = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->sh));
     nl.gallery_names = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->names));
@@ -746,6 +747,11 @@ void dialog_settings(Win *w)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(s->names), LOOK.gallery_names);
     srow(grid, &r, "Gallery", s->names);
     section(&grid, &r, "Browsing");
+    s->cw = gtk_spin_button_new_with_range(COL_MIN, 600, 10);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(s->cw), LOOK.column_width);
+    gtk_widget_set_tooltip_text(s->cw, "Where new columns start. A column you drag keeps its own width; "
+                                       "double-click its divider to bring it back to this one.");
+    srow(grid, &r, "Column width (px)", s->cw);
     s->ff = gtk_check_button_new_with_label("Folders first");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(s->ff), LOOK.folders_first);
     srow(grid, &r, "Sort by name", s->ff);
@@ -787,6 +793,7 @@ void dialog_settings(Win *w)
     g_signal_connect(s->width, "value-changed", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->style, "changed", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->pw, "value-changed", G_CALLBACK(settings_changed), s);
+    g_signal_connect(s->cw, "value-changed", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->ff, "toggled", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->sh, "toggled", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->names, "toggled", G_CALLBACK(settings_changed), s);

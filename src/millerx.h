@@ -15,7 +15,7 @@
 #define MILLERX_VERSION "0.7"
 #endif
 
-#define COL_WIDTH 230
+#define COL_DEFAULT 230      /* the start width of a column, unless set in Settings */
 #define COL_MIN 120
 #define COL_MAX 1200
 #define PREVIEW_DEFAULT 340
@@ -42,6 +42,7 @@ typedef struct {
     int cache_max_mb;       /* thumbnail cache: shrink to this, least used first */
     int cache_days;         /* forget thumbnails unused this long */
     gboolean cache_auto;    /* clean once a day when millerX starts */
+    int column_width;       /* start width of folder columns, 120-600 */
 } Look;
 
 extern Look LOOK;

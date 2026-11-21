@@ -704,7 +704,7 @@ void column_set_width(Column *c, int w)
     c->width = CLAMP(w, COL_MIN, COL_MAX);
     gtk_widget_set_size_request(c->scroller, c->width, -1);
     char *uri = g_file_get_uri(c->gfile);
-    if (c->width == COL_WIDTH) {
+    if (c->width == LOOK.column_width) {        /* back to the setting: follows it again */
         g_hash_table_remove(c->win->col_widths, uri);
         g_free(uri);
     } else {
@@ -757,7 +757,7 @@ Column *column_new(Win *w, GFile *gfile, GPtrArray *chain)
     char *uri = g_file_get_uri(gfile);
     gpointer wv = g_hash_table_lookup(w->col_widths, uri);
     g_free(uri);
-    c->width = wv ? GPOINTER_TO_INT(wv) : COL_WIDTH;
+    c->width = wv ? GPOINTER_TO_INT(wv) : LOOK.column_width;
     gtk_widget_set_size_request(c->scroller, c->width, -1);
     gtk_container_add(GTK_CONTAINER(c->scroller), c->view);
     /* a thin bar on top when this folder is sorted its own way; its x goes back to by name */

@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- **Column width setting:** Settings → Browsing → Column width (120–600, default 230) sets where new
+  folder columns start. Open columns follow it at once; one you dragged keeps its own width, and
+  double-clicking its divider brings it back to the setting.
+
 ## 0.7.1 (2026-11-21)
 
 - **millerX remembers its window:** close it and open it again, and it comes back with the same size,
