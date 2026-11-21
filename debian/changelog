@@ -1,3 +1,11 @@
+millerx (0.7.2) unstable; urgency=medium
+
+  * Settings: column width, where new folder columns start (120-600,
+    default 230); open columns follow it at once, dragged ones keep theirs
+    until their divider is double-clicked.
+
+ -- overcatbe <1771834+overcatbe@users.noreply.github.com>  Sat, 21 Nov 2026 23:27:09 +0200
+
 millerx (0.7.1) unstable; urgency=medium
 
   * Remembers the window: size, place and maximized state come back at the

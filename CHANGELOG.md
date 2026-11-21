@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.7.2 (2026-11-21)
 
 - **Column width setting:** Settings → Browsing → Column width (120–600, default 230) sets where new
   folder columns start. Open columns follow it at once; one you dragged keeps its own width, and
