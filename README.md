@@ -4,6 +4,8 @@ A small, native file browser with **Miller columns**: every folder from `/` down
 where you are sits in its own column, and the selected file is previewed on the right.
 Like a mind map of your disk. Written in C with GTK 3 and GIO.
 
+> **New in 0.6.3:** builds on Slackware 15.0 (GLib 2.70) again.
+>
 > **New in 0.6.2:** your own highlight colour, picked live in the settings, and if you
 > like for all GTK programs.
 >
@@ -120,13 +122,14 @@ Packages for **Slackware**, **Debian/Ubuntu** and **Arch** are attached to every
 [release](https://github.com/overcatbe/millerx/releases).
 
 - **Slackware**: download the `.SlackBuild.tar.gz` and the source tarball, then as root:
-  `./millerx.SlackBuild && installpkg /tmp/millerx-*.txz`
+  `./millerx.SlackBuild && installpkg /tmp/millerx-*_SBo.tgz`
 - **Debian / Ubuntu**: `sudo apt install ./millerx_*.deb`
 - **Arch**: `sudo pacman -U millerx-*.pkg.tar.zst`
 
 ### Build from source (any distro)
 
-Needs GTK 3, GLib/GIO, libarchive, meson and ninja. Optional: libwebp (WebP pictures;
+Needs GTK 3.22+, GLib/GIO 2.70+, libarchive, meson 0.60+ and ninja (on Slackware 15.0: with the
+official patches, which bring meson 1.11). Optional: libwebp (WebP pictures;
 found automatically when building), `pdftoppm` (poppler) for PDF previews, `ffmpeg` for
 AVIF, HEIC and other pictures gdk-pixbuf can't read, polkit plus an
 authentication agent for "Open as root".

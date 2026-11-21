@@ -289,31 +289,40 @@ static gboolean thumbable(const char *ct)
     return g_str_has_prefix(ct, "image/") || !strcmp(ct, "application/pdf");
 }
 
-/* ---- the freedesktop thumbnail cache (~/.cache/thumbnails), shared with Thunar & co. ---- */
-static const struct { const char *dir, *path_attr, *valid_attr; int px; } BUCKETS[] = {
-    { "normal", G_FILE_ATTRIBUTE_THUMBNAIL_PATH_NORMAL, G_FILE_ATTRIBUTE_THUMBNAIL_IS_VALID_NORMAL, 128 },
-    { "large", G_FILE_ATTRIBUTE_THUMBNAIL_PATH_LARGE, G_FILE_ATTRIBUTE_THUMBNAIL_IS_VALID_LARGE, 256 },
-    { "x-large", G_FILE_ATTRIBUTE_THUMBNAIL_PATH_XLARGE, G_FILE_ATTRIBUTE_THUMBNAIL_IS_VALID_XLARGE, 512 },
-    { "xx-large", G_FILE_ATTRIBUTE_THUMBNAIL_PATH_XXLARGE, G_FILE_ATTRIBUTE_THUMBNAIL_IS_VALID_XXLARGE, 1024 },
+/* ---- the freedesktop thumbnail cache (~/.cache/thumbnails), shared with Thunar & co. ----
+ * Looked up by hand as the spec says (md5 of the URI, Thumb::MTime must match) rather than through
+ * GIO's thumbnail::path-<size> attributes: those only exist since GLib 2.76 (Slackware 15.0 has 2.70). */
+static const struct { const char *dir; int px; } BUCKETS[] = {
+    { "normal", 128 }, { "large", 256 }, { "x-large", 512 }, { "xx-large", 1024 },
 };
 
 /* a valid cached thumbnail at least size big, or NULL */
 static GdkPixbuf *cached_thumb(const char *path, int size)
 {
+    struct stat st;
+    char *uri = g_stat(path, &st) ? NULL : g_filename_to_uri(path, NULL, NULL);
+    if (!uri)
+        return NULL;
+    char *md5 = g_compute_checksum_for_string(G_CHECKSUM_MD5, uri, -1);
+    char *mtime = g_strdup_printf("%" G_GINT64_FORMAT, (gint64) st.st_mtime);
     GdkPixbuf *pb = NULL;
-    GFile *gf = g_file_new_for_path(path);
-    GFileInfo *ti = g_file_query_info(gf, "thumbnail::*", G_FILE_QUERY_INFO_NONE, NULL, NULL);
-    for (guint k = 0; ti && !pb && k < G_N_ELEMENTS(BUCKETS); k++) {
+    for (guint k = 0; !pb && k < G_N_ELEMENTS(BUCKETS); k++) {
         if (BUCKETS[k].px < size)
             continue;
-        const char *tp = g_file_info_get_attribute_byte_string(ti, BUCKETS[k].path_attr);
-        gboolean valid = !g_file_info_has_attribute(ti, BUCKETS[k].valid_attr)
-                         || g_file_info_get_attribute_boolean(ti, BUCKETS[k].valid_attr);
-        if (tp && valid)
-            pb = load_fitted(tp, size, size);
+        char *name = g_strconcat(md5, ".png", NULL);
+        char *tp = g_build_filename(g_get_user_cache_dir(), "thumbnails", BUCKETS[k].dir, name, NULL);
+        GdkPixbuf *t = g_file_test(tp, G_FILE_TEST_IS_REGULAR) ? gdk_pixbuf_new_from_file(tp, NULL) : NULL;
+        const char *tm = t ? gdk_pixbuf_get_option(t, "tEXt::Thumb::MTime") : NULL;
+        const char *tu = t ? gdk_pixbuf_get_option(t, "tEXt::Thumb::URI") : NULL;
+        if (tm && !strcmp(tm, mtime) && (!tu || !strcmp(tu, uri)))
+            pb = fit_pixbuf(g_object_ref(t), size, size);
+        g_clear_object(&t);
+        g_free(tp);
+        g_free(name);
     }
-    g_clear_object(&ti);
-    g_object_unref(gf);
+    g_free(mtime);
+    g_free(md5);
+    g_free(uri);
     return pb;
 }
 

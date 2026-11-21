@@ -1,0 +1,20 @@
+millerX is a small native GTK 3 file browser with Miller columns: every
+folder from / down to the current one sits in its own column, and the
+selected file is previewed on the right (pictures, the first page of
+PDFs, text, the contents of zip/tar archives, folder sizes). Folders
+show their pictures and PDFs as a fast thumbnail gallery, using the
+shared ~/.cache/thumbnails like Thunar does.
+
+Copy/paste, drag and drop, bookmarks shared with Thunar and the GTK
+file dialogs, USB drives (udisks2), per-folder sorting, properties with
+editable permissions, and "Open as root" through polkit (pkexec).
+
+Everything it needs is part of Slackware. Programs it uses if they are
+installed (all in Slackware too):
+
+  poppler (pdftoppm)  first page of PDFs
+  ffmpeg              AVIF, HEIC and other pictures that gdk-pixbuf
+                      can't read
+  polkit agent        "Open as root"
+
+Building needs a fully patched Slackware 15.0 (meson 0.60 or newer).

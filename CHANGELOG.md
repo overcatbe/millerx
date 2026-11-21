@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.3 (2026-11-21)
+
+- **Builds on Slackware 15.0 again** (and anything else with GLib 2.70 or newer).
+  0.6.2 used thumbnail names that only came with GLib 2.76. Now millerX finds the
+  cached thumbnails itself, the way the freedesktop standard describes, so it works the
+  same everywhere. Thanks to random_guy and Paulo2 on LinuxQuestions for the report.
+
 ## 0.6.2 (2026-11-20)
 
 - **Your own highlight colour** (Settings → Highlight colour). Click a swatch or pick any

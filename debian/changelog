@@ -1,3 +1,11 @@
+millerx (0.6.3) unstable; urgency=medium
+
+  * Builds with GLib 2.70 again (Slackware 15.0): cached thumbnails are
+    looked up as the freedesktop spec describes instead of through GIO's
+    size-specific thumbnail attributes, which need GLib 2.76.
+
+ -- overcatbe <1771834+overcatbe@users.noreply.github.com>  Sat, 21 Nov 2026 07:38:52 +0200
+
 millerx (0.6.2) unstable; urgency=medium
 
   * Own highlight (selection) colour in the settings, shown live while you
