@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- **Settings in boxes:** every section has its own frame with its title on it, the labels line up
+  across all of them, and the window scrolls if the screen is too small for it.
+
 ## 0.7 (2026-11-21)
 
 The gallery (a folder's contents under its details) grew up:

@@ -420,26 +420,41 @@ static void settings_close(GtkDialog *d, int r, Set *s)
     gtk_widget_destroy(GTK_WIDGET(d));
 }
 
+/* While the settings are built: the box the section frames go into, and a size group that keeps
+ * the labels of all sections equally wide, so the frames line up. */
+static GtkWidget *SECTIONS;
+static GtkSizeGroup *LABELS;
+
 static void srow(GtkWidget *grid, int *r, const char *label, GtkWidget *w)
 {
     GtkWidget *l = gtk_label_new(label);
     gtk_label_set_xalign(GTK_LABEL(l), 1);
+    if (LABELS)
+        gtk_size_group_add_widget(LABELS, l);
     gtk_grid_attach(GTK_GRID(grid), l, 0, *r, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), w, 1, *r, 1, 1);
     (*r)++;
 }
 
-static void section(GtkWidget *grid, int *r, const char *text)
+/* a new section: a frame with the title on it, holding its own grid (which *grid becomes) */
+static void section(GtkWidget **grid, int *r, const char *text)
 {
     GtkWidget *l = gtk_label_new(NULL);
-    char *m = g_strdup_printf("<b>%s</b>", text);
+    char *m = g_markup_printf_escaped("<b>%s</b>", text);
     gtk_label_set_markup(GTK_LABEL(l), m);
     g_free(m);
-    gtk_label_set_xalign(GTK_LABEL(l), 0);
-    if (*r)
-        gtk_widget_set_margin_top(l, 6);
-    gtk_grid_attach(GTK_GRID(grid), l, 0, *r, 2, 1);
-    (*r)++;
+    GtkWidget *frame = gtk_frame_new(NULL);
+    gtk_frame_set_label_widget(GTK_FRAME(frame), l);
+    gtk_frame_set_label_align(GTK_FRAME(frame), 0, 0.5);
+    gtk_widget_set_margin_start(l, 8);          /* every title at the same spot, long or short */
+    GtkWidget *g = gtk_grid_new();
+    gtk_grid_set_column_spacing(GTK_GRID(g), 12);
+    gtk_grid_set_row_spacing(GTK_GRID(g), 8);
+    g_object_set(g, "margin", 10, NULL);
+    gtk_container_add(GTK_CONTAINER(frame), g);
+    gtk_box_pack_start(GTK_BOX(SECTIONS), frame, FALSE, FALSE, 0);
+    *grid = g;
+    *r = 0;
 }
 
 /* Optional programs millerX uses if they are there: what each one gives, and what to install
@@ -459,13 +474,12 @@ static void helper_rows(GtkWidget *grid, int *r)
         char *found = g_find_program_in_path(HELPERS[i].prog);
         char *m = found
             ? g_markup_printf_escaped("✓ %s", HELPERS[i].gives)
-            : g_markup_printf_escaped("✗ not installed: %s.\n<small>Install %s for %s.</small>",
+            : g_markup_printf_escaped("✗ not installed: %s.\n<small>Install %s\nfor %s.</small>",
                                       HELPERS[i].without, HELPERS[i].package, HELPERS[i].gives);
         GtkWidget *l = gtk_label_new(NULL);
         gtk_label_set_markup(GTK_LABEL(l), m);
         gtk_label_set_xalign(GTK_LABEL(l), 0);
-        gtk_label_set_line_wrap(GTK_LABEL(l), TRUE);
-        gtk_label_set_max_width_chars(GTK_LABEL(l), 52);
+        /* no wrapping: wrapped labels make GTK guess the dialog far too tall */
         if (!found)
             gtk_widget_set_opacity(l, 0.85);
         srow(grid, r, HELPERS[i].prog, l);
@@ -647,17 +661,29 @@ void dialog_settings(Win *w)
 {
     GtkWidget *d = gtk_dialog_new_with_buttons("millerX settings", GTK_WINDOW(w->window), 0, "Close",
                                                GTK_RESPONSE_CLOSE, NULL);
-    GtkWidget *grid = gtk_grid_new();
-    gtk_grid_set_column_spacing(GTK_GRID(grid), 12);
-    gtk_grid_set_row_spacing(GTK_GRID(grid), 8);
-    g_object_set(grid, "margin", 14, NULL);
-    gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(d))), grid, TRUE, TRUE, 0);
+    /* one framed box per section, all in a column that scrolls if the screen is too small */
+    SECTIONS = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+    g_object_set(SECTIONS, "margin", 14, NULL);
+    LABELS = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
+    GtkWidget *scroll = gtk_scrolled_window_new(NULL, NULL);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+    gtk_scrolled_window_set_propagate_natural_height(GTK_SCROLLED_WINDOW(scroll), TRUE);
+    gtk_scrolled_window_set_propagate_natural_width(GTK_SCROLLED_WINDOW(scroll), TRUE);
+    GdkRectangle area = { 0, 0, 0, 900 };
+    GdkMonitor *mon = gdk_display_get_monitor_at_window(gtk_widget_get_display(w->window),
+                                                        gtk_widget_get_window(w->window));
+    if (mon)
+        gdk_monitor_get_workarea(mon, &area);
+    gtk_scrolled_window_set_max_content_height(GTK_SCROLLED_WINDOW(scroll), MAX(300, area.height - 120));
+    gtk_container_add(GTK_CONTAINER(scroll), SECTIONS);
+    gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(d))), scroll, TRUE, TRUE, 0);
+    GtkWidget *grid = NULL;
     Set *s = g_new0(Set, 1);
     s->w = w;
     g_object_set_data_full(G_OBJECT(d), "set", s, g_free);
     int r = 0;
 
-    section(grid, &r, "Column dividers");
+    section(&grid, &r, "Column dividers");
     s->auto_rb = gtk_radio_button_new_with_label(NULL, "Follow the theme (20 % lighter / darker)");
     s->own_rb = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(s->auto_rb), "Own colour");
     s->colour = gtk_color_button_new();
@@ -685,7 +711,7 @@ void dialog_settings(Win *w)
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->style), "fade", "Fading at the ends");
     gtk_combo_box_set_active_id(GTK_COMBO_BOX(s->style), LOOK.fade ? "fade" : "solid");
     srow(grid, &r, "Style", s->style);
-    section(grid, &r, "Highlight colour");
+    section(&grid, &r, "Highlight colour");
     s->hl_auto = gtk_radio_button_new_with_label(NULL, "Follow the theme");
     s->hl_own = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(s->hl_auto), "Own colour");
     s->hl_colour = gtk_color_button_new();
@@ -712,21 +738,21 @@ void dialog_settings(Win *w)
     gtk_box_pack_start(GTK_BOX(sysb), s->hl_sys, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(sysb), s->hl_unsys, FALSE, FALSE, 0);
     srow(grid, &r, "System", sysb);
-    section(grid, &r, "Preview");
+    section(&grid, &r, "Preview");
     s->pw = gtk_spin_button_new_with_range(200, 900, 10);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(s->pw), LOOK.preview_width);
     srow(grid, &r, "Minimum width (px)", s->pw);   /* it takes the rest of the window */
     s->names = gtk_check_button_new_with_label("Show names under thumbnails");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(s->names), LOOK.gallery_names);
     srow(grid, &r, "Gallery", s->names);
-    section(grid, &r, "Browsing");
+    section(&grid, &r, "Browsing");
     s->ff = gtk_check_button_new_with_label("Folders first");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(s->ff), LOOK.folders_first);
     srow(grid, &r, "Sort by name", s->ff);
     s->sh = gtk_check_button_new_with_label("Show hidden files when millerX starts");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(s->sh), LOOK.show_hidden);
     srow(grid, &r, "Hidden files", s->sh);
-    section(grid, &r, "Thumbnail cache (shared with Thunar)");
+    section(&grid, &r, "Thumbnail cache (shared with Thunar)");
     s->cache_size = gtk_label_new("measuring…");
     gtk_label_set_xalign(GTK_LABEL(s->cache_size), 0);
     s->cache_clear = gtk_button_new_with_label("Clear…");
@@ -744,9 +770,9 @@ void dialog_settings(Win *w)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(s->cache_auto), LOOK.cache_auto);
     srow(grid, &r, "Clean up", s->cache_auto);
     thumbcache_measure(cache_measured, g_object_ref(s->cache_size));
-    section(grid, &r, "Optional helpers (millerX works without them)");
+    section(&grid, &r, "Optional helpers (millerX works without them)");
     helper_rows(grid, &r);
-    section(grid, &r, "Folders sorted their own way (all others: by name)");
+    section(&grid, &r, "Folders sorted their own way (all others: by name)");
     s->sort_list = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
     GtkWidget *sl_scroll = gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sl_scroll), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
@@ -773,6 +799,8 @@ void dialog_settings(Win *w)
     g_signal_connect(s->cache_auto, "toggled", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->cache_clear, "clicked", G_CALLBACK(cache_clear_clicked), s);
     g_signal_connect(d, "response", G_CALLBACK(settings_close), s);
+    SECTIONS = NULL;
+    g_clear_object(&LABELS);           /* the labels keep the group alive */
     gtk_widget_show_all(d);
 }
 
