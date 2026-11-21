@@ -1,10 +1,12 @@
-# On every version tag (v0.5.4, ...): build the Debian/Ubuntu and Arch packages
+# On every version tag (v0.5.4, ...): build the Debian/Ubuntu, Arch and Slackware packages
 # and attach them, plus the Slackware build files, to a GitHub release.
+# Run by hand (Actions -> release -> Run workflow) it only builds, as a test: no release.
 name: release
 
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -43,8 +45,36 @@ jobs:
       - uses: actions/upload-artifact@v4
         with: { name: arch, path: out/*.pkg.tar.zst }
 
+  slackware:
+    # Built on Slackware 15.0 (unofficial image by an SBo admin), so the package runs on
+    # 15.0 and on -current. It's our own SlackBuild, run the way a user runs it.
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build .txz in Slackware 15.0
+        run: |
+          ver=$(sed -n "s/^  version : '\(.*\)',/\1/p" meson.build)
+          git archive --prefix=millerx-$ver/ -o slackware/millerx-$ver.tar.gz HEAD
+          mkdir -p out
+          docker run --rm -v "$PWD:/src" -e VERSION=$ver aclemons/slackware:15.0-full bash -ec '
+            # millerX needs meson 0.60+: stock 15.0 has 0.59, the official patches bring 1.11
+            if [ "$(printf "0.60\n%s\n" "$(meson --version)" | sort -V | head -1)" != 0.60 ]; then
+              echo "https://mirrors.slackware.com/slackware/slackware64-15.0/" > /etc/slackpkg/mirrors
+              slackpkg -batch=on -default_answer=y update gpg
+              slackpkg -batch=on -default_answer=y update
+              slackpkg -batch=on -default_answer=y upgrade meson python3
+            fi
+            meson --version
+            cd /src/slackware
+            PKGTYPE=txz OUTPUT=/src/out ./millerx.SlackBuild
+          '
+          ls -l out
+      - uses: actions/upload-artifact@v4
+        with: { name: slackware, path: out/*.txz }
+
   release:
-    needs: [deb, arch]
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [deb, arch, slackware]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
