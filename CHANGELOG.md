@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.7.1 (2026-11-21)
 
 - **millerX remembers its window:** close it and open it again, and it comes back with the same size,
   in the same place, maximized if it was. If that place isn't on any screen any more (monitor

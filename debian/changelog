@@ -1,3 +1,13 @@
+millerx (0.7.1) unstable; urgency=medium
+
+  * Remembers the window: size, place and maximized state come back at the
+    next start (centred if that place is off every screen; size only on
+    Wayland). New windows open centred at 1400x800, at most 85% of the screen.
+  * Settings: every section in its own framed box; scrolls on small screens.
+  * Narrow preview: the icon moves above the details.
+
+ -- overcatbe <1771834+overcatbe@users.noreply.github.com>  Sat, 21 Nov 2026 23:10:00 +0200
+
 millerx (0.7) unstable; urgency=medium
 
   * Gallery: select several thumbnails (Ctrl/Shift+click, Ctrl+A), drag them
