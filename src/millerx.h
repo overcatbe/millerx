@@ -48,6 +48,14 @@ extern Look LOOK;
 
 void look_load(void);
 gboolean look_save(GError **err);
+
+/* where the last closed window was ([window] in millerx.conf); x/y only on X11 */
+typedef struct {
+    int x, y, w, h;
+    gboolean has_pos, has_size, max;
+} Geom;
+void geom_load(Geom *g);
+void geom_save(const Geom *g);
 char *sort_key(const char *name, gboolean isdir);
 void divider_rgba(GtkWidget *w, GdkRGBA *out);
 int divider_hit_width(void);
@@ -147,6 +155,8 @@ struct Preview {
 struct Win {
     int ref;
     gboolean dead;
+    Geom geom;              /* its normal (unmaximized) place and size, kept up to date */
+    Geom geom_prev;         /* the one before: maximizing may report the big size first */
     GtkApplication *app;
     GtkWidget *window, *location, *colbox, *hscroll, *pane_divider;
     GtkWidget *statusbar, *progress, *cancel_btn;

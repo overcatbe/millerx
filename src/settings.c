@@ -111,6 +111,46 @@ gboolean look_save(GError **err)
     return ok;
 }
 
+void geom_load(Geom *g)
+{
+    GKeyFile *kf = g_key_file_new();
+    char *path = config_file();
+    g_key_file_load_from_file(kf, path, G_KEY_FILE_NONE, NULL);
+    memset(g, 0, sizeof *g);
+    g->w = get_int(kf, "window", "width", 0, 0, 20000);
+    g->h = get_int(kf, "window", "height", 0, 0, 20000);
+    g->has_size = g->w >= 300 && g->h >= 200;
+    g->has_pos = g_key_file_has_key(kf, "window", "x", NULL) && g_key_file_has_key(kf, "window", "y", NULL);
+    g->x = get_int(kf, "window", "x", 0, -20000, 20000);
+    g->y = get_int(kf, "window", "y", 0, -20000, 20000);
+    g->max = get_bool(kf, "window", "maximized", FALSE);
+    g_free(path);
+    g_key_file_unref(kf);
+}
+
+/* only the [window] lines change; the rest of the file stays as it is */
+void geom_save(const Geom *g)
+{
+    if (!g->has_size)
+        return;
+    GKeyFile *kf = g_key_file_new();
+    char *path = config_file();
+    g_key_file_load_from_file(kf, path, G_KEY_FILE_KEEP_COMMENTS, NULL);
+    g_key_file_set_integer(kf, "window", "width", g->w);
+    g_key_file_set_integer(kf, "window", "height", g->h);
+    if (g->has_pos) {
+        g_key_file_set_integer(kf, "window", "x", g->x);
+        g_key_file_set_integer(kf, "window", "y", g->y);
+    }
+    g_key_file_set_boolean(kf, "window", "maximized", g->max);
+    char *dir = g_path_get_dirname(path);
+    g_mkdir_with_parents(dir, 0755);
+    g_key_file_save_to_file(kf, path, NULL);
+    g_free(dir);
+    g_free(path);
+    g_key_file_unref(kf);
+}
+
 /* By name, natural order (file2 before file10), case-insensitive whatever the locale
  * (apple, Banana, cherry); the exact name breaks ties. Folders first unless switched off. */
 char *sort_key(const char *name, gboolean isdir)

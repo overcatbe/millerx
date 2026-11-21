@@ -4,6 +4,7 @@
 #include "millerx.h"
 #include <string.h>
 #include <unistd.h>
+#include <gdk/gdkx.h>
 
 #ifndef MILLERX_BINDIR
 #define MILLERX_BINDIR "/usr/bin"
@@ -1483,7 +1484,92 @@ static void on_destroy(GtkWidget *win, Win *w)
         g_signal_handlers_disconnect_by_data(w->volumes, w);
     if (w->clip)
         gtk_clipboard_store(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD));
+    geom_save(&w->geom);             /* the last one closed is how the next start looks */
     win_unref(w);
+}
+
+/* ---- window place and size: remembered when closed, back the same at the next start ---- */
+#define WIN_W 1400
+#define WIN_H 800
+
+/* moved or resized: note it, but not the maximized size (unmaximizing should give the old one) */
+static gboolean on_configure(GtkWidget *win, GdkEventConfigure *e, Win *w)
+{
+    (void) e;
+    GdkWindow *gw = gtk_widget_get_window(win);
+    if (gw && gdk_window_get_state(gw) & (GDK_WINDOW_STATE_MAXIMIZED | GDK_WINDOW_STATE_FULLSCREEN |
+                                           GDK_WINDOW_STATE_TILED))
+        return FALSE;
+    int width, height;
+    gtk_window_get_size(GTK_WINDOW(win), &width, &height);
+    if (width != w->geom.w || height != w->geom.h)
+        w->geom_prev = w->geom;
+    w->geom.w = width;
+    w->geom.h = height;
+    w->geom.has_size = TRUE;
+    if (GDK_IS_X11_DISPLAY(gtk_widget_get_display(win))) {     /* Wayland doesn't tell, nor let us */
+        gtk_window_get_position(GTK_WINDOW(win), &w->geom.x, &w->geom.y);
+        w->geom.has_pos = TRUE;
+    }
+    return FALSE;
+}
+
+static gboolean on_window_state(GtkWidget *win, GdkEventWindowState *e, Win *w)
+{
+    gboolean max = (e->new_window_state & GDK_WINDOW_STATE_MAXIMIZED) != 0;
+    if (max && !w->geom.max && w->geom_prev.has_size) {
+        /* the window manager sometimes sends the maximized size before saying it maximized:
+         * if what we noted last is that size, the normal one is the one before */
+        int width, height;
+        gtk_window_get_size(GTK_WINDOW(win), &width, &height);
+        if (width == w->geom.w && height == w->geom.h)
+            w->geom = w->geom_prev;
+    }
+    w->geom.max = max;
+    return FALSE;
+}
+
+/* is the top of a window at x, y on some screen? (not after the monitor it was on is gone) */
+static gboolean on_a_screen(GdkDisplay *d, int x, int y, int width)
+{
+    for (int i = 0; i < gdk_display_get_n_monitors(d); i++) {
+        GdkRectangle r;
+        gdk_monitor_get_workarea(gdk_display_get_monitor(d, i), &r);
+        int cx = x + width / 2, cy = y + 10;
+        if (cx >= r.x && cx < r.x + r.width && cy >= r.y && cy < r.y + r.height)
+            return TRUE;
+    }
+    return FALSE;
+}
+
+/* the first window comes back as the last one was closed; new ones open centred, 1400 x 800
+ * (at most 85 % of the screen) */
+static void place_window(Win *w, gboolean first)
+{
+    GtkWindow *win = GTK_WINDOW(w->window);
+    GdkDisplay *d = gtk_widget_get_display(w->window);
+    GdkRectangle area = { 0, 0, WIN_W * 100 / 85, WIN_H * 100 / 85 };
+    GdkMonitor *mon = gdk_display_get_primary_monitor(d);
+    if (!mon)
+        mon = gdk_display_get_monitor(d, 0);
+    if (mon)
+        gdk_monitor_get_workarea(mon, &area);
+    Geom g;
+    if (first)
+        geom_load(&g);
+    if (first && g.has_size) {
+        gtk_window_set_default_size(win, g.w, g.h);
+        if (g.has_pos && GDK_IS_X11_DISPLAY(d) && on_a_screen(d, g.x, g.y, g.w))
+            gtk_window_move(win, g.x, g.y);
+        else
+            gtk_window_set_position(win, GTK_WIN_POS_CENTER);
+        if (g.max)
+            gtk_window_maximize(win);
+        w->geom = w->geom_prev = g;
+        return;
+    }
+    gtk_window_set_default_size(win, MIN(WIN_W, area.width * 85 / 100), MIN(WIN_H, area.height * 85 / 100));
+    gtk_window_set_position(win, GTK_WIN_POS_CENTER);        /* not wherever the WM likes */
 }
 
 static GtkWidget *tool_button(const char *icon, const char *tip)
@@ -1554,12 +1640,14 @@ Win *win_new(GtkApplication *app, GFile *start)
     w->pv_start = -1;
     w->col_widths = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 
+    gboolean first = gtk_application_get_windows(app) == NULL;
     w->window = gtk_application_window_new(app);
     g_object_set_data(G_OBJECT(w->window), "millerx-win", w);
     gtk_window_set_title(GTK_WINDOW(w->window), "millerX");
     gtk_window_set_icon_name(GTK_WINDOW(w->window), "millerx");
-    gtk_window_set_default_size(GTK_WINDOW(w->window), 1200, 700);
-    gtk_window_set_position(GTK_WINDOW(w->window), GTK_WIN_POS_CENTER);   /* not wherever the WM likes */
+    place_window(w, first);
+    g_signal_connect(w->window, "configure-event", G_CALLBACK(on_configure), w);
+    g_signal_connect(w->window, "window-state-event", G_CALLBACK(on_window_state), w);
 
     w->location = gtk_entry_new();
     gtk_widget_set_hexpand(w->location, TRUE);

@@ -2,7 +2,11 @@
 
 ## Unreleased
 
-- **Windows open centred** on the screen, not wherever the window manager drops them.
+- **millerX remembers its window:** close it and open it again, and it comes back with the same size,
+  in the same place, maximized if it was. If that place isn't on any screen any more (monitor
+  unplugged), it opens centred. On Wayland only the size is kept: the compositor decides where windows go.
+- **New windows** (Ctrl+N, middle-click) open centred and bigger, 1400 × 800 (at most 85 % of the
+  screen), not wherever the window manager drops them. The very first start does the same.
 - **Narrow preview:** when the pane gets narrow, the icon moves above the details, so they keep the
   whole width instead of breaking into a few letters per line. Wider again, it goes back beside them.
 - **Settings in boxes:** every section has its own frame with its title on it, the labels line up
