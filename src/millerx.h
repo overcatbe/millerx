@@ -133,6 +133,8 @@ struct Preview {
     GtkWidget *dir_size_l, *dir_count_l;   /* the shown folder's Size and Items rows (refs) */
     guint sizes_refresh;             /* recount after the folder changed */
     guint sizes_gen;                 /* only the newest count may write the rows */
+    gboolean header_narrow;          /* icon above the details (narrow pane) instead of beside */
+    guint header_idle;
     char *drag_path;                 /* thumbnail pressed with button 1, until it drags or lets go */
     GList *drag_files;               /* GFile*: what a running drag carries */
     int press_x, press_y;

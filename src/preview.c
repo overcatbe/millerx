@@ -1100,9 +1100,30 @@ static gboolean grid_resized(gpointer data)
 }
 
 /* the thumbnails are made for one width: a clearly different one makes them again */
+/* Narrow pane: the icon goes above the details, so they get the whole width instead of being
+ * squeezed into a few letters per line. Two thresholds, so it doesn't flip back and forth. */
+#define HEADER_NARROW 440
+#define HEADER_WIDE 480
+
+static gboolean header_apply(gpointer data)
+{
+    Preview *p = data;
+    p->header_idle = 0;
+    gtk_orientable_set_orientation(GTK_ORIENTABLE(p->header),
+                                   p->header_narrow ? GTK_ORIENTATION_VERTICAL : GTK_ORIENTATION_HORIZONTAL);
+    gtk_widget_set_halign(p->icon, p->header_narrow ? GTK_ALIGN_START : GTK_ALIGN_FILL);
+    return G_SOURCE_REMOVE;
+}
+
 static void on_pane_size(GtkWidget *wid, GdkRectangle *a, Preview *p)
 {
     (void) wid;
+    gboolean narrow = p->header_narrow ? a->width < HEADER_WIDE : a->width < HEADER_NARROW;
+    if (narrow != p->header_narrow) {
+        p->header_narrow = narrow;          /* changed after this layout pass, not inside it */
+        if (!p->header_idle)
+            p->header_idle = g_idle_add(header_apply, p);
+    }
     if (p->grid_w && abs(a->width - p->grid_w) >= 12 && gtk_widget_get_visible(p->grid_scroll)) {
         if (p->resize_timer)
             g_source_remove(p->resize_timer);
@@ -1655,6 +1676,8 @@ Preview *preview_new(Win *w)
 void preview_free(Preview *p)
 {
     grid_stop(p);
+    if (p->header_idle)
+        g_source_remove(p->header_idle);
     /* every job holds a reference on the window, so none is left when we get here */
     g_thread_pool_free(p->pool, TRUE, TRUE);
     if (p->image_timer)

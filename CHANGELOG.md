@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **Windows open centred** on the screen, not wherever the window manager drops them.
+- **Narrow preview:** when the pane gets narrow, the icon moves above the details, so they keep the
+  whole width instead of breaking into a few letters per line. Wider again, it goes back beside them.
 - **Settings in boxes:** every section has its own frame with its title on it, the labels line up
   across all of them, and the window scrolls if the screen is too small for it.
 

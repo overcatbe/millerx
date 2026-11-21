@@ -1559,6 +1559,7 @@ Win *win_new(GtkApplication *app, GFile *start)
     gtk_window_set_title(GTK_WINDOW(w->window), "millerX");
     gtk_window_set_icon_name(GTK_WINDOW(w->window), "millerx");
     gtk_window_set_default_size(GTK_WINDOW(w->window), 1200, 700);
+    gtk_window_set_position(GTK_WINDOW(w->window), GTK_WIN_POS_CENTER);   /* not wherever the WM likes */
 
     w->location = gtk_entry_new();
     gtk_widget_set_hexpand(w->location, TRUE);
