@@ -103,7 +103,8 @@ static const char *ARCHIVES[] = {
     "application/zip", "application/x-tar", "application/x-compressed-tar",
     "application/x-bzip-compressed-tar", "application/x-xz-compressed-tar",
     "application/x-zstd-compressed-tar", "application/java-archive",
-    "application/vnd.comicbook+zip", "application/epub+zip", NULL
+    "application/vnd.comicbook+zip", "application/epub+zip", "application/x-7z-compressed",
+    "application/vnd.rar", "application/x-rar", "application/x-cpio", NULL
 };
 
 gboolean is_archive_type(const char *ct)

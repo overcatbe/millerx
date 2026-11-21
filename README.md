@@ -4,6 +4,9 @@ A small, native file browser with **Miller columns**: every folder from `/` down
 where you are sits in its own column, and the selected file is previewed on the right.
 Like a mind map of your disk. Written in C with GTK 3 and GIO.
 
+> **New in 0.6.5:** extract and compress archives (zip, tar.gz/xz/zst, 7z) · a ready-built
+> Slackware .txz on every release.
+>
 > **New in 0.6.4:** more windows: Ctrl+N, Menu → New window, or middle-click a folder.
 >
 > **New in 0.6.3:** builds on Slackware 15.0 (GLib 2.70) again.
@@ -38,7 +41,7 @@ millerX carries his name.
 - **Columns from `/`** to the current folder; ← → and the mouse move through them,
   the newest column always stays in view.
 - **Preview** in the rest of the window: pictures (WebP, AVIF and HEIC too) fitted to the pane, the first
-  page of PDFs, text, the contents of zip/tar archives, folder sizes counted in the background.
+  page of PDFs, text, the contents of archives (zip, tar, 7z, rar, …), folder sizes counted in the background.
 - **Gallery**: a folder's pictures and PDFs as thumbnails under its details. Opens at once
   even with thousands of files, loads only what is on screen, and right-click gives each
   thumbnail its own menu (open, show in column, rename, trash, …). Names under the
@@ -48,6 +51,9 @@ millerX carries his name.
 - **Sorting per folder**: everything is sorted by name, so your eye learns where things are.
   A folder can have its own order (date, size, type, reversed), shown by a bar on top of
   its column and a ⇅ next to its name.
+- **Archives**: right-click → Extract here / Extract to "name/", or Compress… to zip, tar.gz,
+  tar.xz, tar.zst or 7z. In the background, with Cancel; hostile archives can't write outside the
+  folder.
 - **Resizable columns**: drag a divider for long names, double-click for the default width.
 - **More windows**: Ctrl+N, Menu → New window, or middle-click a folder. Copy, paste and
   drag & drop work between them, e.g. one window above the other to compare two folders.
@@ -106,7 +112,7 @@ GTK 3 programs:
 millerx
 ├── GTK 3            the window, columns and dialogs
 │   └── GLib/GIO, Pango, Cairo, gdk-pixbuf   (come with GTK)
-├── libarchive       looking into zip and tar files
+├── libarchive       looking into, unpacking and packing archives
 └── libwebp          WebP pictures (optional: left out if it isn't there when building)
 ```
 
@@ -128,7 +134,9 @@ the background. It works with any window manager or desktop on X11.
 Packages for **Slackware**, **Debian/Ubuntu** and **Arch** are attached to every
 [release](https://github.com/overcatbe/millerx/releases).
 
-- **Slackware**: download the `.SlackBuild.tar.gz` and the source tarball, then as root:
+- **Slackware**: the ready-built `millerx-*_SBo.txz` (built on 15.0, runs on -current too):
+  `installpkg millerx-*.txz` as root. Or build it yourself: download the `.SlackBuild.tar.gz`
+  and the source tarball, then as root:
   `./millerx.SlackBuild && installpkg /tmp/millerx-*_SBo.tgz`
 - **Debian / Ubuntu**: `sudo apt install ./millerx_*.deb`
 - **Arch**: `sudo pacman -U millerx-*.pkg.tar.zst`

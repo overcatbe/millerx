@@ -932,7 +932,85 @@ typedef struct {
 
 enum { A_OPEN_DIR, A_OPEN, A_OPEN_WITH, A_CUT, A_COPY, A_PASTE_INTO, A_PASTE, A_RENAME, A_TRASH,
        A_DELETE, A_NEW_FOLDER, A_TERMINAL, A_COPY_PATH, A_BOOKMARK, A_PROPERTIES, A_ROOT, A_SHOW,
-       A_NEW_WINDOW };
+       A_NEW_WINDOW, A_EXTRACT_HERE, A_EXTRACT_FOLDER, A_COMPRESS };
+
+/* ---- archives ------------------------------------------------------------------------------ */
+/* Asks for the archive's name and format, then packs the files (which share one folder) there. */
+static void compress_dialog(Win *w, GList *files)
+{
+    static int last_format;          /* the format picked last time, this session */
+    GFile *folder = g_file_get_parent(files->data);
+    char *initial = files->next ? g_file_get_basename(folder) : g_file_get_basename(files->data);
+    if (!files->next && !is_dir(files->data, FALSE)) {          /* "notes.txt" -> "notes" */
+        const char *dot = strrchr(initial, '.');
+        if (dot && dot != initial)
+            initial[dot - initial] = 0;
+    }
+    GtkWidget *d = gtk_dialog_new_with_buttons("Compress", GTK_WINDOW(w->window), GTK_DIALOG_MODAL,
+                                               "Cancel", GTK_RESPONSE_CANCEL, "Compress", GTK_RESPONSE_OK, NULL);
+    gtk_dialog_set_default_response(GTK_DIALOG(d), GTK_RESPONSE_OK);
+    GtkWidget *grid = gtk_grid_new();
+    gtk_grid_set_row_spacing(GTK_GRID(grid), 8);
+    gtk_grid_set_column_spacing(GTK_GRID(grid), 8);
+    g_object_set(grid, "margin", 12, NULL);
+    char *what = files->next ? g_strdup_printf("%u items", g_list_length(files)) : g_file_get_basename(files->data);
+    char *head = g_strdup_printf("Pack “%s” into an archive in the same folder:", what);
+    GtkWidget *l = gtk_label_new(head);
+    gtk_label_set_xalign(GTK_LABEL(l), 0);
+    gtk_grid_attach(GTK_GRID(grid), l, 0, 0, 2, 1);
+    GtkWidget *e = gtk_entry_new();
+    gtk_entry_set_text(GTK_ENTRY(e), initial);
+    gtk_entry_set_activates_default(GTK_ENTRY(e), TRUE);
+    gtk_entry_set_width_chars(GTK_ENTRY(e), 32);
+    gtk_widget_set_hexpand(e, TRUE);
+    gtk_grid_attach(GTK_GRID(grid), e, 0, 1, 1, 1);
+    GtkWidget *fmt = gtk_combo_box_text_new();
+    for (int i = 0; i < ARC_N_FORMATS; i++)
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(fmt), ARC_FORMATS[i].ext);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(fmt), last_format);
+    gtk_grid_attach(GTK_GRID(grid), fmt, 1, 1, 1, 1);
+    gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area(GTK_DIALOG(d))), grid);
+    gtk_widget_show_all(d);
+    gtk_widget_grab_focus(e);
+    int r = gtk_dialog_run(GTK_DIALOG(d));
+    char *name = g_strstrip(g_strdup(gtk_entry_get_text(GTK_ENTRY(e))));
+    int f = gtk_combo_box_get_active(GTK_COMBO_BOX(fmt));
+    gtk_widget_destroy(d);
+    if (r == GTK_RESPONSE_OK && *name && !strchr(name, '/') && f >= 0) {
+        last_format = f;
+        char *full = g_strconcat(name, ARC_FORMATS[f].ext, NULL);
+        GFile *out = g_file_get_child(folder, full);
+        if (g_file_query_exists(out, NULL)) {
+            char *msg = g_strdup_printf("“%s” already exists. Pick another name.", full);
+            win_error(w, "Couldn't compress", msg);
+            g_free(msg);
+        } else {
+            job_compress(w, files, out, f);
+        }
+        g_object_unref(out);
+        g_free(full);
+    }
+    g_free(name);
+    g_free(head);
+    g_free(what);
+    g_free(initial);
+    g_object_unref(folder);
+}
+
+/* every file in the list is an archive millerX can unpack */
+static gboolean all_archives(GList *files)
+{
+    for (GList *l = files; l; l = l->next) {
+        GFileInfo *fi = g_file_query_info(l->data, "standard::content-type,standard::type",
+                                          G_FILE_QUERY_INFO_NONE, NULL, NULL);
+        gboolean yes = fi && g_file_info_get_file_type(fi) == G_FILE_TYPE_REGULAR
+                       && g_file_info_get_content_type(fi) && is_archive_type(g_file_info_get_content_type(fi));
+        g_clear_object(&fi);
+        if (!yes)
+            return FALSE;
+    }
+    return files != NULL;
+}
 
 static void act_free(gpointer data, GClosure *cl)
 {
@@ -988,6 +1066,9 @@ static void act_run(GtkMenuItem *mi, Act *a)
     case A_BOOKMARK: places_bookmark_add(w, a->folder); break;
     case A_ROOT: win_open_as_root(w, a->folder); break;
     case A_NEW_WINDOW: win_new(w->app, a->folder); break;
+    case A_EXTRACT_HERE:
+    case A_EXTRACT_FOLDER: job_extract(w, a->files, a->action == A_EXTRACT_FOLDER); break;
+    case A_COMPRESS: compress_dialog(w, a->files); break;
     case A_PROPERTIES:
         dialog_properties(w, a->files && (!a->files->next || !c) ? a->files->data : c->gfile);
         break;
@@ -1175,6 +1256,21 @@ void win_context_menu(Win *w, Column *c, GdkEventButton *ev)
             g_list_free_full(apps, g_object_unref);
         }
         g_clear_object(&info);
+        sep(menu);
+        if (all_archives(files)) {
+            item(menu, w, c, files, NULL, A_EXTRACT_HERE, "Extract here", NULL, TRUE);
+            if (n == 1) {
+                char *b = g_file_get_basename(files->data), *stem = arc_stem(b);
+                char *l = g_strdup_printf("Extract to “%s/”", stem);
+                item(menu, w, c, files, NULL, A_EXTRACT_FOLDER, l, NULL, TRUE);
+                g_free(l);
+                g_free(stem);
+                g_free(b);
+            } else {
+                item(menu, w, c, files, NULL, A_EXTRACT_FOLDER, "Extract each to its own folder", NULL, TRUE);
+            }
+        }
+        item(menu, w, c, files, NULL, A_COMPRESS, "Compress…", NULL, TRUE);
         sep(menu);
         item(menu, w, c, files, NULL, A_CUT, "Cut", "<Control>x", TRUE);
         item(menu, w, c, files, NULL, A_COPY, "Copy", "<Control>c", TRUE);

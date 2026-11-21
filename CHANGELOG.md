@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.6.5 (2026-11-21)
+
+- **Archives: unpack and pack**, right in millerX, with libarchive (which millerX already used for
+  the preview, so nothing new to install):
+  - right-click an archive → **Extract here**: an archive with one folder (or file) on top puts
+    just that next to it; one with several things on top gets its own folder, so nothing spills
+    out. **Extract to "name/"** always makes a folder.
+  - right-click files or folders → **Compress…**: pick a name and zip, tar.gz, tar.xz, tar.zst
+    or 7z.
+  - Runs in the background with the progress bar and Cancel; a cancelled or failed job leaves
+    nothing half-done behind. Name conflicts ask, as with copying (skip, keep both, merge).
+  - **Safe with hostile archives:** entries with absolute paths or `..` are left out (and you're
+    told), and nothing is written through symlinks, so an archive can't put files outside the
+    folder you unpack it in.
+  - Reads zip, tar (gz, bz2, xz, zst, …), 7z, rar, cpio, iso, jar, cbz, epub and Slackware's
+    txz/tgz packages. The preview now also lists 7z, rar and cpio contents.
+- **Slackware: a ready-built .txz** on every release from now on, built on Slackware 15.0 (so it
+  runs on 15.0 and -current). The SlackBuild is still there for building it yourself.
+
 ## 0.6.4 (2026-11-21)
 
 - **New window**: Ctrl+N or Menu → New window opens a second window at the same folder;

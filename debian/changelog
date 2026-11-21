@@ -1,3 +1,12 @@
+millerx (0.6.5) unstable; urgency=medium
+
+  * Archives: Extract here / Extract to a folder, and Compress… to zip,
+    tar.gz, tar.xz, tar.zst or 7z, with libarchive (no new dependency).
+    Entries with absolute paths or ".." are refused.
+  * Slackware: every release now carries a ready-built .txz (built on 15.0).
+
+ -- overcatbe <1771834+overcatbe@users.noreply.github.com>  Sat, 21 Nov 2026 12:34:10 +0200
+
 millerx (0.6.4) unstable; urgency=medium
 
   * New window: Ctrl+N or Menu -> New window opens a second window at the

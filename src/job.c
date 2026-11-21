@@ -1,11 +1,21 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later
  * Copyright (C) 2026 overcatbe */
-/* Copy or move files in the background; asks on conflicts. */
+/* Copy, move, extract or compress files in the background; asks on conflicts. */
 #include "millerx.h"
+#include <glib/gstdio.h>
+#include <errno.h>
+#include <string.h>
+#include <unistd.h>
+
+typedef enum { K_COPY, K_EXTRACT_HERE, K_EXTRACT_FOLDER, K_COMPRESS } Kind;
 
 struct Job {
     Win *win;
+    Kind kind;
     gboolean move;
+    GFile *out;              /* K_COMPRESS: the archive to write */
+    int format;              /* K_COMPRESS: index into ARC_FORMATS */
+    guint done_n;            /* items finished, for the status line */
     GList *sources;          /* GFile* */
     GFile *dest;
     GCancellable *cancel;
@@ -54,6 +64,7 @@ static void job_free(Job *j)
 {
     g_list_free_full(j->sources, g_object_unref);
     g_object_unref(j->dest);
+    g_clear_object(&j->out);
     g_object_unref(j->cancel);
     g_ptr_array_unref(j->errors);
     g_mutex_clear(&j->lock);
@@ -81,6 +92,12 @@ static gboolean ui_done(gpointer data)
             g_string_free(s, TRUE);
         } else if (g_cancellable_is_cancelled(j->cancel)) {
             win_status(w, "Cancelled");
+        } else if (j->kind == K_COMPRESS) {
+            char *to = g_file_get_basename(j->out);
+            win_status(w, "Packed %u item(s) into %s", g_list_length(j->sources), to);
+            g_free(to);
+        } else if (j->kind != K_COPY) {
+            win_status(w, "Extracted %u archive(s)", j->done_n);
         } else {
             char *to = g_file_get_basename(j->dest);
             win_status(w, "%s %u item(s) to %s", j->move ? "Moved" : "Copied", g_list_length(j->sources), to);
@@ -253,6 +270,158 @@ out:
     return ok;
 }
 
+/* ---- archives (worker thread) ------------------------------------------------------------ */
+typedef struct {
+    Job *j;
+    const char *verb, *what;
+    double base, span;      /* this archive's part of the whole bar */
+} ArcCtx;
+
+static void arc_progress(gpointer data, const char *name, double frac)
+{
+    ArcCtx *x = data;
+    Progress *pr = g_new0(Progress, 1);
+    pr->j = x->j;
+    pr->text = g_strdup_printf("%s %s: %s", x->verb, x->what, name);
+    pr->frac = x->base + frac * x->span;
+    g_idle_add(ui_progress, pr);
+}
+
+/* "name", or "name (2)", "name (3)", … whichever is free in folder */
+static GFile *free_child(GFile *folder, const char *name)
+{
+    GFile *f = g_file_get_child(folder, name);
+    for (int n = 2; g_file_query_exists(f, NULL); n++) {
+        g_object_unref(f);
+        char *cand = g_strdup_printf("%s (%d)", name, n);
+        f = g_file_get_child(folder, cand);
+        g_free(cand);
+    }
+    return f;
+}
+
+/* Unpacks into a hidden temporary folder next to the archive first, then puts the result in place:
+ * "here" with one top item moves that item (asking on conflicts, like a paste); several items, or
+ * "into a folder", become a folder named after the archive. Nothing half-done is left behind. */
+static gboolean extract_one(Job *j, GFile *archive, double base, double span, GError **err)
+{
+    char *path = g_file_get_path(archive);
+    GFile *dest = g_file_get_parent(archive);
+    char *dpath = dest ? g_file_get_path(dest) : NULL;
+    if (!path || !dpath) {
+        g_set_error_literal(err, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED, "only local files can be extracted");
+        g_free(path);
+        g_free(dpath);
+        g_clear_object(&dest);
+        return FALSE;
+    }
+    char *base_name = g_file_get_basename(archive);
+    char *stem = arc_stem(base_name);
+    char *tmpl = g_build_filename(dpath, ".millerx-extract-XXXXXX", NULL);
+    gboolean ok = FALSE;
+    if (!g_mkdtemp(tmpl)) {
+        g_set_error(err, G_IO_ERROR, g_io_error_from_errno(errno), "%s", g_strerror(errno));
+        goto out;
+    }
+    ArcCtx x = { j, "Extracting", base_name, base, span };
+    ok = arc_extract(path, tmpl, j->cancel, arc_progress, &x, err);
+    GFile *tmp = g_file_new_for_path(tmpl);
+    if (ok && !g_cancellable_is_cancelled(j->cancel)) {
+        GList *kids = NULL;
+        GFileEnumerator *en = g_file_enumerate_children(tmp, "standard::name", G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                                        NULL, NULL);
+        GFileInfo *fi;
+        while (en && (fi = g_file_enumerator_next_file(en, NULL, NULL))) {
+            kids = g_list_prepend(kids, g_file_get_child(tmp, g_file_info_get_name(fi)));
+            g_object_unref(fi);
+        }
+        g_clear_object(&en);
+        guint n = g_list_length(kids);
+        gboolean single = n == 1;
+        char *kid_name = single ? g_file_get_basename(kids->data) : NULL;
+        if (n == 0) {
+            if (err && !*err)
+                g_set_error_literal(err, G_IO_ERROR, G_IO_ERROR_FAILED, "the archive is empty");
+            ok = FALSE;
+        } else if (single && (j->kind == K_EXTRACT_HERE
+                              || (is_dir(kids->data, FALSE) && !strcmp(kid_name, stem)))) {
+            /* one top item: move it next to the archive, like a paste (asks if it exists) */
+            GFile *saved = j->dest;
+            gboolean saved_move = j->move;
+            j->dest = dest;
+            j->move = TRUE;
+            ok = one(j, kids->data, err);
+            j->dest = saved;
+            j->move = saved_move;
+        } else {
+            GFile *target = free_child(dest, stem);
+            ok = g_file_move(tmp, target, G_FILE_COPY_NOFOLLOW_SYMLINKS, NULL, NULL, NULL, err);
+            g_object_unref(target);
+        }
+        g_free(kid_name);
+        g_list_free_full(kids, g_object_unref);
+    }
+    if (g_file_query_exists(tmp, NULL))       /* cancelled, failed, skipped or moved out of */
+        delete_tree(tmp, NULL, NULL);
+    g_object_unref(tmp);
+out:
+    g_free(tmpl);
+    g_free(stem);
+    g_free(base_name);
+    g_free(path);
+    g_free(dpath);
+    g_object_unref(dest);
+    return ok;
+}
+
+static gpointer compress_thread(gpointer data)
+{
+    Job *j = data;
+    GPtrArray *paths = g_ptr_array_new_with_free_func(g_free);
+    for (GList *l = j->sources; l; l = l->next) {
+        char *p = g_file_get_path(l->data);
+        if (p)
+            g_ptr_array_add(paths, p);
+    }
+    g_ptr_array_add(paths, NULL);
+    char *outp = g_file_get_path(j->out);
+    char *dpath = g_file_get_path(j->dest);
+    char *name = g_file_get_basename(j->out);
+    GError *err = NULL;
+    if (!outp || !dpath || paths->len < 2) {
+        g_set_error_literal(&err, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED, "only local files can be packed");
+    } else {
+        /* written under a hidden name first, renamed when complete */
+        char *dir = g_path_get_dirname(outp);
+        char *tmp = g_strdup_printf("%s/.%s.part-XXXXXX", dir, name);
+        int fd = g_mkstemp(tmp);
+        if (fd < 0) {
+            g_set_error(&err, G_IO_ERROR, g_io_error_from_errno(errno), "%s", g_strerror(errno));
+        } else {
+            close(fd);
+            ArcCtx x = { j, "Packing", name, 0, 1 };
+            gboolean ok = arc_create(tmp, j->format, (char **) paths->pdata, dpath, j->cancel, arc_progress, &x,
+                                     &err);
+            if (ok && !g_cancellable_is_cancelled(j->cancel) && g_rename(tmp, outp) != 0)
+                g_set_error(&err, G_IO_ERROR, g_io_error_from_errno(errno), "%s", g_strerror(errno));
+            g_unlink(tmp);          /* gone after the rename anyway */
+        }
+        g_free(tmp);
+        g_free(dir);
+    }
+    if (err && !g_error_matches(err, G_IO_ERROR, G_IO_ERROR_CANCELLED)) {
+        g_ptr_array_add(j->errors, g_strdup_printf("%s: %s", name, err->message));
+        j->denied |= g_error_matches(err, G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED);
+    }
+    g_clear_error(&err);
+    g_free(name);
+    g_free(dpath);
+    g_free(outp);
+    g_ptr_array_unref(paths);
+    g_idle_add(ui_done, j);
+    return NULL;
+}
+
 static gpointer job_thread(gpointer data)
 {
     Job *j = data;
@@ -264,11 +433,16 @@ static gpointer job_thread(gpointer data)
         char *b = g_file_get_basename(l->data);
         Progress *pr = g_new0(Progress, 1);
         pr->j = j;
-        pr->text = g_strdup_printf("%s %s (%u/%u)", j->move ? "Moving" : "Copying", b, i, n);
+        pr->text = g_strdup_printf("%s %s (%u/%u)", j->kind != K_COPY ? "Extracting" : j->move ? "Moving" : "Copying",
+                                   b, i, n);
         pr->frac = (double) (i - 1) / n;
         g_idle_add(ui_progress, pr);
         GError *err = NULL;
-        if (!one(j, l->data, &err) && err) {
+        gboolean ok = j->kind == K_COPY ? one(j, l->data, &err)
+                                        : extract_one(j, l->data, (double) (i - 1) / n, 1.0 / n, &err);
+        if (ok)
+            j->done_n++;
+        if (err) {                 /* also when it worked but something was left out */
             if (g_error_matches(err, G_IO_ERROR, G_IO_ERROR_CANCELLED)) {
                 g_error_free(err);
                 g_free(b);
@@ -284,9 +458,13 @@ static gpointer job_thread(gpointer data)
     return NULL;
 }
 
-Job *job_run(Win *w, gboolean move, GList *sources, GFile *dest)
+static Job *job_start(Win *w, Kind kind, gboolean move, GList *sources, GFile *dest, GFile *out, int format,
+                      GThreadFunc fn)
 {
     Job *j = g_new0(Job, 1);
+    j->kind = kind;
+    j->out = out ? g_object_ref(out) : NULL;
+    j->format = format;
     j->win = win_ref(w);
     j->move = move;
     j->sources = g_list_copy_deep(sources, obj_copy, NULL);
@@ -300,6 +478,30 @@ Job *job_run(Win *w, gboolean move, GList *sources, GFile *dest)
     gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(w->progress), 0);
     gtk_widget_show(w->progress);
     gtk_widget_show(w->cancel_btn);
-    g_thread_unref(g_thread_new("millerx-job", job_thread, j));
+    g_thread_unref(g_thread_new("millerx-job", fn, j));
+    return j;
+}
+
+Job *job_run(Win *w, gboolean move, GList *sources, GFile *dest)
+{
+    return job_start(w, K_COPY, move, sources, dest, NULL, 0, job_thread);
+}
+
+/* each archive is unpacked next to itself; dest (only for the job's bookkeeping) is the first one's folder */
+Job *job_extract(Win *w, GList *archives, gboolean into_folder)
+{
+    GFile *dest = g_file_get_parent(archives->data);
+    Job *j = job_start(w, into_folder ? K_EXTRACT_FOLDER : K_EXTRACT_HERE, FALSE, archives, dest, NULL, 0,
+                       job_thread);
+    g_object_unref(dest);
+    return j;
+}
+
+/* sources all sit in one folder (a column's selection); out is the archive to create there */
+Job *job_compress(Win *w, GList *sources, GFile *out, int format)
+{
+    GFile *dest = g_file_get_parent(out);
+    Job *j = job_start(w, K_COMPRESS, FALSE, sources, dest, out, format, compress_thread);
+    g_object_unref(dest);
     return j;
 }

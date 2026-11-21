@@ -12,7 +12,7 @@
 #include <gtk/gtk.h>
 
 #ifndef MILLERX_VERSION
-#define MILLERX_VERSION "0.6.4"
+#define MILLERX_VERSION "0.6.5"
 #endif
 
 #define COL_WIDTH 230
@@ -216,7 +216,20 @@ void preview_show_many(Preview *p, GList *files);
 /* ---- jobs (job.c) ------------------------------------------------------------ */
 typedef struct Job Job;
 Job *job_run(Win *w, gboolean move, GList *sources, GFile *dest);
+Job *job_extract(Win *w, GList *archives, gboolean into_folder);
+Job *job_compress(Win *w, GList *sources, GFile *out, int format);
 void job_cancel(Job *j);
+
+/* archive.c: packing and unpacking with libarchive (worker thread) */
+typedef struct { const char *name, *ext; } ArcFormat;
+extern const ArcFormat ARC_FORMATS[];
+extern const int ARC_N_FORMATS;
+typedef void (*ArcProgress)(gpointer data, const char *name, double frac);
+char *arc_stem(const char *name);
+gboolean arc_extract(const char *archive, const char *dir, GCancellable *cancel, ArcProgress cb,
+                     gpointer data, GError **err);
+gboolean arc_create(const char *out, int format, char **paths, const char *base, GCancellable *cancel,
+                    ArcProgress cb, gpointer data, GError **err);
 
 /* ---- places (places.c) -------------------------------------------------------- */
 void places_fill_bookmarks(Win *w);

@@ -12,8 +12,8 @@ millerx: millerX is a small native GTK 3 file browser that shows every folder
 millerx: from / to the current one as a column, with a preview on the right:
 millerx: pictures (WebP too), the first page of PDFs, text, archive contents,
 millerx: folder sizes, and a fast thumbnail gallery shared with Thunar's
-millerx: cache. Copy/paste and bookmarks work with Thunar, per-folder
-millerx: sorting, USB drives, properties, "Open as root" through polkit.
+millerx: cache. Packs and unpacks archives, copy/paste and bookmarks work
+millerx: with Thunar, per-folder sorting, USB drives, "Open as root".
 millerx:
 millerx: Homepage: https://github.com/overcatbe/millerx
 millerx:

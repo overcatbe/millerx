@@ -7,7 +7,8 @@ shared ~/.cache/thumbnails like Thunar does.
 
 Copy/paste, drag and drop, bookmarks shared with Thunar and the GTK
 file dialogs, USB drives (udisks2), per-folder sorting, properties with
-editable permissions, and "Open as root" through polkit (pkexec).
+editable permissions, packing and unpacking archives (libarchive), and
+"Open as root" through polkit (pkexec).
 
 Everything it needs is part of Slackware. Programs it uses if they are
 installed (all in Slackware too):
