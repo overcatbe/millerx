@@ -442,6 +442,38 @@ static void section(GtkWidget *grid, int *r, const char *text)
     (*r)++;
 }
 
+/* Optional programs millerX uses if they are there: what each one gives, and what to install
+ * if it is missing. Looked up when the settings open, so a fresh install shows up next time. */
+static const struct { const char *prog, *gives, *without, *package; } HELPERS[] = {
+    { "ffmpeg", "video frames, music covers, AVIF and HEIC pictures",
+      "videos and music show their icon, AVIF/HEIC too", "ffmpeg (Slackware: l/ffmpeg)" },
+    { "pdftoppm", "the first page of PDFs",
+      "PDFs show their icon", "poppler (Debian/Ubuntu: poppler-utils)" },
+    { "pkexec", "“Open as root”",
+      "no root window", "polkit, plus an authentication agent" },
+};
+
+static void helper_rows(GtkWidget *grid, int *r)
+{
+    for (guint i = 0; i < G_N_ELEMENTS(HELPERS); i++) {
+        char *found = g_find_program_in_path(HELPERS[i].prog);
+        char *m = found
+            ? g_markup_printf_escaped("✓ %s", HELPERS[i].gives)
+            : g_markup_printf_escaped("✗ not installed: %s.\n<small>Install %s for %s.</small>",
+                                      HELPERS[i].without, HELPERS[i].package, HELPERS[i].gives);
+        GtkWidget *l = gtk_label_new(NULL);
+        gtk_label_set_markup(GTK_LABEL(l), m);
+        gtk_label_set_xalign(GTK_LABEL(l), 0);
+        gtk_label_set_line_wrap(GTK_LABEL(l), TRUE);
+        gtk_label_set_max_width_chars(GTK_LABEL(l), 52);
+        if (!found)
+            gtk_widget_set_opacity(l, 0.85);
+        srow(grid, r, HELPERS[i].prog, l);
+        g_free(m);
+        g_free(found);
+    }
+}
+
 /* the size label is ours (a reference) even if the dialog was closed meanwhile */
 static void cache_measured(guint64 bytes, guint files, guint removed, gpointer data)
 {
@@ -712,6 +744,8 @@ void dialog_settings(Win *w)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(s->cache_auto), LOOK.cache_auto);
     srow(grid, &r, "Clean up", s->cache_auto);
     thumbcache_measure(cache_measured, g_object_ref(s->cache_size));
+    section(grid, &r, "Optional helpers (millerX works without them)");
+    helper_rows(grid, &r);
     section(grid, &r, "Folders sorted their own way (all others: by name)");
     s->sort_list = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
     GtkWidget *sl_scroll = gtk_scrolled_window_new(NULL, NULL);

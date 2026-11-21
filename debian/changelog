@@ -1,3 +1,16 @@
+millerx (0.7) unstable; urgency=medium
+
+  * Gallery: select several thumbnails (Ctrl/Shift+click, Ctrl+A), drag them
+    out like rows in a column, Ctrl+C / Ctrl+X; Compress and Extract in their
+    menu.
+  * Video frames and embedded music covers as thumbnails and in the preview,
+    through ffmpeg when installed.
+  * A shown folder's size and item counts update when its contents change.
+  * Settings list the optional helper programs (ffmpeg, pdftoppm, pkexec):
+    found or not, what they give, what to install.
+
+ -- overcatbe <1771834+overcatbe@users.noreply.github.com>  Sat, 21 Nov 2026 14:05:20 +0200
+
 millerx (0.6.5) unstable; urgency=medium
 
   * Archives: Extract here / Extract to a folder, and Compress… to zip,

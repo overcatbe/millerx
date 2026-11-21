@@ -12,7 +12,7 @@
 #include <gtk/gtk.h>
 
 #ifndef MILLERX_VERSION
-#define MILLERX_VERSION "0.6.5"
+#define MILLERX_VERSION "0.7"
 #endif
 
 #define COL_WIDTH 230
@@ -115,7 +115,7 @@ struct Preview {
     GtkWidget *header, *sep;         /* icon left + name and details right; a line under it */
     GtkWidget *image_scroll;         /* the picture's area: takes the room left, never grows the window */
     char *image_path;                /* picture or PDF shown now, NULL if none */
-    gboolean image_pdf;
+    int image_kind;                  /* MEDIA_*: how the picture for image_path is made */
     int image_w, image_h;            /* the area size it was drawn for */
     guint image_timer, resize_timer;
     int grid_w;                      /* pane width the thumbnails were made for */
@@ -130,6 +130,13 @@ struct Preview {
     guint grid_token;          /* the grid's own: reloading it must not stop the size count */
     GFileMonitor *grid_monitor;
     guint grid_refresh;
+    GtkWidget *dir_size_l, *dir_count_l;   /* the shown folder's Size and Items rows (refs) */
+    guint sizes_refresh;             /* recount after the folder changed */
+    guint sizes_gen;                 /* only the newest count may write the rows */
+    char *drag_path;                 /* thumbnail pressed with button 1, until it drags or lets go */
+    GList *drag_files;               /* GFile*: what a running drag carries */
+    int press_x, press_y;
+    gboolean press_keep;             /* the press kept a multi-selection (for dragging it) */
     guint token;
     int width;
     GFile *current;
@@ -178,7 +185,7 @@ GdkModifierType win_pointer_mask(Win *w);
 void win_look_changed(Win *w, gboolean resort);
 void app_sorting_changed(GtkApplication *app, const char *path);
 void win_context_menu(Win *w, Column *c, GdkEventButton *ev);
-void win_file_menu(Win *w, GFile *f, GdkEventButton *ev, GtkWidget *attach);
+void win_file_menu(Win *w, GList *files, GdkEventButton *ev, GtkWidget *attach);
 void win_rename_file(Win *w, GFile *f);
 void win_open_default(Win *w, GFile *f);
 void win_trash(Win *w, GList *files);

@@ -22,6 +22,8 @@ typedef struct {
     guint token;
     char *path;
     int width, max_height;
+    int media;             /* MEDIA_* for a picture job */
+    guint gen;             /* sizes: which count this is (see sizes_gen) */
     GtkWidget *size_label, *count_label;   /* refs */
     GPtrArray *paths;
     gboolean single_dir;
@@ -140,6 +142,7 @@ static gboolean set_pixbuf(gpointer data)
     Bg *b = data;
     if (bg_current(b) && b->pixbuf) {
         gtk_image_set_from_pixbuf(GTK_IMAGE(b->p->image), b->pixbuf);
+        gtk_widget_show(b->p->sep);
     }
     bg_free(b);
     return G_SOURCE_REMOVE;
@@ -284,10 +287,42 @@ static int by_folder_sort(gconstpointer a, gconstpointer b, gpointer data)
                            x->size, y->size, x->ext, y->ext);
 }
 
+enum { MEDIA_NONE = -1, MEDIA_IMAGE, MEDIA_PDF, MEDIA_VIDEO, MEDIA_AUDIO };
+
+static gboolean have_ffmpeg(void)
+{
+    static int have = -1;
+    if (have < 0) {
+        char *f = g_find_program_in_path("ffmpeg");
+        have = f != NULL;
+        g_free(f);
+    }
+    return have;
+}
+
+/* what kind of picture a file can have: itself, page 1, a frame, or its cover (the last two
+ * only with ffmpeg) */
+static int media_kind(const char *ct)
+{
+    if (!ct)
+        return MEDIA_NONE;
+    if (g_str_has_prefix(ct, "image/"))
+        return MEDIA_IMAGE;
+    if (!strcmp(ct, "application/pdf"))
+        return MEDIA_PDF;
+    if (g_str_has_prefix(ct, "video/") && have_ffmpeg())
+        return MEDIA_VIDEO;
+    if (g_str_has_prefix(ct, "audio/") && have_ffmpeg())
+        return MEDIA_AUDIO;
+    return MEDIA_NONE;
+}
+
 static gboolean thumbable(const char *ct)
 {
-    return g_str_has_prefix(ct, "image/") || !strcmp(ct, "application/pdf");
+    return media_kind(ct) != MEDIA_NONE;
 }
+
+static GdkPixbuf *render_media(const char *path, int kind, int max_w, int max_h, int timeout_ms);
 
 /* ---- the freedesktop thumbnail cache (~/.cache/thumbnails), shared with Thunar & co. ----
  * Looked up by hand as the spec says (md5 of the URI, Thumb::MTime must match) rather than through
@@ -370,21 +405,59 @@ static void save_thumb(const char *path, int k, GdkPixbuf *pb)
 
 /* A tile's picture: from the cache if one is big enough, else made at the next cache size, saved
  * there for next time (and for Thunar), and fitted to the tile. */
+/* the picture for a file of this kind, fitted into px x px */
+static GdkPixbuf *render_kind(const char *path, int kind, int px)
+{
+    switch (kind) {
+    case MEDIA_PDF: return render_pdf(path, px, px, 4000);
+    case MEDIA_VIDEO:
+    case MEDIA_AUDIO: return render_media(path, kind, px, px, 8000);
+    default: return load_fitted(path, px, px);
+    }
+}
+
+/* files that had no picture this session (music without a cover, broken videos): not asked again
+ * until they change. Key: path + mtime. */
+static GHashTable *NO_PICTURE;
+static GMutex NO_PICTURE_LOCK;
+
+static char *no_picture_key(const char *path)
+{
+    GStatBuf st;
+    return g_strdup_printf("%s\n%" G_GINT64_FORMAT, path, g_stat(path, &st) ? (gint64) 0 : (gint64) st.st_mtime);
+}
+
 static GdkPixbuf *make_thumb(const char *path, const char *ct, int size)
 {
     GdkPixbuf *pb = cached_thumb(path, size);
     if (pb)
         return pb;
-    gboolean pdf = !strcmp(ct, "application/pdf");
+    int kind = media_kind(ct);
+    char *key = no_picture_key(path);
+    g_mutex_lock(&NO_PICTURE_LOCK);
+    gboolean known_bad = NO_PICTURE && g_hash_table_contains(NO_PICTURE, key);
+    g_mutex_unlock(&NO_PICTURE_LOCK);
+    if (known_bad) {
+        g_free(key);
+        return NULL;
+    }
     int k = 0;
     while (k < (int) G_N_ELEMENTS(BUCKETS) && BUCKETS[k].px < size)
         k++;
-    if (k == G_N_ELEMENTS(BUCKETS))              /* tile bigger than any cache size: no saving */
-        return pdf ? render_pdf(path, size, size, 4000) : load_fitted(path, size, size);
-    int px = BUCKETS[k].px;
-    GdkPixbuf *big = pdf ? render_pdf(path, px, px, 4000) : load_fitted(path, px, px);
+    int px = k == G_N_ELEMENTS(BUCKETS) ? size : BUCKETS[k].px;
+    GdkPixbuf *big = render_kind(path, kind, px);
+    if (!big && kind >= MEDIA_VIDEO) {
+        g_mutex_lock(&NO_PICTURE_LOCK);
+        if (!NO_PICTURE)
+            NO_PICTURE = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+        g_hash_table_add(NO_PICTURE, g_strdup(key));
+        g_mutex_unlock(&NO_PICTURE_LOCK);
+    }
+    g_free(key);
     if (!big)
         return NULL;
+    if (k == G_N_ELEMENTS(BUCKETS))              /* tile bigger than any cache size: no saving */
+        return big;
     save_thumb(path, k, big);
     return fit_pixbuf(big, size, size);
 }
@@ -670,6 +743,12 @@ static void grid_stop(Preview *p)
         g_source_remove(p->grid_refresh);
         p->grid_refresh = 0;
     }
+    if (p->sizes_refresh) {
+        g_source_remove(p->sizes_refresh);
+        p->sizes_refresh = 0;
+    }
+    g_clear_object(&p->dir_size_l);
+    g_clear_object(&p->dir_count_l);
     if (p->grid_monitor) {
         g_signal_handlers_disconnect_by_data(p->grid_monitor, p);
         g_file_monitor_cancel(p->grid_monitor);
@@ -718,10 +797,16 @@ static gboolean grid_reload(gpointer data)
     return G_SOURCE_REMOVE;
 }
 
-/* Gone or renamed thumbnails are changed in place, so the grid doesn't jump back to the top. */
+static gboolean sizes_reload(gpointer data);
+
+/* Gone or renamed thumbnails are changed in place, so the grid doesn't jump back to the top.
+ * Any change also counts the folder's size and items again, a moment later. */
 static void on_grid_changed(GFileMonitor *m, GFile *f, GFile *other, GFileMonitorEvent ev, Preview *p)
 {
     (void) m;
+    if (ev != G_FILE_MONITOR_EVENT_ATTRIBUTE_CHANGED && ev != G_FILE_MONITOR_EVENT_PRE_UNMOUNT
+        && ev != G_FILE_MONITOR_EVENT_UNMOUNTED && !p->sizes_refresh)
+        p->sizes_refresh = g_timeout_add(500, sizes_reload, p);
     char *path = g_file_get_path(f);
     GtkWidget *t = path ? thumb_for(p, path) : NULL;
     switch (ev) {
@@ -775,66 +860,204 @@ static GFile *thumb_file(GtkFlowBoxChild *child)
     return g_file_new_for_path(g_object_get_data(G_OBJECT(child), "path"));
 }
 
-static GtkFlowBoxChild *thumb_selected(Preview *p)
+static int by_index(gconstpointer a, gconstpointer b)
 {
-    GList *sel = gtk_flow_box_get_selected_children(GTK_FLOW_BOX(p->grid));
-    GtkFlowBoxChild *c = sel ? sel->data : NULL;
-    g_list_free(sel);
+    return gtk_flow_box_child_get_index((GtkFlowBoxChild *) a) - gtk_flow_box_child_get_index((GtkFlowBoxChild *) b);
+}
+
+/* the selected thumbnails, in the order they are shown */
+static GList *thumbs_selected(Preview *p)
+{
+    return g_list_sort(gtk_flow_box_get_selected_children(GTK_FLOW_BOX(p->grid)), by_index);
+}
+
+/* their files (GFile*, owned by the caller) */
+static GList *thumbs_files(GList *thumbs)
+{
+    GList *files = NULL;
+    for (GList *l = thumbs; l; l = l->next)
+        files = g_list_prepend(files, thumb_file(l->data));
+    return g_list_reverse(files);
+}
+
+static GtkFlowBoxChild *thumb_by_path(Preview *p, const char *path)
+{
+    GtkFlowBoxChild *c = NULL;
+    GList *kids = gtk_container_get_children(GTK_CONTAINER(p->grid));
+    for (GList *k = kids; k && !c; k = k->next)
+        if (!g_strcmp0(g_object_get_data(G_OBJECT(k->data), "path"), path))
+            c = k->data;
+    g_list_free(kids);
     return c;
 }
 
-/* right-click on a thumbnail: the file menu for that one file */
-static gboolean on_grid_button(GtkWidget *grid, GdkEventButton *ev, Preview *p)
+/* an event's position in the grid's own coordinates (events may come from a child's window) */
+static void grid_pos(GtkWidget *grid, GdkWindow *win, double ex, double ey, int *x, int *y)
 {
-    if (ev->type != GDK_BUTTON_PRESS || ev->button != GDK_BUTTON_SECONDARY)
-        return FALSE;
     GtkWidget *from = NULL;
-    gdk_window_get_user_data(ev->window, (gpointer *) &from);
-    int x = (int) ev->x, y = (int) ev->y;
+    gdk_window_get_user_data(win, (gpointer *) &from);
+    *x = (int) ex;
+    *y = (int) ey;
     if (from && from != grid)
-        gtk_widget_translate_coordinates(from, grid, x, y, &x, &y);
-    GtkFlowBoxChild *child = gtk_flow_box_get_child_at_pos(GTK_FLOW_BOX(grid), x, y);
-    if (!child)
+        gtk_widget_translate_coordinates(from, grid, *x, *y, x, y);
+}
+
+/* ---- dragging thumbnails out, like rows in a column (a file list, text/uri-list) ---- */
+static gboolean on_grid_motion(GtkWidget *grid, GdkEventMotion *ev, Preview *p)
+{
+    if (!p->drag_path || !(ev->state & GDK_BUTTON1_MASK))
         return FALSE;
-    gtk_flow_box_select_child(GTK_FLOW_BOX(grid), child);
-    gtk_widget_grab_focus(GTK_WIDGET(child));
-    GFile *f = thumb_file(child);
-    win_file_menu(p->win, f, ev, grid);
-    g_object_unref(f);
+    int x, y;
+    grid_pos(grid, ev->window, ev->x, ev->y, &x, &y);
+    if (!gtk_drag_check_threshold(grid, p->press_x, p->press_y, x, y))
+        return FALSE;
+    /* a selected thumbnail takes the whole selection along, any other just itself */
+    GtkFlowBoxChild *c = thumb_by_path(p, p->drag_path);
+    g_list_free_full(p->drag_files, g_object_unref);
+    p->drag_files = NULL;
+    if (c && gtk_flow_box_child_is_selected(c)) {
+        GList *sel = thumbs_selected(p);
+        p->drag_files = thumbs_files(sel);
+        g_list_free(sel);
+    } else {
+        p->drag_files = g_list_append(NULL, g_file_new_for_path(p->drag_path));
+    }
+    GtkTargetList *tl = gtk_target_list_new(NULL, 0);
+    gtk_target_list_add_uri_targets(tl, 0);
+    gtk_drag_begin_with_coordinates(grid, tl, GDK_ACTION_COPY | GDK_ACTION_MOVE, 1, (GdkEvent *) ev,
+                                    p->press_x, p->press_y);
+    gtk_target_list_unref(tl);
     return TRUE;
 }
 
-/* keys on a selected thumbnail: menu key, F2, Delete, Shift+Delete, Alt+Return */
-static gboolean on_grid_key(GtkWidget *grid, GdkEventKey *ev, Preview *p)
+static void on_grid_drag_begin(GtkWidget *grid, GdkDragContext *ctx, Preview *p)
 {
-    GtkFlowBoxChild *child = thumb_selected(p);
+    (void) grid;
+    GtkFlowBoxChild *c = thumb_by_path(p, p->drag_path);
+    GtkImage *img = c ? g_object_get_data(G_OBJECT(c), "img") : NULL;
+    if (img && gtk_image_get_storage_type(img) == GTK_IMAGE_PIXBUF)   /* the thumbnail under the mouse */
+        gtk_drag_set_icon_pixbuf(ctx, gtk_image_get_pixbuf(img), 0, 0);
+    else
+        gtk_drag_set_icon_name(ctx, p->drag_files && p->drag_files->next ? "edit-copy" : "text-x-generic", 0, 0);
+}
+
+static void on_grid_drag_get(GtkWidget *grid, GdkDragContext *ctx, GtkSelectionData *data, guint info,
+                             guint t, Preview *p)
+{
+    (void) grid; (void) ctx; (void) info; (void) t;
+    guint n = g_list_length(p->drag_files), i = 0;
+    if (!n)
+        return;
+    char **uris = g_new0(char *, n + 1);
+    for (GList *l = p->drag_files; l; l = l->next)
+        uris[i++] = g_file_get_uri(l->data);
+    gtk_selection_data_set_uris(data, uris);
+    g_strfreev(uris);
+}
+
+static void on_grid_drag_end(GtkWidget *grid, GdkDragContext *ctx, Preview *p)
+{
+    (void) grid; (void) ctx;
+    g_clear_pointer(&p->drag_path, g_free);
+    g_list_free_full(p->drag_files, g_object_unref);
+    p->drag_files = NULL;
+}
+
+static gboolean on_grid_release(GtkWidget *grid, GdkEventButton *ev, Preview *p)
+{
+    (void) ev;
+    if (!gtk_drag_get_source_widget(NULL)) {         /* no drag going on: the press was just a click */
+        if (p->press_keep && p->drag_path) {         /* … on one of several selected: now just that one */
+            GtkFlowBoxChild *c = thumb_by_path(p, p->drag_path);
+            gtk_flow_box_unselect_all(GTK_FLOW_BOX(grid));
+            if (c)
+                gtk_flow_box_select_child(GTK_FLOW_BOX(grid), c);
+        }
+        g_clear_pointer(&p->drag_path, g_free);
+    }
+    p->press_keep = FALSE;
+    return FALSE;
+}
+
+/* Right-click on a thumbnail: the menu for the selection (a thumbnail outside it becomes the
+ * selection first). Button 1 only remembers the thumbnail, for a drag. */
+static gboolean on_grid_button(GtkWidget *grid, GdkEventButton *ev, Preview *p)
+{
+    int x, y;
+    grid_pos(grid, ev->window, ev->x, ev->y, &x, &y);
+    if (ev->type == GDK_BUTTON_PRESS && ev->button == GDK_BUTTON_PRIMARY) {
+        GtkFlowBoxChild *c = gtk_flow_box_get_child_at_pos(GTK_FLOW_BOX(grid), x, y);
+        g_free(p->drag_path);
+        p->drag_path = c ? g_strdup(g_object_get_data(G_OBJECT(c), "path")) : NULL;
+        p->press_x = x;
+        p->press_y = y;
+        /* pressing a thumbnail of a bigger selection keeps it (to drag them all); the flow box
+         * would otherwise select just that one right away */
+        if (c && gtk_flow_box_child_is_selected(c)
+            && !(ev->state & (GDK_CONTROL_MASK | GDK_SHIFT_MASK))) {
+            GList *sel = gtk_flow_box_get_selected_children(GTK_FLOW_BOX(grid));
+            gboolean many = sel && sel->next;
+            g_list_free(sel);
+            if (many) {
+                gtk_widget_grab_focus(GTK_WIDGET(c));
+                p->press_keep = TRUE;
+                return TRUE;
+            }
+        }
+        p->press_keep = FALSE;
+        return FALSE;              /* selecting and double-click work as before */
+    }
+    if (ev->type != GDK_BUTTON_PRESS || ev->button != GDK_BUTTON_SECONDARY)
+        return FALSE;
+    GtkFlowBoxChild *child = gtk_flow_box_get_child_at_pos(GTK_FLOW_BOX(grid), x, y);
     if (!child)
         return FALSE;
+    if (!gtk_flow_box_child_is_selected(child)) {
+        gtk_flow_box_unselect_all(GTK_FLOW_BOX(grid));
+        gtk_flow_box_select_child(GTK_FLOW_BOX(grid), child);
+    }
+    gtk_widget_grab_focus(GTK_WIDGET(child));
+    GList *sel = thumbs_selected(p), *files = thumbs_files(sel);
+    win_file_menu(p->win, files, ev, grid);
+    g_list_free_full(files, g_object_unref);
+    g_list_free(sel);
+    return TRUE;
+}
+
+/* keys on the selected thumbnails: menu key, Ctrl+C/X, F2, Delete, Shift+Delete, Alt+Return */
+static gboolean on_grid_key(GtkWidget *grid, GdkEventKey *ev, Preview *p)
+{
+    GList *sel = thumbs_selected(p);
+    if (!sel)
+        return FALSE;
     gboolean shift = ev->state & GDK_SHIFT_MASK, alt = ev->state & GDK_MOD1_MASK;
+    gboolean ctrl = ev->state & GDK_CONTROL_MASK;
     guint k = ev->keyval;
-    GFile *f = thumb_file(child);
-    GList *one = g_list_append(NULL, f);
-    gboolean done = TRUE;
+    GList *files = thumbs_files(sel);
+    gboolean one = !files->next, done = TRUE;
     if (k == GDK_KEY_Menu || (shift && k == GDK_KEY_F10))
-        win_file_menu(p->win, f, NULL, GTK_WIDGET(child));
-    else if (k == GDK_KEY_F2)
-        win_rename_file(p->win, f);
+        win_file_menu(p->win, files, NULL, GTK_WIDGET(sel->data));
+    else if (ctrl && !shift && (k == GDK_KEY_c || k == GDK_KEY_C || k == GDK_KEY_x || k == GDK_KEY_X))
+        win_clip_set(p->win, g_list_copy_deep(files, obj_copy, NULL), k == GDK_KEY_x || k == GDK_KEY_X);
+    else if (k == GDK_KEY_F2 && one)
+        win_rename_file(p->win, files->data);
     else if (k == GDK_KEY_Delete && shift)
-        win_delete_forever(p->win, one);
+        win_delete_forever(p->win, files);
     else if (k == GDK_KEY_Delete)
-        win_trash(p->win, one);
-    else if (alt && (k == GDK_KEY_Return || k == GDK_KEY_KP_Enter))
-        dialog_properties(p->win, f);
+        win_trash(p->win, files);
+    else if (alt && (k == GDK_KEY_Return || k == GDK_KEY_KP_Enter) && one)
+        dialog_properties(p->win, files->data);
     else
         done = FALSE;
     (void) grid;
-    g_list_free(one);
-    g_object_unref(f);
+    g_list_free_full(files, g_object_unref);
+    g_list_free(sel);
     return done;
 }
 
 /* ---- the picture area follows the pane's size ----------------------------------------- */
 static gpointer pdf_thread(gpointer data);
+static gpointer media_thread(gpointer data);
 static gboolean image_load(gpointer data)
 {
     Preview *p = data;
@@ -848,7 +1071,8 @@ static gboolean image_load(gpointer data)
     if (p->image_h < 64)
         p->image_h = 400;
     Bg *b = bg_new(p, p->image_path);
-    spawn_bg(b, p->image_pdf ? pdf_thread : image_thread);
+    b->media = p->image_kind;          /* read on the main thread, used on the worker */
+    spawn_bg(b, p->image_kind == MEDIA_PDF ? pdf_thread : p->image_kind >= MEDIA_VIDEO ? media_thread : image_thread);
     return G_SOURCE_REMOVE;
 }
 
@@ -949,15 +1173,25 @@ static GdkPixbuf *render_pdf(const char *path, int max_w, int max_h, int timeout
 
 /* Pictures gdk-pixbuf can't read (AVIF, HEIC, …) through ffmpeg, if it is installed: scaled
  * down to fit (never up), first frame only. */
+static GdkPixbuf *ffmpeg_frame(const char *path, const char *seek, int max_w, int max_h, int timeout_ms);
+
 static GdkPixbuf *render_ffmpeg(const char *path, int max_w, int max_h, int timeout_ms)
 {
-    static int have = -1;
-    if (have < 0) {
-        char *f = g_find_program_in_path("ffmpeg");
-        have = f != NULL;
-        g_free(f);
-    }
-    if (!have)
+    return ffmpeg_frame(path, NULL, max_w, max_h, timeout_ms);
+}
+
+/* A video's frame a few seconds in (the very start is often black; short clips fall back to
+ * the first frame), or a music file's embedded cover (ffmpeg shows it as the video stream). */
+static GdkPixbuf *render_media(const char *path, int kind, int max_w, int max_h, int timeout_ms)
+{
+    GdkPixbuf *pb = kind == MEDIA_VIDEO ? ffmpeg_frame(path, "3", max_w, max_h, timeout_ms) : NULL;
+    return pb ? pb : ffmpeg_frame(path, NULL, max_w, max_h, timeout_ms);
+}
+
+/* one frame through ffmpeg, scaled down to fit (never up); seek = seconds into it, or NULL */
+static GdkPixbuf *ffmpeg_frame(const char *path, const char *seek, int max_w, int max_h, int timeout_ms)
+{
+    if (!have_ffmpeg())
         return NULL;
     char *dir = g_dir_make_tmp("millerx-XXXXXX", NULL);
     if (!dir)
@@ -966,16 +1200,34 @@ static GdkPixbuf *render_ffmpeg(const char *path, int max_w, int max_h, int time
     char *in = g_strconcat("file:", path, NULL);          /* never read as an ffmpeg protocol */
     char *vf = g_strdup_printf("scale='min(%d,iw)':'min(%d,ih)':force_original_aspect_ratio=decrease",
                                max_w, max_h);
-    char *argv[] = { (char *) "ffmpeg", (char *) "-nostdin", (char *) "-hide_banner", (char *) "-loglevel",
-                     (char *) "error", (char *) "-i", in, (char *) "-frames:v", (char *) "1", (char *) "-vf", vf,
-                     (char *) "-y", png, NULL };
-    GdkPixbuf *pb = run_to_png(argv, png, max_w, max_h, timeout_ms);
+    /* no -ss at all without a seek: even "-ss 0" skips a music file's embedded cover */
+    const char *argv[20];
+    int n = 0;
+    for (const char *a0[] = { "ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error", NULL }, **a = a0; *a; a++)
+        argv[n++] = *a;
+    if (seek) {
+        argv[n++] = "-ss";
+        argv[n++] = seek;
+    }
+    for (const char *a1[] = { "-i", in, "-map", "0:v:0", "-frames:v", "1", "-vf", vf, "-y", png, NULL }, **a = a1;
+         *a; a++)
+        argv[n++] = *a;
+    argv[n] = NULL;
+    GdkPixbuf *pb = run_to_png((char **) argv, png, max_w, max_h, timeout_ms);
     g_rmdir(dir);
     g_free(vf);
     g_free(in);
     g_free(png);
     g_free(dir);
     return pb;
+}
+
+static gpointer media_thread(gpointer data)
+{
+    Bg *b = data;
+    b->pixbuf = render_media(b->path, b->media, b->width, b->max_height, 15000);
+    g_idle_add(set_pixbuf, b);
+    return NULL;
 }
 
 static gpointer pdf_thread(gpointer data)
@@ -1051,7 +1303,7 @@ static gpointer archive_thread(gpointer data)
 static gboolean set_sizes(gpointer data)
 {
     Bg *b = data;
-    if (bg_current(b)) {
+    if (bg_current(b) && b->gen == (guint) g_atomic_int_get((gint *) &b->p->sizes_gen)) {
         char *size = format_size_full(b->total);
         char *txt = g_strconcat(size, b->running ? " …" : "", NULL);
         gtk_label_set_text(GTK_LABEL(b->size_label), txt);
@@ -1081,6 +1333,7 @@ static void post_sizes(Bg *b, gboolean running)
     u->p = b->p;
     u->win = win_ref(b->win);
     u->token = b->token;
+    u->gen = b->gen;
     u->size_label = g_object_ref(b->size_label);
     u->count_label = g_object_ref(b->count_label);
     u->single_dir = b->single_dir;
@@ -1120,7 +1373,7 @@ static gpointer sizes_thread(gpointer data)
     }
     gint64 last = g_get_monotonic_time();
     while (stack->len) {
-        if (!bg_current(b))
+        if (!bg_current(b) || b->gen != (guint) g_atomic_int_get((gint *) &b->p->sizes_gen))
             break;
         char *dpath = g_ptr_array_steal_index(stack, stack->len - 1);
         DIR *d = opendir(dpath);
@@ -1161,7 +1414,23 @@ static void start_sizes(Preview *p, GPtrArray *paths, GtkWidget *size_l, GtkWidg
     b->single_dir = single_dir != NULL;
     b->size_label = g_object_ref(size_l);
     b->count_label = g_object_ref(count_l);
+    b->gen = (guint) g_atomic_int_add((gint *) &p->sizes_gen, 1) + 1;   /* older counts stop writing */
     spawn_bg(b, sizes_thread);
+}
+
+/* the folder on show changed: count its size and items again (its rows stay where they are) */
+static gboolean sizes_reload(gpointer data)
+{
+    Preview *p = data;
+    p->sizes_refresh = 0;
+    char *path = p->current ? g_file_get_path(p->current) : NULL;
+    if (path && p->dir_size_l && p->dir_count_l) {
+        GPtrArray *paths = g_ptr_array_new_with_free_func(g_free);
+        g_ptr_array_add(paths, g_strdup(path));
+        start_sizes(p, paths, p->dir_size_l, p->dir_count_l, path);
+    }
+    g_free(path);
+    return G_SOURCE_REMOVE;
 }
 
 /* ---- public ------------------------------------------------------------------------ */
@@ -1267,13 +1536,18 @@ void preview_show_file(Preview *p, GFile *f)
         if (isdir) {
             p->grid_timer = g_timeout_add(250, start_grid, p);
             grid_watch(p);
+            p->dir_size_l = g_object_ref(size_l);
+            p->dir_count_l = g_object_ref(count_l);
             GPtrArray *paths = g_ptr_array_new_with_free_func(g_free);
             g_ptr_array_add(paths, g_strdup(path));
             start_sizes(p, paths, size_l, count_l, path);
-        } else if (g_str_has_prefix(ct, "image/") || !strcmp(ct, "application/pdf")) {
+        } else if (media_kind(ct) != MEDIA_NONE) {
             p->image_path = g_strdup(path);
-            p->image_pdf = !g_str_has_prefix(ct, "image/");
-            gtk_widget_show(p->sep);
+            p->image_kind = media_kind(ct);
+            /* the area is laid out right away (so the picture gets the pane's size); for video
+             * frames and covers the line above it only shows once there is one */
+            if (p->image_kind < MEDIA_VIDEO)
+                gtk_widget_show(p->sep);
             gtk_widget_show(p->image_scroll);
             image_schedule(p, 30);      /* after the area got its size */
         } else if (is_archive_type(ct)) {
@@ -1335,9 +1609,16 @@ Preview *preview_new(Win *w)
     }
     gtk_style_context_add_class(gtk_widget_get_style_context(p->grid), "millerx-thumbs");
     gtk_flow_box_set_activate_on_single_click(GTK_FLOW_BOX(p->grid), FALSE);
+    gtk_flow_box_set_selection_mode(GTK_FLOW_BOX(p->grid), GTK_SELECTION_MULTIPLE);   /* Ctrl/Shift+click */
     gtk_widget_set_valign(p->grid, GTK_ALIGN_START);
     g_signal_connect(p->grid, "child-activated", G_CALLBACK(on_thumb_activated), p);
     g_signal_connect(p->grid, "button-press-event", G_CALLBACK(on_grid_button), p);
+    gtk_widget_add_events(p->grid, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK);
+    g_signal_connect(p->grid, "motion-notify-event", G_CALLBACK(on_grid_motion), p);
+    g_signal_connect(p->grid, "button-release-event", G_CALLBACK(on_grid_release), p);
+    g_signal_connect(p->grid, "drag-begin", G_CALLBACK(on_grid_drag_begin), p);
+    g_signal_connect(p->grid, "drag-data-get", G_CALLBACK(on_grid_drag_get), p);
+    g_signal_connect(p->grid, "drag-end", G_CALLBACK(on_grid_drag_end), p);
     g_signal_connect(p->grid, "key-press-event", G_CALLBACK(on_grid_key), p);
     p->grid_scroll = gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(p->grid_scroll), GTK_POLICY_EXTERNAL, GTK_POLICY_AUTOMATIC);
@@ -1381,6 +1662,8 @@ void preview_free(Preview *p)
     if (p->resize_timer)
         g_source_remove(p->resize_timer);
     g_free(p->image_path);
+    g_free(p->drag_path);
+    g_list_free_full(p->drag_files, g_object_unref);
     g_clear_object(&p->current);
     g_free(p);
 }

@@ -1317,47 +1317,67 @@ void win_context_menu(Win *w, Column *c, GdkEventButton *ev)
     g_list_free_full(files, g_object_unref);
 }
 
-/* Menu for one file that isn't a row in a column: a thumbnail in the preview's grid.
- * ev = the right-click, or NULL (menu key) to open it at the widget. */
-void win_file_menu(Win *w, GFile *f, GdkEventButton *ev, GtkWidget *attach)
+/* Menu for files that aren't rows in a column: thumbnails in the preview's gallery (one or several,
+ * all from one folder). ev = the right-click, or NULL (menu key) to open it at the widget. */
+void win_file_menu(Win *w, GList *files, GdkEventButton *ev, GtkWidget *attach)
 {
-    GList *files = g_list_append(NULL, f);
+    if (!files)
+        return;
+    GFile *f = files->data;
+    gboolean one = !files->next;
     GFileInfo *info = g_file_query_info(f, "standard::content-type,standard::type", G_FILE_QUERY_INFO_NONE,
                                         NULL, NULL);
     gboolean isdir = info && g_file_info_get_file_type(info) == G_FILE_TYPE_DIRECTORY;
     GtkWidget *menu = gtk_menu_new();
-    if (isdir)
-        item(menu, w, NULL, files, NULL, A_SHOW, "Open", NULL, TRUE);
-    else
-        item(menu, w, NULL, files, NULL, A_OPEN, "Open", NULL, TRUE);
-    const char *ct = info ? g_file_info_get_content_type(info) : NULL;
-    GList *apps = ct && !isdir ? g_app_info_get_all_for_type(ct) : NULL;
-    if (apps) {
-        GtkWidget *sub = gtk_menu_new();
-        for (GList *l = apps; l; l = l->next) {
-            GtkWidget *mi = item(sub, w, NULL, files, NULL, A_OPEN_WITH,
-                                 g_app_info_get_display_name(l->data), NULL, TRUE);
-            Act *a = g_object_get_data(G_OBJECT(mi), "act");
-            a->app = g_object_ref(l->data);
+    if (one) {
+        if (isdir)
+            item(menu, w, NULL, files, NULL, A_SHOW, "Open", NULL, TRUE);
+        else
+            item(menu, w, NULL, files, NULL, A_OPEN, "Open", NULL, TRUE);
+        const char *ct = info ? g_file_info_get_content_type(info) : NULL;
+        GList *apps = ct && !isdir ? g_app_info_get_all_for_type(ct) : NULL;
+        if (apps) {
+            GtkWidget *sub = gtk_menu_new();
+            for (GList *l = apps; l; l = l->next) {
+                GtkWidget *mi = item(sub, w, NULL, files, NULL, A_OPEN_WITH,
+                                     g_app_info_get_display_name(l->data), NULL, TRUE);
+                Act *a = g_object_get_data(G_OBJECT(mi), "act");
+                a->app = g_object_ref(l->data);
+            }
+            GtkWidget *ow = gtk_menu_item_new_with_label("Open with");
+            gtk_menu_item_set_submenu(GTK_MENU_ITEM(ow), sub);
+            gtk_menu_shell_append(GTK_MENU_SHELL(menu), ow);
+            g_list_free_full(apps, g_object_unref);
         }
-        GtkWidget *ow = gtk_menu_item_new_with_label("Open with");
-        gtk_menu_item_set_submenu(GTK_MENU_ITEM(ow), sub);
-        gtk_menu_shell_append(GTK_MENU_SHELL(menu), ow);
-        g_list_free_full(apps, g_object_unref);
+        if (!isdir)
+            item(menu, w, NULL, files, NULL, A_SHOW, "Show in column", NULL, TRUE);
+        sep(menu);
     }
     g_clear_object(&info);
-    if (!isdir)
-        item(menu, w, NULL, files, NULL, A_SHOW, "Show in column", NULL, TRUE);
+    if (all_archives(files)) {
+        item(menu, w, NULL, files, NULL, A_EXTRACT_HERE, "Extract here", NULL, TRUE);
+        if (one) {
+            char *b = g_file_get_basename(f), *stem = arc_stem(b);
+            char *l = g_strdup_printf("Extract to “%s/”", stem);
+            item(menu, w, NULL, files, NULL, A_EXTRACT_FOLDER, l, NULL, TRUE);
+            g_free(l);
+            g_free(stem);
+            g_free(b);
+        } else {
+            item(menu, w, NULL, files, NULL, A_EXTRACT_FOLDER, "Extract each to its own folder", NULL, TRUE);
+        }
+    }
+    item(menu, w, NULL, files, NULL, A_COMPRESS, "Compress…", NULL, TRUE);
     sep(menu);
-    item(menu, w, NULL, files, NULL, A_CUT, "Cut", NULL, TRUE);
-    item(menu, w, NULL, files, NULL, A_COPY, "Copy", NULL, TRUE);
+    item(menu, w, NULL, files, NULL, A_CUT, "Cut", "<Control>x", TRUE);
+    item(menu, w, NULL, files, NULL, A_COPY, "Copy", "<Control>c", TRUE);
     sep(menu);
-    item(menu, w, NULL, files, NULL, A_RENAME, "Rename…", "F2", TRUE);
+    item(menu, w, NULL, files, NULL, A_RENAME, "Rename…", "F2", one);
     item(menu, w, NULL, files, NULL, A_TRASH, "Move to trash", "Delete", TRUE);
     item(menu, w, NULL, files, NULL, A_DELETE, "Delete permanently…", "<Shift>Delete", TRUE);
     sep(menu);
-    item(menu, w, NULL, files, NULL, A_COPY_PATH, "Copy path", NULL, TRUE);
-    item(menu, w, NULL, files, NULL, A_PROPERTIES, "Properties…", "<Alt>Return", TRUE);
+    item(menu, w, NULL, files, NULL, A_COPY_PATH, one ? "Copy path" : "Copy paths", NULL, TRUE);
+    item(menu, w, NULL, files, NULL, A_PROPERTIES, "Properties…", "<Alt>Return", one);
     gtk_widget_show_all(menu);
     gtk_menu_attach_to_widget(GTK_MENU(menu), attach, NULL);
     g_signal_connect(menu, "deactivate", G_CALLBACK(menu_done), NULL);
@@ -1365,7 +1385,6 @@ void win_file_menu(Win *w, GFile *f, GdkEventButton *ev, GtkWidget *attach)
         gtk_menu_popup_at_pointer(GTK_MENU(menu), (GdkEvent *) ev);
     else
         gtk_menu_popup_at_widget(GTK_MENU(menu), attach, GDK_GRAVITY_CENTER, GDK_GRAVITY_NORTH_WEST, NULL);
-    g_list_free(files);
 }
 
 /* a second window at the folder this one shows (Ctrl+N, Menu -> New window) */

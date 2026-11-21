@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.7 (2026-11-21)
+
+The gallery (a folder's contents under its details) grew up:
+
+- **Select several thumbnails**: Ctrl+click adds or removes one, Shift+click takes a range,
+  Ctrl+A all of them. Right-click, Delete, Shift+Delete, Ctrl+C and Ctrl+X work on the whole
+  selection; Rename and Properties on one. A plain click on one of several selected picks just
+  that one.
+- **Ctrl+C and Ctrl+X** on thumbnails, like in a column.
+- **Drag thumbnails out**, one or the whole selection, like rows in a column: into Audacious, GIMP,
+  a browser, another millerX window or a folder. The thumbnail goes along under the mouse.
+  (Asked for on LinuxQuestions.)
+- **Videos show a frame** (a few seconds in; very short ones their first frame) and **music files
+  their embedded cover**, in the gallery and in the big preview, through ffmpeg if it is
+  installed. Music without a cover keeps its icon and isn't asked again. Saved in the shared
+  thumbnail cache like pictures.
+- The right-click menu of thumbnails also offers **Compress…** and, for archives, **Extract**.
+- **Settings → Optional helpers** shows which helper programs millerX found (ffmpeg, pdftoppm,
+  pkexec), what each one gives, and what to install if one is missing. So no more wondering why
+  pictures have thumbnails and videos don't.
+- **A folder's details follow it:** size and item counts update when files are added, deleted
+  or moved in or out while you look at it (they used to keep the old numbers).
+
 ## 0.6.5 (2026-11-21)
 
 - **Archives: unpack and pack**, right in millerX, with libarchive (which millerX already used for

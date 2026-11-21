@@ -4,6 +4,9 @@ A small, native file browser with **Miller columns**: every folder from `/` down
 where you are sits in its own column, and the selected file is previewed on the right.
 Like a mind map of your disk. Written in C with GTK 3 and GIO.
 
+> **New in 0.7:** the gallery: select several thumbnails, drag them out, Ctrl+C/X · video
+> frames and music covers (through ffmpeg).
+>
 > **New in 0.6.5:** extract and compress archives (zip, tar.gz/xz/zst, 7z) · a ready-built
 > Slackware .txz on every release.
 >
@@ -40,11 +43,13 @@ millerX carries his name.
 
 - **Columns from `/`** to the current folder; ← → and the mouse move through them,
   the newest column always stays in view.
-- **Preview** in the rest of the window: pictures (WebP, AVIF and HEIC too) fitted to the pane, the first
+- **Preview** in the rest of the window: pictures (WebP, AVIF and HEIC too) fitted to the pane, a video's
+  frame, a song's cover, the first
   page of PDFs, text, the contents of archives (zip, tar, 7z, rar, …), folder sizes counted in the background.
 - **Gallery**: a folder's pictures and PDFs as thumbnails under its details. Opens at once
   even with thousands of files, loads only what is on screen, and right-click gives each
-  thumbnail its own menu (open, show in column, rename, trash, …). Names under the
+  thumbnail its own menu (open, show in column, rename, trash, …). Select several with
+  Ctrl/Shift+click, drag them out or copy them like rows. Videos show a frame, music its cover. Names under the
   thumbnails if you like (one line, cut in the middle so the extension stays).
 - **Shared thumbnail cache** (`~/.cache/thumbnails`, like Thunar and the file dialogs),
   cleaned up automatically: files that are gone, unused for 180 days, above 1 GB.
@@ -100,8 +105,8 @@ What changed in each version: [CHANGELOG](CHANGELOG.md).
 
 Middle-click a folder (or right-click → Open in new window) to open it in a second window.
 
-On a selected thumbnail in the gallery: Enter opens it in its column, Delete / Shift+Delete,
-F2, the Menu key and Alt+Enter work as in a column.
+In the gallery: Ctrl/Shift+click selects several thumbnails, Ctrl+A all. Enter opens one in its
+column; Delete / Shift+Delete, Ctrl+C / Ctrl+X, F2, the Menu key and Alt+Enter work as in a column.
 
 ## What it needs
 
@@ -116,12 +121,13 @@ millerx
 └── libwebp          WebP pictures (optional: left out if it isn't there when building)
 ```
 
-Programs it uses **if they are installed**, nothing breaks without them:
+Programs it uses **if they are installed**, nothing breaks without them (Settings → Optional
+helpers shows which ones it found):
 
 | For | Program | Without it |
 | --- | --- | --- |
 | PDF previews | `pdftoppm` (poppler) | the PDF's icon |
-| AVIF, HEIC and other pictures | `ffmpeg` | the picture's icon |
+| AVIF, HEIC and other pictures, video frames, music covers | `ffmpeg` | the file's icon |
 | Open as root | `pkexec` + a polkit agent | no root window |
 | USB sticks and other drives | gvfs / udisks2 | only drives already mounted |
 | Open terminal here | any terminal (`$TERMINAL` or one of 17 known) | a message saying none was found |

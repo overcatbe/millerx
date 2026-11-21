@@ -15,7 +15,7 @@ installed (all in Slackware too):
 
   poppler (pdftoppm)  first page of PDFs
   ffmpeg              AVIF, HEIC and other pictures that gdk-pixbuf
-                      can't read
+                      can't read, video frames, music covers
   polkit agent        "Open as root"
 
 Building needs a fully patched Slackware 15.0 (meson 0.60 or newer).
