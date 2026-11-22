@@ -241,6 +241,7 @@ void preview_free(Preview *p);
 void preview_clear(Preview *p);
 void preview_show_file(Preview *p, GFile *f);
 void preview_show_many(Preview *p, GList *files);
+GtkWidget *disk_bar(double used);
 void preview_show_disk(Preview *p, const char *name, GIcon *icon, GFile *root, const char *where,
                        const char *device, const char *fs, const char *note);
 

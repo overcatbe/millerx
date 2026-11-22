@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- **Disk fill bar in the highlight colour:** the Computer column's preview shows how full a disk is
+  in your highlight colour (or the theme's), red above 95 %. GTK's own colours were made for
+  batteries: an almost empty disk showed orange.
+
 ## 0.7.4 (2026-11-22)
 
 - **Computer column:** the computer button (Alt+/) opens a first column with all your disks (also

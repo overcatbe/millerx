@@ -1477,6 +1477,32 @@ void preview_show_many(Preview *p, GList *files)
     start_sizes(p, paths, size_l, count_l, NULL);
 }
 
+/* How full a disk is, in the highlight colour (yours or the theme's); red above 95 %. Not GTK's own
+ * levels: those are made for batteries, where little is bad and a nearly full disk looks fine. */
+GtkWidget *disk_bar(double used)
+{
+    static GtkCssProvider *css;
+    if (!css) {
+        css = gtk_css_provider_new();
+        gtk_css_provider_load_from_data(css,
+            "levelbar block.mx-ok { background-color: @theme_selected_bg_color;"
+            " border-color: @theme_selected_bg_color; background-image: none; }\n"
+            "levelbar block.mx-full { background-color: #e01b24; border-color: #e01b24;"
+            " background-image: none; }\n", -1, NULL);
+    }
+    GtkWidget *bar = gtk_level_bar_new_for_interval(0, 1);
+    GtkLevelBar *lb = GTK_LEVEL_BAR(bar);
+    gtk_level_bar_remove_offset_value(lb, GTK_LEVEL_BAR_OFFSET_LOW);
+    gtk_level_bar_remove_offset_value(lb, GTK_LEVEL_BAR_OFFSET_HIGH);
+    gtk_level_bar_remove_offset_value(lb, GTK_LEVEL_BAR_OFFSET_FULL);
+    gtk_level_bar_add_offset_value(lb, "mx-ok", 0.95);
+    gtk_level_bar_add_offset_value(lb, "mx-full", 1.0);
+    gtk_level_bar_set_value(lb, used);
+    gtk_style_context_add_provider(gtk_widget_get_style_context(bar), GTK_STYLE_PROVIDER(css),
+                                   GTK_STYLE_PROVIDER_PRIORITY_APPLICATION + 10);
+    return bar;
+}
+
 /* a disk in the Computer column: where it is, what it is, how full; never its contents (counting
  * a whole disk would take ages). Free space only for local disks: a dead share must not hang us. */
 void preview_show_disk(Preview *p, const char *name, GIcon *icon, GFile *root, const char *where,
@@ -1511,8 +1537,7 @@ void preview_show_disk(Preview *p, const char *name, GIcon *icon, GFile *root, c
                 GtkWidget *k = gtk_label_new("Used");
                 gtk_label_set_xalign(GTK_LABEL(k), 1);
                 gtk_style_context_add_class(gtk_widget_get_style_context(k), "dim-label");
-                GtkWidget *bar = gtk_level_bar_new_for_interval(0, 1);
-                gtk_level_bar_set_value(GTK_LEVEL_BAR(bar), used);
+                GtkWidget *bar = disk_bar(used);
                 gtk_widget_set_valign(bar, GTK_ALIGN_CENTER);
                 gtk_widget_set_hexpand(bar, TRUE);
                 char *pc = g_strdup_printf("%.0f %%", used * 100);
