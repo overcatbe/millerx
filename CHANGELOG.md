@@ -14,6 +14,10 @@
   right), Thumbnails (what to show, the cache, the optional helpers) and Folders (the ones sorted their
   own way). Shorter, no scrolling; they open on the tab you used last.
 
+- **Optional helpers can be switched off:** Settings → Thumbnails → Optional helpers has a tick box
+  for each one that's installed. ffmpeg off: no video frames, music covers or AVIF/HEIC; pdftoppm off:
+  no PDF pages; pkexec off: "Open as root" disappears from every menu.
+
 ## 0.7.2 (2026-11-21)
 
 - **Column width setting:** Settings → Browsing → Column width (120–600, default 230) sets where new

@@ -131,7 +131,7 @@ void win_open_as_root(Win *w, GFile *folder)
 /* an error message; if we're not root and know the folder, offer to open it as root */
 void win_error_root(Win *w, const char *title, const char *text, GFile *folder)
 {
-    if (!folder || is_root()) {
+    if (!folder || is_root() || !LOOK.use_pkexec) {
         win_error(w, title, text);
         return;
     }
@@ -515,6 +515,10 @@ void win_look_changed(Win *w, gboolean resort)
         g_free(uri);
     }
     gtk_widget_set_size_request(w->pane_divider, dw, -1);
+    if (w->root_mi) {                         /* "Open as root" switched off in the settings */
+        gtk_widget_set_visible(w->root_mi, LOOK.use_pkexec);
+        gtk_widget_set_visible(w->root_sep, LOOK.use_pkexec);
+    }
     if (w->preview->width != LOOK.preview_width) {
         w->preview->width = LOOK.preview_width;
         gtk_widget_set_size_request(w->preview->box, w->preview->width, -1);
@@ -1306,7 +1310,7 @@ void win_context_menu(Win *w, Column *c, GdkEventButton *ev)
     if (files)
         item(menu, w, c, files, NULL, A_COPY_PATH, "Copy path", NULL, TRUE);
     item(menu, w, c, NULL, folder, A_BOOKMARK, "Add to bookmarks", "<Control>d", TRUE);
-    if (!is_root())
+    if (!is_root() && LOOK.use_pkexec)
         item(menu, w, c, NULL, folder, A_ROOT, "Open as root…", NULL, TRUE);
     sep(menu);
     item(menu, w, c, files, NULL, A_PROPERTIES, "Properties…", "<Alt>Return", TRUE);
@@ -1681,10 +1685,11 @@ Win *win_new(GtkApplication *app, GFile *start)
     gtk_menu_shell_append(GTK_MENU_SHELL(main_menu), mi);
     gtk_menu_shell_append(GTK_MENU_SHELL(main_menu), gtk_separator_menu_item_new());
     if (!is_root()) {
-        mi = gtk_menu_item_new_with_label("Open this folder as root…");
+        w->root_mi = mi = gtk_menu_item_new_with_label("Open this folder as root…");
         g_signal_connect(mi, "activate", G_CALLBACK(on_root_here), w);
         gtk_menu_shell_append(GTK_MENU_SHELL(main_menu), mi);
-        gtk_menu_shell_append(GTK_MENU_SHELL(main_menu), gtk_separator_menu_item_new());
+        w->root_sep = gtk_separator_menu_item_new();
+        gtk_menu_shell_append(GTK_MENU_SHELL(main_menu), w->root_sep);
     }
     mi = gtk_menu_item_new_with_label("Settings…");
     g_signal_connect(mi, "activate", G_CALLBACK(on_settings), w);
@@ -1765,7 +1770,8 @@ Win *win_new(GtkApplication *app, GFile *start)
 void app_apply_look(GtkApplication *app, const Look *nl)
 {
     gboolean resort = nl->folders_first != LOOK.folders_first;
-    gboolean names = nl->gallery_names != LOOK.gallery_names || nl->thumbs != LOOK.thumbs;
+    gboolean names = nl->gallery_names != LOOK.gallery_names || nl->thumbs != LOOK.thumbs ||
+                     nl->use_ffmpeg != LOOK.use_ffmpeg || nl->use_pdftoppm != LOOK.use_pdftoppm;
     char *col = g_strdup(nl->divider_color), *hl = g_strdup(nl->highlight);
     gboolean hl_changed = g_strcmp0(nl->highlight, LOOK.highlight);
     g_free(LOOK.divider_color);

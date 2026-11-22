@@ -365,6 +365,7 @@ typedef struct {
     GtkWidget *auto_rb, *own_rb, *colour, *width, *style, *pw, *cw, *ff, *sh;
     GtkWidget *cache_size, *cache_clear, *cache_mb, *cache_days, *cache_auto;
     GtkWidget *sort_list, *names, *thumbs;
+    GtkWidget *use[3];         /* the optional helpers, when installed; NULL when not */
     GtkWidget *hl_auto, *hl_own, *hl_colour, *hl_sys, *hl_unsys;
 } Set;
 
@@ -402,6 +403,10 @@ static void settings_changed(GtkWidget *any, Set *s)
     nl.folders_first = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->ff));
     nl.show_hidden = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->sh));
     nl.gallery_names = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->names));
+    gboolean *uses[] = { &nl.use_ffmpeg, &nl.use_pdftoppm, &nl.use_pkexec };
+    for (int i = 0; i < 3; i++)
+        if (s->use[i])
+            *uses[i] = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->use[i]));
     const char *tid = gtk_combo_box_get_active_id(GTK_COMBO_BOX(s->thumbs));
     nl.thumbs = !g_strcmp0(tid, "local") ? THUMBS_LOCAL : !g_strcmp0(tid, "never") ? THUMBS_NEVER : THUMBS_ALWAYS;
     nl.cache_max_mb = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(s->cache_mb));
@@ -500,20 +505,26 @@ static const struct { const char *prog, *gives, *without, *package; } HELPERS[] 
       "no root window", "polkit, plus an authentication agent" },
 };
 
-static void helper_rows(GtkWidget *grid, int *r)
+/* found: a tick box to use it or not; missing: what it would give and where to get it */
+static void helper_rows(GtkWidget *grid, int *r, Set *s)
 {
+    const gboolean on[] = { LOOK.use_ffmpeg, LOOK.use_pdftoppm, LOOK.use_pkexec };
     for (guint i = 0; i < G_N_ELEMENTS(HELPERS); i++) {
         char *found = g_find_program_in_path(HELPERS[i].prog);
-        char *m = found
-            ? g_markup_printf_escaped("✓ %s", HELPERS[i].gives)
-            : g_markup_printf_escaped("✗ not installed: %s.\n<small>Install %s\nfor %s.</small>",
+        if (found) {
+            s->use[i] = gtk_check_button_new_with_label(HELPERS[i].gives);
+            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(s->use[i]), on[i]);
+            srow(grid, r, HELPERS[i].prog, s->use[i]);
+            g_free(found);
+            continue;
+        }
+        char *m = g_markup_printf_escaped("✗ not installed: %s.\n<small>Install %s\nfor %s.</small>",
                                       HELPERS[i].without, HELPERS[i].package, HELPERS[i].gives);
         GtkWidget *l = gtk_label_new(NULL);
         gtk_label_set_markup(GTK_LABEL(l), m);
         gtk_label_set_xalign(GTK_LABEL(l), 0);
         /* no wrapping: wrapped labels make GTK guess the dialog far too tall */
-        if (!found)
-            gtk_widget_set_opacity(l, 0.85);
+        gtk_widget_set_opacity(l, 0.85);
         srow(grid, r, HELPERS[i].prog, l);
         g_free(m);
         g_free(found);
@@ -822,8 +833,8 @@ void dialog_settings(Win *w)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(s->cache_auto), LOOK.cache_auto);
     srow(grid, &r, "Clean up", s->cache_auto);
     thumbcache_measure(cache_measured, g_object_ref(s->cache_size));
-    section(&grid, &r, "Optional helpers (millerX works without them)");
-    helper_rows(grid, &r);
+    section(&grid, &r, "Optional helpers (millerX works without them; untick to not use one)");
+    helper_rows(grid, &r, s);
     new_column(folders_tab);
     section(&grid, &r, "Folders sorted their own way (all others: by name)");
     s->sort_list = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
@@ -845,6 +856,9 @@ void dialog_settings(Win *w)
     g_signal_connect(s->sh, "toggled", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->names, "toggled", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->thumbs, "changed", G_CALLBACK(settings_changed), s);
+    for (int i = 0; i < 3; i++)
+        if (s->use[i])
+            g_signal_connect(s->use[i], "toggled", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->hl_auto, "toggled", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->hl_colour, "color-set", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->hl_sys, "clicked", G_CALLBACK(hl_system_clicked), s);

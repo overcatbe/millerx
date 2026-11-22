@@ -45,6 +45,9 @@ typedef struct {
     gboolean cache_auto;    /* clean once a day when millerX starts */
     int column_width;       /* start width of folder columns, 120-600 */
     int thumbs;             /* gallery thumbnails: THUMBS_ALWAYS, _LOCAL (not on network folders), _NEVER */
+    gboolean use_ffmpeg;    /* optional helpers, when installed: switched off here */
+    gboolean use_pdftoppm;
+    gboolean use_pkexec;    /* off: no "Open as root" anywhere */
 } Look;
 
 extern Look LOOK;
@@ -159,6 +162,7 @@ struct Preview {
 struct Win {
     int ref;
     gboolean dead;
+    GtkWidget *root_mi, *root_sep;   /* "Open this folder as root…" in the main menu */
     Geom geom;              /* its normal (unmaximized) place and size, kept up to date */
     Geom geom_prev;         /* the one before: maximizing may report the big size first */
     GtkApplication *app;

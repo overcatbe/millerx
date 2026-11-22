@@ -297,7 +297,7 @@ static gboolean have_ffmpeg(void)
         have = f != NULL;
         g_free(f);
     }
-    return have;
+    return have && LOOK.use_ffmpeg;
 }
 
 /* what kind of picture a file can have: itself, page 1, a frame, or its cover (the last two
@@ -309,7 +309,7 @@ static int media_kind(const char *ct)
     if (g_str_has_prefix(ct, "image/"))
         return MEDIA_IMAGE;
     if (!strcmp(ct, "application/pdf"))
-        return MEDIA_PDF;
+        return LOOK.use_pdftoppm ? MEDIA_PDF : MEDIA_NONE;
     if (g_str_has_prefix(ct, "video/") && have_ffmpeg())
         return MEDIA_VIDEO;
     if (g_str_has_prefix(ct, "audio/") && have_ffmpeg())

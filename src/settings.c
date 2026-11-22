@@ -4,7 +4,8 @@
 #include "millerx.h"
 #include <string.h>
 
-Look LOOK = { NULL, 2, FALSE, PREVIEW_DEFAULT, TRUE, FALSE, .column_width = COL_DEFAULT };
+Look LOOK = { NULL, 2, FALSE, PREVIEW_DEFAULT, TRUE, FALSE, .column_width = COL_DEFAULT,
+              .use_ffmpeg = TRUE, .use_pdftoppm = TRUE, .use_pkexec = TRUE };
 
 static char *config_file(void)
 {
@@ -67,6 +68,9 @@ void look_load(void)
     g_free(style);
     LOOK.preview_width = get_int(kf, "look", "preview_width", PREVIEW_DEFAULT, 200, 900);
     LOOK.column_width = get_int(kf, "look", "column_width", COL_DEFAULT, COL_MIN, 600);
+    LOOK.use_ffmpeg = get_bool(kf, "helpers", "ffmpeg", TRUE);
+    LOOK.use_pdftoppm = get_bool(kf, "helpers", "pdftoppm", TRUE);
+    LOOK.use_pkexec = get_bool(kf, "helpers", "pkexec", TRUE);
     char *th = get_str(kf, "thumbnails", "show");
     LOOK.thumbs = !g_strcmp0(th, "local") ? THUMBS_LOCAL : !g_strcmp0(th, "never") ? THUMBS_NEVER : THUMBS_ALWAYS;
     g_free(th);
@@ -104,6 +108,9 @@ gboolean look_save(GError **err)
     g_key_file_set_string(kf, "look", "highlight_color", LOOK.highlight);
     g_key_file_set_boolean(kf, "browse", "folders_first", LOOK.folders_first);
     g_key_file_set_boolean(kf, "browse", "show_hidden", LOOK.show_hidden);
+    g_key_file_set_boolean(kf, "helpers", "ffmpeg", LOOK.use_ffmpeg);
+    g_key_file_set_boolean(kf, "helpers", "pdftoppm", LOOK.use_pdftoppm);
+    g_key_file_set_boolean(kf, "helpers", "pkexec", LOOK.use_pkexec);
     g_key_file_set_string(kf, "thumbnails", "show",
                           LOOK.thumbs == THUMBS_LOCAL ? "local" : LOOK.thumbs == THUMBS_NEVER ? "never" : "always");
     g_key_file_set_integer(kf, "thumbnails", "max_mb", LOOK.cache_max_mb);
