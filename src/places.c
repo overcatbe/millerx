@@ -2,6 +2,7 @@
  * Copyright (C) 2026 overcatbe */
 /* Bookmarks (the GTK file, shared with Thunar and the file dialogs) and drives. */
 #include "millerx.h"
+#include <mntent.h>
 #include <string.h>
 
 /* ---- bookmarks --------------------------------------------------------------------------- */
@@ -351,11 +352,100 @@ static void add_mount(Win *w, GtkWidget *m, GMount *mnt, const char *name, GIcon
     g_free(mname);
 }
 
+/* ---- the disks themselves: everything really mounted (also through /etc/fstab, which GIO keeps
+ * to itself as "system"), with its free space ---- */
+static gboolean is_disk_mount(const struct mntent *e)
+{
+    static const char *NET[] = { "nfs", "nfs4", "cifs", "smb3", "fuse.sshfs", NULL };
+    gboolean net = FALSE;
+    for (int i = 0; NET[i]; i++)
+        if (!strcmp(e->mnt_type, NET[i]))
+            net = TRUE;
+    if (!net && strncmp(e->mnt_fsname, "/dev/", 5))
+        return FALSE;                                   /* proc, sysfs, tmpfs, overlay … */
+    if (!strncmp(e->mnt_fsname, "/dev/loop", 9) || !strcmp(e->mnt_type, "swap") ||
+        !strcmp(e->mnt_type, "squashfs") || !strcmp(e->mnt_type, "iso9660") ||
+        !strcmp(e->mnt_type, "udf"))
+        return FALSE;                                   /* images and CDs: under removable */
+    static const char *HIDE[] = { "/boot", "/boot/efi", "/efi", "/recovery", NULL };
+    for (int i = 0; HIDE[i]; i++)
+        if (!strcmp(e->mnt_dir, HIDE[i]))
+            return FALSE;
+    static const char *UNDER[] = { "/proc/", "/sys/", "/dev/", "/snap/", "/var/lib/", NULL };
+    for (int i = 0; UNDER[i]; i++)
+        if (g_str_has_prefix(e->mnt_dir, UNDER[i]))
+            return FALSE;
+    return TRUE;
+}
+
+/* "File System (/)  312.4 GB free of 937.0 GB"; local disks only, a dead network share mustn't hang */
+static int add_disks(Win *w, GtkWidget *m, GHashTable *gio_paths)
+{
+    FILE *f = setmntent("/proc/self/mounts", "r");
+    if (!f)
+        return 0;
+    int n = 0;
+    GHashTable *done = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+    struct mntent *e;
+    while ((e = getmntent(f))) {
+        if (!is_disk_mount(e) || g_hash_table_contains(gio_paths, e->mnt_dir) ||
+            g_hash_table_contains(done, e->mnt_dir))
+            continue;
+        g_hash_table_add(done, g_strdup(e->mnt_dir));
+        gboolean net = strncmp(e->mnt_fsname, "/dev/", 5) != 0;
+        GFile *root = g_file_new_for_path(e->mnt_dir);
+        char *base = g_path_get_basename(e->mnt_dir);
+        char *name = !strcmp(e->mnt_dir, "/") ? g_strdup("File System (/)")
+                                               : g_strdup_printf("%s (%s)", base, e->mnt_dir);
+        char *label = NULL;
+        if (!net) {
+            GFileInfo *fi = g_file_query_filesystem_info(root, G_FILE_ATTRIBUTE_FILESYSTEM_FREE ","
+                                                         G_FILE_ATTRIBUTE_FILESYSTEM_SIZE, NULL, NULL);
+            if (fi && g_file_info_has_attribute(fi, G_FILE_ATTRIBUTE_FILESYSTEM_SIZE)) {
+                char *fr = g_format_size(g_file_info_get_attribute_uint64(fi, G_FILE_ATTRIBUTE_FILESYSTEM_FREE));
+                char *sz = g_format_size(g_file_info_get_attribute_uint64(fi, G_FILE_ATTRIBUTE_FILESYSTEM_SIZE));
+                label = g_strdup_printf("%s   %s free of %s", name, fr, sz);
+                g_free(fr);
+                g_free(sz);
+            }
+            g_clear_object(&fi);
+        }
+        GtkWidget *mi = menu_item_new(label ? label : name, NULL, net ? "folder-remote" : "drive-harddisk");
+        char *tip = g_strdup_printf("%s (%s)", e->mnt_fsname, e->mnt_type);
+        gtk_widget_set_tooltip_text(mi, tip);
+        add(m, mi, root, G_CALLBACK(on_open_bookmark), w);
+        g_free(tip);
+        g_free(label);
+        g_free(name);
+        g_free(base);
+        g_object_unref(root);
+        n++;
+    }
+    endmntent(f);
+    g_hash_table_unref(done);
+    return n;
+}
+
 void places_fill_devices(Win *w)
 {
     GtkWidget *m = w->dev_menu;
     clear_menu(m);
     int n = 0;
+    /* what GIO shows itself (sticks, phones, network places) comes below, with mount and eject */
+    GHashTable *gio_paths = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+    GList *all = g_volume_monitor_get_mounts(w->volumes);
+    for (GList *l = all; l; l = l->next) {
+        GFile *root = g_mount_get_root(l->data);
+        char *p = g_file_get_path(root);
+        if (p)
+            g_hash_table_add(gio_paths, p);
+        g_object_unref(root);
+    }
+    g_list_free_full(all, g_object_unref);
+    int disks = add_disks(w, m, gio_paths);
+    g_hash_table_unref(gio_paths);
+    if (disks)
+        gtk_menu_shell_append(GTK_MENU_SHELL(m), gtk_separator_menu_item_new());
     GHashTable *seen = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
     GList *vols = g_volume_monitor_get_volumes(w->volumes);
     for (GList *l = vols; l; l = l->next) {
@@ -403,7 +493,7 @@ void places_fill_devices(Win *w)
     g_list_free_full(mounts, g_object_unref);
     g_hash_table_unref(seen);
     if (!n) {
-        GtkWidget *mi = menu_item_new("No drives to mount", NULL, NULL);
+        GtkWidget *mi = menu_item_new("No USB drives or other removable media", NULL, NULL);
         gtk_widget_set_sensitive(mi, FALSE);
         add(m, mi, NULL, NULL, w);
     }

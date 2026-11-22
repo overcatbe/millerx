@@ -1672,7 +1672,7 @@ Win *win_new(GtkApplication *app, GFile *start)
     g_signal_connect(bm, "clicked", G_CALLBACK(places_clicked), w);
     w->dev_menu = gtk_menu_new();
     gtk_menu_attach_to_widget(GTK_MENU(w->dev_menu), w->window, NULL);
-    GtkWidget *dev = tool_button("drive-removable-media", "Drives: mount, open, eject");
+    GtkWidget *dev = tool_button("drive-removable-media", "Disks and drives: open, mount, eject");
     g_signal_connect(dev, "clicked", G_CALLBACK(places_clicked), w);
     GtkWidget *main_menu = gtk_menu_new();
     GtkWidget *mi = gtk_menu_item_new_with_label("New window");

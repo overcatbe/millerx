@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- **The drive button shows all your disks:** every mounted disk (also the ones from /etc/fstab,
+  e.g. a second disk on /storage), with its free space, opens with one click. Below come USB sticks
+  and other removable media to mount, open and eject, as before. Boot and system mounts stay hidden.
+
 ## 0.7.2 (2026-11-21)
 
 - **Column width setting:** Settings → Browsing → Column width (120–600, default 230) sets where new
