@@ -1,0 +1,20 @@
+millerX
+Copyright (C) 2026 overcatbe
+https://github.com/overcatbe/millerx
+
+millerX is free software under the GNU General Public License, version 2 or (at your option)
+any later version; see COPYING. You may use it, study it, change it and pass it on under that
+license. Forks are welcome.
+
+
+The name and the logo
+
+The GPL covers the code, not the name. "millerX" and the yellow M logo are not licensed with it.
+
+- Unchanged copies may be passed on as millerX, with the logo.
+- Distribution packages may keep the name when they only change what packaging needs (build
+  flags, install paths, fixes for their system).
+- A version with other changes to how millerX works or looks must carry another name and
+  another logo, so nobody takes it for the original. Saying "based on millerX" is welcome.
+
+As the GPL already asks: keep the copyright notices, and mark your changes as changes.

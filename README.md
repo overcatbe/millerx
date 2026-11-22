@@ -202,3 +202,6 @@ Please open an [issue](https://github.com/overcatbe/millerx/issues).
 ## License
 
 GPL-2.0-or-later, see [COPYING](COPYING).
+
+Forks are welcome. The name "millerX" and the logo aren't part of the license: a changed
+version needs another name and logo, see [NOTICE](NOTICE).
