@@ -1,13 +1,15 @@
-millerx (0.7.3) unstable; urgency=medium
+millerx (0.7.4) unstable; urgency=medium
 
-  * Drive button: every mounted disk (also from /etc/fstab) with its free
-    space, then removable media to mount, open and eject.
-  * Settings: thumbnails always / not in network folders / never.
+  * Computer column (the computer button): all mounted disks (also from
+    /etc/fstab) with free space, removable media to mount and eject, network
+    shares and GVfs places, Connect to server. Replaces the drive button.
+  * Settings: thumbnails not in network folders (default) / always / never.
   * Settings in three tabs: Look, Thumbnails, Folders.
   * Installed optional helpers (ffmpeg, pdftoppm, pkexec) can be switched off.
+  * Comments after values in millerx.conf are ignored.
   * NOTICE: forks welcome, the name and logo stay with the original.
 
- -- overcatbe <1771834+overcatbe@users.noreply.github.com>  Sun, 22 Nov 2026 07:11:02 +0200
+ -- overcatbe <1771834+overcatbe@users.noreply.github.com>  Sun, 22 Nov 2026 07:29:38 +0200
 
 millerx (0.7.2) unstable; urgency=medium
 

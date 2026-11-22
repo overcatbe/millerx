@@ -4,8 +4,9 @@ A small, native file browser with **Miller columns**: every folder from `/` down
 where you are sits in its own column, and the selected file is previewed on the right.
 Like a mind map of your disk. Written in C with GTK 3 and GIO.
 
-> **New in 0.7.3:** settings in three tabs · the drive button shows all your disks with free space ·
-> thumbnails always / not in network folders / never · optional helpers can be switched off.
+> **New in 0.7.4:** the computer button opens a Computer column: all your disks with free space,
+> USB sticks, network shares, "Connect to server…" · settings in three tabs · thumbnails not in
+> network folders (or always / never) · optional helpers can be switched off.
 >
 > **New in 0.7.2:** Settings → Column width: where new folder columns start (default 230).
 >
@@ -76,7 +77,9 @@ millerX carries his name.
 - **Rename, new folder, move to trash, delete permanently**, with a conflict dialog
   (skip, keep both, replace or merge, "do this for all").
 - **Bookmarks**, shared with Thunar and the GTK file dialogs.
-- **Drives**: mount, open and eject USB sticks (through udisks2/gvfs).
+- **Computer column** (the computer button, Alt+/): all your disks with free space and a fill bar,
+  USB sticks (one click mounts, right-click ejects), network shares and GVfs places (sftp://,
+  smb://), and "Connect to server…". A disk opens to the right like any folder.
 - **Type to jump**: type the first letters of a name; the same letter again goes to the next match.
 - **Properties** with editable permissions, free space and folder totals.
 - **Open as root** through polkit (`pkexec`): the password is asked by your polkit agent,
@@ -137,7 +140,7 @@ helpers shows which ones it found):
 | PDF previews | `pdftoppm` (poppler) | the PDF's icon |
 | AVIF, HEIC and other pictures, video frames, music covers | `ffmpeg` | the file's icon |
 | Open as root | `pkexec` + a polkit agent | no root window |
-| USB sticks and other drives | gvfs / udisks2 | only drives already mounted |
+| USB sticks, Connect to server | gvfs / udisks2 | only disks already mounted |
 | Open terminal here | any terminal (`$TERMINAL` or one of 17 known) | a message saying none was found |
 
 No Qt, no KDE or GNOME libraries, no Python, no thumbnailer service, nothing running in

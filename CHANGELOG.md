@@ -1,18 +1,12 @@
 # Changelog
 
-## Unreleased
+## 0.7.4 (2026-11-22)
 
 - **Computer column:** the computer button (Alt+/) opens a first column with all your disks (also
   the ones from /etc/fstab), USB sticks and other removable media, network shares and GVfs places
   (sftp://, smb://), plus "Connect to server…". A disk opens to the right like any folder; the
   preview shows the disk itself (device, file system, free space, a fill bar) instead of counting it.
   One click mounts a stick, right-click ejects or unmounts it. The separate drive button is gone.
-
-## 0.7.3 (2026-11-22)
-
-- **The drive button shows all your disks:** every mounted disk (also the ones from /etc/fstab,
-  e.g. a second disk on /storage), with its free space, opens with one click. Below come USB sticks
-  and other removable media to mount, open and eject, as before. Boot and system mounts stay hidden.
 
 - **Thumbnails setting:** Settings → Thumbnails → Show: Not in network folders (the default now:
   NFS, Samba, sshfs get plain icons, so a slow share stays quick), Always, or Never (plain icons
