@@ -1,15 +1,16 @@
 project('millerx', 'c',
-  version : '0.7.4',
+  version : '0.7.5',
   license : 'GPL-2.0-or-later',
   meson_version : '>= 0.60',
   default_options : ['c_std=gnu11', 'warning_level=2', 'buildtype=release'])
 
 gtk = dependency('gtk+-3.0', version : '>= 3.22')
+giounix = dependency('gio-unix-2.0')    # launchers (.desktop files) on a double-click
 archive = dependency('libarchive')
 threads = dependency('threads')
 # WebP pictures: gdk-pixbuf has no WebP loader on many systems (Slackware), so we decode it ourselves
 webp = dependency('libwebp', required : false)
-deps = [gtk, archive, threads]
+deps = [gtk, giounix, archive, threads]
 if webp.found()
   deps += webp
   add_project_arguments('-DHAVE_WEBP', language : 'c')

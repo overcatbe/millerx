@@ -1,3 +1,12 @@
+millerx (0.7.5) unstable; urgency=medium
+
+  * Double-click runs programs: a real program with the x bit starts in its
+    folder; a script asks (Run, Run in terminal, Open); a .desktop launcher
+    with the x bit starts. Files that only have the x bit still just open.
+  * Computer column: the disk fill bar in the highlight colour, red above 95 %.
+
+ -- overcatbe <1771834+overcatbe@users.noreply.github.com>  Sun, 22 Nov 2026 14:21:25 +0200
+
 millerx (0.7.4) unstable; urgency=medium
 
   * Computer column (the computer button): all mounted disks (also from

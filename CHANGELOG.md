@@ -1,6 +1,12 @@
 # Changelog
 
-## Unreleased
+## 0.7.5 (2026-11-22)
+
+- **Double-click runs programs:** a program you may run (the x bit, and really a program) starts in
+  its own folder; a script asks first: Run, Run in terminal (which waits for Enter so you can read
+  what it printed), or Open to read it; a launcher (.desktop with the x bit) starts what it
+  describes. Before, millerX looked for "the program for this type" and found none. A file that only
+  has the x bit, like everything on a FAT or NTFS stick, still just opens.
 
 - **Disk fill bar in the highlight colour:** the Computer column's preview shows how full a disk is
   in your highlight colour (or the theme's), red above 95 %. GTK's own colours were made for

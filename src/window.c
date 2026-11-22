@@ -5,6 +5,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <gdk/gdkx.h>
+#include <gio/gdesktopappinfo.h>
 
 #ifndef MILLERX_BINDIR
 #define MILLERX_BINDIR "/usr/bin"
@@ -564,7 +565,7 @@ void win_look_changed(Win *w, gboolean resort)
 }
 
 /* ---- actions ------------------------------------------------------------------------- */
-void win_open_default(Win *w, GFile *f)
+static void open_by_type(Win *w, GFile *f)
 {
     char *uri = g_file_get_uri(f);
     GError *err = NULL;
@@ -573,6 +574,82 @@ void win_open_default(Win *w, GFile *f)
         g_error_free(err);
     }
     g_free(uri);
+}
+
+static void open_with(Win *w, GAppInfo *app, GList *files);
+static void run_in_terminal(Win *w, const char *path);
+static void run_program(Win *w, const char *path);
+
+/* What a file you may execute really is, by its first bytes. The x bit alone says little:
+ * on FAT and NTFS sticks every file has it. */
+enum { EXEC_NO, EXEC_PROGRAM, EXEC_SCRIPT };
+static int exec_kind(const char *path)
+{
+    if (!g_file_test(path, G_FILE_TEST_IS_REGULAR) || access(path, X_OK))
+        return EXEC_NO;
+    unsigned char head[4] = { 0 };
+    FILE *fp = fopen(path, "rb");
+    if (!fp)
+        return EXEC_NO;
+    size_t n = fread(head, 1, sizeof head, fp);
+    fclose(fp);
+    if (n >= 4 && !memcmp(head, "\177ELF", 4))
+        return EXEC_PROGRAM;
+    if (n >= 2 && head[0] == '#' && head[1] == '!')
+        return EXEC_SCRIPT;
+    return EXEC_NO;
+}
+
+/* a script: run it blindly, or read it first? */
+static void ask_script(Win *w, const char *path)
+{
+    char *base = g_path_get_basename(path);
+    GtkWidget *d = gtk_message_dialog_new(GTK_WINDOW(w->window), GTK_DIALOG_MODAL, GTK_MESSAGE_QUESTION,
+                                          GTK_BUTTONS_NONE, "“%s” is a script", base);
+    gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(d),
+                                             "Run it, or open it to read what it does?");
+    gtk_dialog_add_button(GTK_DIALOG(d), "Cancel", 0);
+    gtk_dialog_add_button(GTK_DIALOG(d), "Open", 1);
+    gtk_dialog_add_button(GTK_DIALOG(d), "Run in terminal", 2);
+    gtk_dialog_add_button(GTK_DIALOG(d), "Run", 3);
+    gtk_dialog_set_default_response(GTK_DIALOG(d), 1);
+    int r = gtk_dialog_run(GTK_DIALOG(d));
+    gtk_widget_destroy(d);
+    g_free(base);
+    if (r == 1) {
+        GFile *f = g_file_new_for_path(path);
+        open_by_type(w, f);
+        g_object_unref(f);
+    } else if (r == 2) {
+        run_in_terminal(w, path);
+    } else if (r == 3) {
+        run_program(w, path);
+    }
+}
+
+/* A double-click: a program you may run is started, a script asks first, a launcher (.desktop)
+ * starts what it describes; everything else opens in the program for its type. */
+void win_open_default(Win *w, GFile *f)
+{
+    char *path = g_file_get_path(f);            /* NULL in sftp:// and other remote places */
+    if (path && g_str_has_suffix(path, ".desktop") && !access(path, X_OK)) {
+        /* only a launcher with the x bit, like Thunar: one you just downloaded opens as text */
+        GDesktopAppInfo *app = g_desktop_app_info_new_from_filename(path);
+        if (app) {
+            open_with(w, G_APP_INFO(app), NULL);
+            g_object_unref(app);
+            g_free(path);
+            return;
+        }
+    }
+    int kind = path ? exec_kind(path) : EXEC_NO;
+    if (kind == EXEC_PROGRAM)
+        run_program(w, path);
+    else if (kind == EXEC_SCRIPT)
+        ask_script(w, path);
+    else
+        open_by_type(w, f);
+    g_free(path);
 }
 
 static void open_with(Win *w, GAppInfo *app, GList *files)
@@ -584,28 +661,96 @@ static void open_with(Win *w, GAppInfo *app, GList *files)
     }
 }
 
-/* Known terminals and how to tell them the folder. All of them are also started *in*
- * the folder, so the ones without a flag open there too. */
-static const struct { const char *exe, *flag; } TERMINALS[] = {
-    { "xfce4-terminal", "--working-directory=" },
-    { "x-terminal-emulator", NULL },          /* Debian's alternatives link */
-    { "konsole", "--workdir" },
-    { "gnome-terminal", "--working-directory=" },
-    { "kgx", "--working-directory=" },        /* GNOME Console */
-    { "ptyxis", "--working-directory=" },
-    { "mate-terminal", "--working-directory=" },
-    { "lxterminal", "--working-directory=" },
-    { "qterminal", "-w" },
-    { "tilix", "--working-directory=" },
-    { "terminator", "--working-directory=" },
-    { "alacritty", "--working-directory" },
-    { "kitty", "--directory" },
-    { "foot", "--working-directory=" },
-    { "wezterm", NULL },
-    { "urxvt", NULL },
-    { "st", NULL },
-    { "xterm", NULL },
+/* Known terminals, how to tell them the folder, and how to have them run a command (NULL: we
+ * don't know that one's way, so it isn't used for running). All of them are also started *in*
+ * the folder, so the ones without a folder flag open there too. */
+static const struct { const char *exe, *flag, *exec; } TERMINALS[] = {
+    { "xfce4-terminal", "--working-directory=", "-x" },
+    { "x-terminal-emulator", NULL, "-e" },    /* Debian's alternatives link */
+    { "konsole", "--workdir", "-e" },
+    { "gnome-terminal", "--working-directory=", "--" },
+    { "kgx", "--working-directory=", NULL },  /* GNOME Console */
+    { "ptyxis", "--working-directory=", NULL },
+    { "mate-terminal", "--working-directory=", "-x" },
+    { "lxterminal", "--working-directory=", NULL },
+    { "qterminal", "-w", NULL },
+    { "tilix", "--working-directory=", NULL },
+    { "terminator", "--working-directory=", "-x" },
+    { "alacritty", "--working-directory", "-e" },
+    { "kitty", "--directory", "" },           /* "": the command simply follows */
+    { "foot", "--working-directory=", "" },
+    { "wezterm", NULL, NULL },
+    { "urxvt", NULL, "-e" },
+    { "st", NULL, "-e" },
+    { "xterm", NULL, "-e" },
 };
+
+/* a program, started in its own folder */
+static void run_program(Win *w, const char *path)
+{
+    char *dir = g_path_get_dirname(path);
+    char *argv[] = { (char *) path, NULL };
+    GError *err = NULL;
+    if (!g_spawn_async(dir, argv, NULL, G_SPAWN_DEFAULT, NULL, NULL, NULL, &err)) {
+        win_error(w, "Couldn't run it", err->message);
+        g_error_free(err);
+    }
+    g_free(dir);
+}
+
+/* A script in a terminal, which then waits for Enter, so you can read what it printed.
+ * $TERMINAL is taken to understand -e, like xterm. */
+static void run_in_terminal(Win *w, const char *path)
+{
+    char *dir = g_path_get_dirname(path);
+    const char *wait = "\"$0\"; echo; printf '[finished: press Enter]'; read x";
+    gboolean ok = FALSE;
+    const char *env = g_getenv("TERMINAL");
+    if (env && *env) {
+        char **tv = NULL;
+        if (g_shell_parse_argv(env, NULL, &tv, NULL)) {
+            GPtrArray *a = g_ptr_array_new();
+            for (int i = 0; tv[i]; i++)
+                g_ptr_array_add(a, tv[i]);
+            const char *rest[] = { "-e", "/bin/sh", "-c", wait, path };
+            for (guint i = 0; i < G_N_ELEMENTS(rest); i++)
+                g_ptr_array_add(a, (char *) rest[i]);
+            g_ptr_array_add(a, NULL);
+            ok = g_spawn_async(dir, (char **) a->pdata, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, NULL, NULL);
+            g_ptr_array_free(a, TRUE);
+        }
+        g_strfreev(tv);
+    }
+    for (guint i = 0; !ok && i < G_N_ELEMENTS(TERMINALS); i++) {
+        if (!TERMINALS[i].exec)
+            continue;
+        char *exe = g_find_program_in_path(TERMINALS[i].exe);
+        if (!exe)
+            continue;
+        GPtrArray *a = g_ptr_array_new_with_free_func(g_free);
+        g_ptr_array_add(a, exe);
+        const char *flag = TERMINALS[i].flag;
+        if (flag && g_str_has_suffix(flag, "=")) {
+            g_ptr_array_add(a, g_strconcat(flag, dir, NULL));
+        } else if (flag) {
+            g_ptr_array_add(a, g_strdup(flag));
+            g_ptr_array_add(a, g_strdup(dir));
+        }
+        if (*TERMINALS[i].exec)
+            g_ptr_array_add(a, g_strdup(TERMINALS[i].exec));
+        const char *rest[] = { "/bin/sh", "-c", wait, path };
+        for (guint k = 0; k < G_N_ELEMENTS(rest); k++)
+            g_ptr_array_add(a, g_strdup(rest[k]));
+        g_ptr_array_add(a, NULL);
+        ok = g_spawn_async(dir, (char **) a->pdata, NULL, G_SPAWN_DEFAULT, NULL, NULL, NULL, NULL);
+        g_ptr_array_free(a, TRUE);
+    }
+    if (!ok)
+        win_error(w, "No terminal found",
+                  "Install a terminal (xterm, xfce4-terminal, konsole, …) or set the TERMINAL "
+                  "environment variable to the one you use.");
+    g_free(dir);
+}
 
 static void terminal_here(Win *w, GFile *folder)
 {

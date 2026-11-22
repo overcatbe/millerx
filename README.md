@@ -4,7 +4,10 @@ A small, native file browser with **Miller columns**: every folder from `/` down
 where you are sits in its own column, and the selected file is previewed on the right.
 Like a mind map of your disk. Written in C with GTK 3 and GIO.
 
-> **New in 0.7.4:** the computer button opens a Computer column: all your disks with free space,
+> **New in 0.7.5:** a double-click starts programs, asks before running scripts (Run, Run in
+> terminal, Open) and starts .desktop launchers · the disk fill bar in your highlight colour.
+>
+> **0.7.4:** the computer button opens a Computer column: all your disks with free space,
 > USB sticks, network shares, "Connect to server…" · settings in three tabs · thumbnails not in
 > network folders (or always / never) · optional helpers can be switched off.
 >
