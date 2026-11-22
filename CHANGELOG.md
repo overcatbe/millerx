@@ -14,8 +14,8 @@
   e.g. a second disk on /storage), with its free space, opens with one click. Below come USB sticks
   and other removable media to mount, open and eject, as before. Boot and system mounts stay hidden.
 
-- **Thumbnails setting:** Settings → Preview → Thumbnails: Always (as before), Not in network
-  folders (NFS, Samba, sshfs: plain icons there, so a slow share stays quick), or Never (plain icons
+- **Thumbnails setting:** Settings → Thumbnails → Show: Not in network folders (the default now:
+  NFS, Samba, sshfs get plain icons, so a slow share stays quick), Always, or Never (plain icons
   everywhere). A file you click is still shown big.
 
 - **Settings in three tabs:** Look (dividers and highlight on the left, browsing and preview on the

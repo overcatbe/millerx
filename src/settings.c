@@ -5,7 +5,8 @@
 #include <string.h>
 
 Look LOOK = { NULL, 2, FALSE, PREVIEW_DEFAULT, TRUE, FALSE, .column_width = COL_DEFAULT,
-              .use_ffmpeg = TRUE, .use_pdftoppm = TRUE, .use_pkexec = TRUE };
+              .use_ffmpeg = TRUE, .use_pdftoppm = TRUE, .use_pkexec = TRUE,
+              .thumbs = THUMBS_LOCAL };
 
 static char *config_file(void)
 {
@@ -79,7 +80,7 @@ void look_load(void)
     LOOK.use_pdftoppm = get_bool(kf, "helpers", "pdftoppm", TRUE);
     LOOK.use_pkexec = get_bool(kf, "helpers", "pkexec", TRUE);
     char *th = get_str(kf, "thumbnails", "show");
-    LOOK.thumbs = !g_strcmp0(th, "local") ? THUMBS_LOCAL : !g_strcmp0(th, "never") ? THUMBS_NEVER : THUMBS_ALWAYS;
+    LOOK.thumbs = !g_strcmp0(th, "always") ? THUMBS_ALWAYS : !g_strcmp0(th, "never") ? THUMBS_NEVER : THUMBS_LOCAL;
     g_free(th);
     LOOK.gallery_names = get_bool(kf, "look", "gallery_names", FALSE);
     char *hl = get_str(kf, "look", "highlight_color");

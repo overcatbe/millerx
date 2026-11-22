@@ -188,7 +188,7 @@ folders_first = true
 show_hidden = false
 
 [thumbnails]
-show = always            # always | local (none in network folders) | never
+show = local             # local (none in network folders) | always | never
 max_mb = 1024            # cache size to shrink to, least used first
 max_days = 180           # forget thumbnails unused this long
 auto_clean = true        # once a day when millerX starts
