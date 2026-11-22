@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- **Computer column:** the computer button (Alt+/) opens a first column with all your disks (also
+  the ones from /etc/fstab), USB sticks and other removable media, network shares and GVfs places
+  (sftp://, smb://), plus "Connect to server…". A disk opens to the right like any folder; the
+  preview shows the disk itself (device, file system, free space, a fill bar) instead of counting it.
+  One click mounts a stick, right-click ejects or unmounts it. The separate drive button is gone.
+
 ## 0.7.3 (2026-11-22)
 
 - **The drive button shows all your disks:** every mounted disk (also the ones from /etc/fstab,

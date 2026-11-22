@@ -1477,6 +1477,63 @@ void preview_show_many(Preview *p, GList *files)
     start_sizes(p, paths, size_l, count_l, NULL);
 }
 
+/* a disk in the Computer column: where it is, what it is, how full; never its contents (counting
+ * a whole disk would take ages). Free space only for local disks: a dead share must not hang us. */
+void preview_show_disk(Preview *p, const char *name, GIcon *icon, GFile *root, const char *where,
+                       const char *device, const char *fs, const char *note)
+{
+    preview_clear(p);
+    show_icon(p, icon);
+    char *m = g_markup_printf_escaped("<b>%s</b>", name ? name : "");
+    gtk_label_set_markup(GTK_LABEL(p->title), m);
+    g_free(m);
+    int r = 0;
+    if (note)
+        row(p, r++, "", note);
+    if (where && *where)
+        row(p, r++, "Where", where);
+    if (device && *device)
+        row(p, r++, "Device", device);
+    if (fs && *fs)
+        row(p, r++, "File system", fs);
+    char *path = root ? g_file_get_path(root) : NULL;
+    if (path && !path_on_network(path)) {
+        GFileInfo *fi = g_file_query_filesystem_info(root, G_FILE_ATTRIBUTE_FILESYSTEM_FREE ","
+                                                     G_FILE_ATTRIBUTE_FILESYSTEM_SIZE, NULL, NULL);
+        if (fi && g_file_info_has_attribute(fi, G_FILE_ATTRIBUTE_FILESYSTEM_SIZE)) {
+            guint64 size = g_file_info_get_attribute_uint64(fi, G_FILE_ATTRIBUTE_FILESYSTEM_SIZE);
+            guint64 free_ = g_file_info_get_attribute_uint64(fi, G_FILE_ATTRIBUTE_FILESYSTEM_FREE);
+            char *fr = g_format_size(free_), *sz = g_format_size(size);
+            char *t = g_strdup_printf("%s free of %s", fr, sz);
+            row(p, r++, "Space", t);
+            if (size) {
+                double used = 1.0 - (double) free_ / (double) size;
+                GtkWidget *k = gtk_label_new("Used");
+                gtk_label_set_xalign(GTK_LABEL(k), 1);
+                gtk_style_context_add_class(gtk_widget_get_style_context(k), "dim-label");
+                GtkWidget *bar = gtk_level_bar_new_for_interval(0, 1);
+                gtk_level_bar_set_value(GTK_LEVEL_BAR(bar), used);
+                gtk_widget_set_valign(bar, GTK_ALIGN_CENTER);
+                gtk_widget_set_hexpand(bar, TRUE);
+                char *pc = g_strdup_printf("%.0f %%", used * 100);
+                GtkWidget *pl = gtk_label_new(pc);
+                GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+                gtk_box_pack_start(GTK_BOX(box), bar, TRUE, TRUE, 0);
+                gtk_box_pack_start(GTK_BOX(box), pl, FALSE, FALSE, 0);
+                gtk_grid_attach(GTK_GRID(p->details), k, 0, r, 1, 1);
+                gtk_grid_attach(GTK_GRID(p->details), box, 1, r++, 1, 1);
+                g_free(pc);
+            }
+            g_free(t);
+            g_free(fr);
+            g_free(sz);
+        }
+        g_clear_object(&fi);
+    }
+    g_free(path);
+    gtk_widget_show_all(p->details);
+}
+
 static void show_text_file(Preview *p, const char *path)
 {
     FILE *fh = fopen(path, "rb");

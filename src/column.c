@@ -20,6 +20,8 @@ void column_unref(Column *c)
     g_clear_object(&c->cancel);
     if (c->chain)
         g_ptr_array_unref(c->chain);
+    if (c->objs)
+        g_ptr_array_unref(c->objs);
     g_free(c->pending_select);
     g_string_free(c->typed, TRUE);
     win_unref(c->win);
@@ -362,6 +364,11 @@ static void on_activated(GtkTreeView *v, GtkTreePath *path, GtkTreeViewColumn *c
     gboolean isdir;
     gtk_tree_model_get_iter(GTK_TREE_MODEL(c->store), &it, path);
     gtk_tree_model_get(GTK_TREE_MODEL(c->store), &it, C_FILE, &f, C_ISDIR, &isdir, -1);
+    if (!f) {                                   /* Computer: a stick to mount, or connect */
+        if (c->computer)
+            computer_activate(c);
+        return;
+    }
     if (isdir)
         win_focus_next(c->win, c);
     else
@@ -396,6 +403,23 @@ static gboolean on_button(GtkWidget *view, GdkEventButton *ev, Column *c)
             gtk_tree_path_free(p);
         }
         return done;
+    }
+    if (c->computer && ev->type == GDK_BUTTON_PRESS && ev->button == 1 &&
+        gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(view), ev->x, ev->y, &p, NULL, NULL, NULL)) {
+        /* a stick that isn't mounted, or "Connect to server…": one click does it */
+        GtkTreeIter it;
+        GFile *f = NULL;
+        gtk_tree_model_get_iter(GTK_TREE_MODEL(c->store), &it, p);
+        gtk_tree_model_get(GTK_TREE_MODEL(c->store), &it, C_FILE, &f, -1);
+        gtk_tree_path_free(p);
+        p = NULL;
+        if (!f) {
+            column_select_iter(c, &it);
+            gtk_widget_grab_focus(view);
+            computer_activate(c);
+            return TRUE;
+        }
+        g_object_unref(f);
     }
     if (ev->type != GDK_BUTTON_PRESS || ev->button != 3)
         return FALSE;
@@ -501,6 +525,20 @@ static gboolean on_key(GtkWidget *view, GdkEventKey *ev, Column *c)
     if (k == GDK_KEY_Menu || (shift && k == GDK_KEY_F10)) {
         win_context_menu(w, c, NULL);
         return TRUE;
+    }
+    if (c->computer) {             /* the disks themselves: no copying, deleting, renaming … */
+        if (k == GDK_KEY_F5) {
+            computer_refresh(w);
+            return TRUE;
+        }
+        if (!ctrl && !alt) {
+            gunichar ch = gdk_keyval_to_unicode(k);
+            if (ch && g_unichar_isprint(ch) && ch != ' ') {
+                type_jump(c, ch);
+                return TRUE;
+            }
+        }
+        return ctrl || k == GDK_KEY_Delete || k == GDK_KEY_F2;
     }
     if (ctrl && !shift && (k == GDK_KEY_c || k == GDK_KEY_C)) {
         win_clip_set(w, column_selected_files(c), FALSE);
@@ -734,8 +772,9 @@ Column *column_new(Win *w, GFile *gfile, GPtrArray *chain)
     c->view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(c->store));
     gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(c->view), FALSE);
     gtk_tree_view_set_enable_search(GTK_TREE_VIEW(c->view), FALSE);
+    c->computer = file_is_computer(gfile);
     gtk_tree_selection_set_mode(gtk_tree_view_get_selection(GTK_TREE_VIEW(c->view)),
-                                GTK_SELECTION_MULTIPLE);
+                                c->computer ? GTK_SELECTION_SINGLE : GTK_SELECTION_MULTIPLE);
     GtkTreeViewColumn *col = gtk_tree_view_column_new();
     GtkCellRenderer *r_icon = gtk_cell_renderer_pixbuf_new();
     g_object_set(r_icon, "stock-size", GTK_ICON_SIZE_MENU, NULL);
@@ -791,6 +830,12 @@ Column *column_new(Win *w, GFile *gfile, GPtrArray *chain)
     g_signal_connect(c->view, "key-press-event", G_CALLBACK(on_key), c);
     g_signal_connect(c->view, "focus-in-event", G_CALLBACK(on_focus), c);
 
+    if (c->computer) {             /* filled from the mount table and GIO, not a folder */
+        c->objs = g_ptr_array_new_with_free_func(g_object_unref);
+        computer_fill(c);
+        c->loaded = TRUE;
+        return c;
+    }
     GdkDragAction actions = GDK_ACTION_COPY | GDK_ACTION_MOVE;
     gtk_tree_view_enable_model_drag_source(GTK_TREE_VIEW(c->view), GDK_BUTTON1_MASK, URI_TARGET, 1, actions);
     gtk_tree_view_enable_model_drag_dest(GTK_TREE_VIEW(c->view), URI_TARGET, 1, actions);

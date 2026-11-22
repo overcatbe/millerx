@@ -120,6 +120,8 @@ struct Column {
     FolderSort sort;           /* this folder's own order, if custom */
     gboolean custom;
     GtkWidget *sortbar, *sortlabel;
+    gboolean computer;         /* the Computer column: disks, removable media, network */
+    GPtrArray *objs;           /* its GMounts / GVolumes, by row (C_SIZE) */
 };
 
 struct Preview {
@@ -168,7 +170,7 @@ struct Win {
     GtkApplication *app;
     GtkWidget *window, *location, *colbox, *hscroll, *pane_divider;
     GtkWidget *statusbar, *progress, *cancel_btn;
-    GtkWidget *bm_menu, *dev_menu;
+    GtkWidget *bm_menu;
     Preview *preview;
     GList *columns;            /* Column*, left to right */
     Column *focused;
@@ -239,6 +241,8 @@ void preview_free(Preview *p);
 void preview_clear(Preview *p);
 void preview_show_file(Preview *p, GFile *f);
 void preview_show_many(Preview *p, GList *files);
+void preview_show_disk(Preview *p, const char *name, GIcon *icon, GFile *root, const char *where,
+                       const char *device, const char *fs, const char *note);
 
 /* ---- jobs (job.c) ------------------------------------------------------------ */
 typedef struct Job Job;
@@ -261,7 +265,15 @@ gboolean arc_create(const char *out, int format, char **paths, const char *base,
 /* ---- places (places.c) -------------------------------------------------------- */
 void places_fill_bookmarks(Win *w);
 gboolean path_on_network(const char *path);
-void places_fill_devices(Win *w);
+/* the Computer column (places.c); its rows' kind is in C_MTIME */
+enum { K_DISK, K_MOUNT, K_VOLUME, K_CONNECT };
+gboolean file_is_computer(GFile *f);
+void computer_fill(Column *c);
+void computer_refresh(Win *w);
+void computer_preview(Column *c);
+void computer_activate(Column *c);
+void computer_menu(Win *w, Column *c, GdkEventButton *ev);
+void win_open_computer(Win *w);
 void places_bookmark_add(Win *w, GFile *folder);
 void places_watch_volumes(Win *w);
 

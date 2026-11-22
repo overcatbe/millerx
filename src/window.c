@@ -201,6 +201,11 @@ Column *win_last_column(Win *w)
 
 static void update_location(Win *w, GFile *f)
 {
+    if (file_is_computer(f)) {
+        gtk_entry_set_text(GTK_ENTRY(w->location), "computer:///");
+        gtk_window_set_title(GTK_WINDOW(w->window), is_root() ? "ROOT: Computer" : "Computer");
+        return;
+    }
     char *p = file_path(f);
     gtk_entry_set_text(GTK_ENTRY(w->location), p);
     char *t = is_root() ? g_strconcat("ROOT: ", p, NULL) : g_strdup(p);
@@ -282,6 +287,10 @@ static Column *add_column(Win *w, GFile *f, GPtrArray *chain)
 /* show the whole chain of folders from / down to f, one column each */
 void win_open_path(Win *w, GFile *f)
 {
+    if (file_is_computer(f)) {
+        win_open_computer(w);
+        return;
+    }
     GFile *keep = g_object_ref(f);     /* f may belong to a column we're about to drop */
     char *path = g_file_get_path(keep);
     clear_columns(w);
@@ -304,6 +313,18 @@ void win_open_path(Win *w, GFile *f)
     update_location(w, keep);
     g_free(path);
     g_object_unref(keep);
+}
+
+/* the Computer column alone: disks, removable media, network */
+void win_open_computer(Win *w)
+{
+    clear_columns(w);
+    GFile *f = g_file_new_for_uri("computer:///");
+    Column *c = add_column(w, f, NULL);
+    g_object_unref(f);
+    update_location(w, c->gfile);
+    gtk_widget_grab_focus(c->view);
+    win_status(w, "Computer: click a disk to open it, right-click to eject");
 }
 
 void win_chain_finished(Win *w)
@@ -358,6 +379,18 @@ void win_column_selected(Win *w, Column *c)
     GFile *f;
     gboolean isdir;
     column_selected_single(c, &f, &isdir);
+    if (c->computer) {             /* a disk: its folders to the right, the disk in the preview */
+        if (f) {
+            update_location(w, f);
+            add_column(w, f, NULL);
+        } else {
+            update_location(w, c->gfile);
+        }
+        computer_preview(c);
+        g_clear_object(&f);
+        idle_scroll_end(w);
+        return;
+    }
     update_location(w, f);
     if (isdir)
         add_column(w, f, NULL);
@@ -404,9 +437,7 @@ static void go_home(Win *w)
 
 static void go_root(Win *w)
 {
-    GFile *r = g_file_new_for_path("/");
-    win_open_path(w, r);
-    g_object_unref(r);
+    win_open_computer(w);
 }
 
 GFile *win_current_folder(Win *w)
@@ -420,7 +451,7 @@ static void on_location(GtkEntry *e, Win *w)
     char *t = g_strstrip(g_strdup(gtk_entry_get_text(e)));
     char *exp = t[0] == '~' ? g_build_filename(g_get_home_dir(), t + 1, NULL) : g_strdup(t);
     GFile *f = g_file_new_for_commandline_arg(exp);
-    if (g_file_query_exists(f, NULL))
+    if (file_is_computer(f) || g_file_query_exists(f, NULL))
         win_open_path(w, f);
     else
         win_status(w, "Not found: %s", t);
@@ -1233,6 +1264,10 @@ static void sort_menu(GtkWidget *menu, Win *w, GFile *folder)
 
 void win_context_menu(Win *w, Column *c, GdkEventButton *ev)
 {
+    if (c->computer) {
+        computer_menu(w, c, ev);
+        return;
+    }
     GList *files = column_selected_files(c);
     GFile *one = NULL;
     gboolean single_dir = FALSE;
@@ -1590,16 +1625,13 @@ static GtkWidget *tool_button(const char *icon, const char *tip)
     return b;
 }
 
-/* places menus are rebuilt BEFORE they pop up; filling them while already shown made GTK
- * open them at the old size, then resize and leave them scrolled */
+/* the bookmarks menu is rebuilt BEFORE it pops up; filling it while already shown made GTK
+ * open it at the old size, then resize and leave it scrolled */
 static void places_clicked(GtkButton *b, Win *w)
 {
-    GtkWidget *menu = g_object_get_data(G_OBJECT(b), "bm") ? w->bm_menu : w->dev_menu;
-    if (menu == w->bm_menu)
-        places_fill_bookmarks(w);
-    else
-        places_fill_devices(w);
-    gtk_menu_popup_at_widget(GTK_MENU(menu), GTK_WIDGET(b), GDK_GRAVITY_SOUTH_WEST,
+    (void) b;
+    places_fill_bookmarks(w);
+    gtk_menu_popup_at_widget(GTK_MENU(w->bm_menu), GTK_WIDGET(b), GDK_GRAVITY_SOUTH_WEST,
                              GDK_GRAVITY_NORTH_WEST, NULL);
 }
 
@@ -1667,17 +1699,13 @@ Win *win_new(GtkApplication *app, GFile *start)
     g_signal_connect(up, "clicked", G_CALLBACK(on_up), w);
     GtkWidget *home = tool_button("go-home", "Home (Alt+Home)");
     g_signal_connect(home, "clicked", G_CALLBACK(on_home), w);
-    GtkWidget *root = tool_button("computer", "File system / (Alt+/)");
+    GtkWidget *root = tool_button("computer", "Computer: disks, USB sticks, network (Alt+/)");
     g_signal_connect(root, "clicked", G_CALLBACK(on_root), w);
     w->bm_menu = gtk_menu_new();
     gtk_menu_attach_to_widget(GTK_MENU(w->bm_menu), w->window, NULL);
     GtkWidget *bm = tool_button("user-bookmarks", "Bookmarks (Ctrl+D adds this folder)");
     g_object_set_data(G_OBJECT(bm), "bm", GINT_TO_POINTER(1));
     g_signal_connect(bm, "clicked", G_CALLBACK(places_clicked), w);
-    w->dev_menu = gtk_menu_new();
-    gtk_menu_attach_to_widget(GTK_MENU(w->dev_menu), w->window, NULL);
-    GtkWidget *dev = tool_button("drive-removable-media", "Disks and drives: open, mount, eject");
-    g_signal_connect(dev, "clicked", G_CALLBACK(places_clicked), w);
     GtkWidget *main_menu = gtk_menu_new();
     GtkWidget *mi = gtk_menu_item_new_with_label("New window");
     gtk_accel_label_set_accel(GTK_ACCEL_LABEL(gtk_bin_get_child(GTK_BIN(mi))), GDK_KEY_n, GDK_CONTROL_MASK);
@@ -1702,8 +1730,8 @@ Win *win_new(GtkApplication *app, GFile *start)
 
     GtkWidget *bar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
     g_object_set(bar, "margin", 4, NULL);
-    GtkWidget *btns[] = { up, home, root, bm, dev };
-    for (int i = 0; i < 5; i++)
+    GtkWidget *btns[] = { up, home, root, bm };
+    for (guint i = 0; i < G_N_ELEMENTS(btns); i++)
         gtk_box_pack_start(GTK_BOX(bar), btns[i], FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(bar), w->location, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(bar), menu_btn, FALSE, FALSE, 0);
