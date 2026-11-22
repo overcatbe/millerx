@@ -22,7 +22,7 @@ The technique is credited to **Mark S. Miller**, who came up with it in 1980 at
 Yale University; it was later used at Project Xanadu, Datapoint and NeXT.
 millerX carries his name.
 
-![millerX](docs/screenshot.png)
+![millerX](docs/screenshot.png?v=074)
 
 ## What it does
 
@@ -65,7 +65,7 @@ millerX carries his name.
 - Columns follow changes on disk. Names sort case-insensitive and naturally (file2 before
   file10), folders first (optional).
 
-![The preview fits a picture into the rest of the window](docs/preview.png)
+![The preview fits a picture into the rest of the window](docs/preview.png?v=074)
 
 What changed in each version: [CHANGELOG](CHANGELOG.md).
 
@@ -184,7 +184,7 @@ Folders with their own sorting are kept in `~/.config/millerx/sorting.conf`, one
 (`date`, `size`, `type` or `name`, a tab, `1` if reversed, a tab, the folder). The settings
 list them too, to change or remove.
 
-![Settings](docs/settings.png)
+![Settings](docs/settings.png?v=074)
 
 ## Bugs and wishes
 
