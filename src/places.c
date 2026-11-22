@@ -378,6 +378,34 @@ static gboolean is_disk_mount(const struct mntent *e)
     return TRUE;
 }
 
+/* is path on a network share (NFS, Samba, sshfs …)? From the mount table, so a dead share
+ * can't hang us the way asking the share itself would */
+gboolean path_on_network(const char *path)
+{
+    static const char *NET[] = { "nfs", "nfs4", "cifs", "smb3", "smbfs", "fuse.sshfs", "fuse.rclone",
+                                 "9p", "afs", "ceph", "glusterfs", "davfs", "fuse.gvfsd-fuse", NULL };
+    FILE *f = setmntent("/proc/self/mounts", "r");
+    if (!f)
+        return FALSE;
+    size_t best = 0;
+    gboolean net = FALSE;
+    struct mntent *e;
+    while ((e = getmntent(f))) {
+        size_t n = strlen(e->mnt_dir);
+        gboolean under = !strcmp(e->mnt_dir, "/") ||
+                         (!strncmp(path, e->mnt_dir, n) && (path[n] == '/' || path[n] == '\0'));
+        if (!under || n < best)
+            continue;
+        best = n;                                   /* the deepest mount holding path decides */
+        net = FALSE;
+        for (int i = 0; NET[i]; i++)
+            if (!strcmp(e->mnt_type, NET[i]))
+                net = TRUE;
+    }
+    endmntent(f);
+    return net;
+}
+
 /* "File System (/)  312.4 GB free of 937.0 GB"; local disks only, a dead network share mustn't hang */
 static int add_disks(Win *w, GtkWidget *m, GHashTable *gio_paths)
 {

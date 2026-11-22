@@ -601,7 +601,7 @@ static gboolean add_batch(gpointer data)
         g_free(disp);
         g_object_set_data_full(G_OBJECT(child), "path", g_build_filename(p->pending_dir, e->name, NULL), g_free);
         g_object_set_data_full(G_OBJECT(child), "ct", g_strdup(e->ct), g_free);
-        g_object_set_data(G_OBJECT(child), "state", GINT_TO_POINTER(!e->dir && thumbable(e->ct) ? 0 : 2));
+        g_object_set_data(G_OBJECT(child), "state", GINT_TO_POINTER(!e->dir && !p->grid_icons && thumbable(e->ct) ? 0 : 2));
         gtk_container_add(GTK_CONTAINER(p->grid), child);
         gtk_widget_show_all(child);
     }
@@ -702,6 +702,7 @@ static gboolean start_grid(gpointer data)
     if (avail < 100)
         avail = p->width - 24;
     p->grid_w = avail;
+    p->grid_icons = LOOK.thumbs == THUMBS_NEVER || (LOOK.thumbs == THUMBS_LOCAL && path_on_network(dir));
     p->cols = MAX(THUMB_COLS, (avail + THUMB_GAP) / (THUMB_TARGET + THUMB_GAP + 2 * THUMB_PAD));
     gtk_flow_box_set_min_children_per_line(GTK_FLOW_BOX(p->grid), p->cols);
     gtk_flow_box_set_max_children_per_line(GTK_FLOW_BOX(p->grid), p->cols);

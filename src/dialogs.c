@@ -364,7 +364,7 @@ typedef struct {
     Win *w;
     GtkWidget *auto_rb, *own_rb, *colour, *width, *style, *pw, *cw, *ff, *sh;
     GtkWidget *cache_size, *cache_clear, *cache_mb, *cache_days, *cache_auto;
-    GtkWidget *sort_list, *names;
+    GtkWidget *sort_list, *names, *thumbs;
     GtkWidget *hl_auto, *hl_own, *hl_colour, *hl_sys, *hl_unsys;
 } Set;
 
@@ -402,6 +402,8 @@ static void settings_changed(GtkWidget *any, Set *s)
     nl.folders_first = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->ff));
     nl.show_hidden = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->sh));
     nl.gallery_names = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->names));
+    const char *tid = gtk_combo_box_get_active_id(GTK_COMBO_BOX(s->thumbs));
+    nl.thumbs = !g_strcmp0(tid, "local") ? THUMBS_LOCAL : !g_strcmp0(tid, "never") ? THUMBS_NEVER : THUMBS_ALWAYS;
     nl.cache_max_mb = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(s->cache_mb));
     nl.cache_days = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(s->cache_days));
     nl.cache_auto = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->cache_auto));
@@ -746,6 +748,15 @@ void dialog_settings(Win *w)
     s->names = gtk_check_button_new_with_label("Show names under thumbnails");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(s->names), LOOK.gallery_names);
     srow(grid, &r, "Gallery", s->names);
+    s->thumbs = gtk_combo_box_text_new();
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->thumbs), "always", "Always");
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->thumbs), "local", "Not in network folders");
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->thumbs), "never", "Never (plain icons)");
+    gtk_combo_box_set_active_id(GTK_COMBO_BOX(s->thumbs), LOOK.thumbs == THUMBS_LOCAL ? "local"
+                                                          : LOOK.thumbs == THUMBS_NEVER ? "never" : "always");
+    gtk_widget_set_tooltip_text(s->thumbs, "Pictures in the gallery under a folder. A file you click is always "
+                                           "shown big. Network folders (NFS, Samba, sshfs) can be slow with them.");
+    srow(grid, &r, "Thumbnails", s->thumbs);
     section(&grid, &r, "Browsing");
     s->cw = gtk_spin_button_new_with_range(COL_MIN, 600, 10);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(s->cw), LOOK.column_width);
@@ -797,6 +808,7 @@ void dialog_settings(Win *w)
     g_signal_connect(s->ff, "toggled", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->sh, "toggled", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->names, "toggled", G_CALLBACK(settings_changed), s);
+    g_signal_connect(s->thumbs, "changed", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->hl_auto, "toggled", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->hl_colour, "color-set", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->hl_sys, "clicked", G_CALLBACK(hl_system_clicked), s);

@@ -15,6 +15,7 @@
 #define MILLERX_VERSION "0.7"
 #endif
 
+enum { THUMBS_ALWAYS, THUMBS_LOCAL, THUMBS_NEVER };
 #define COL_DEFAULT 230      /* the start width of a column, unless set in Settings */
 #define COL_MIN 120
 #define COL_MAX 1200
@@ -43,6 +44,7 @@ typedef struct {
     int cache_days;         /* forget thumbnails unused this long */
     gboolean cache_auto;    /* clean once a day when millerX starts */
     int column_width;       /* start width of folder columns, 120-600 */
+    int thumbs;             /* gallery thumbnails: THUMBS_ALWAYS, _LOCAL (not on network folders), _NEVER */
 } Look;
 
 extern Look LOOK;
@@ -136,6 +138,7 @@ struct Preview {
     guint pending_pos;
     char *pending_dir;
     guint grid_timer;
+    gboolean grid_icons;       /* this grid shows plain icons (thumbnails off here) */
     guint grid_token;          /* the grid's own: reloading it must not stop the size count */
     GFileMonitor *grid_monitor;
     guint grid_refresh;
@@ -253,6 +256,7 @@ gboolean arc_create(const char *out, int format, char **paths, const char *base,
 
 /* ---- places (places.c) -------------------------------------------------------- */
 void places_fill_bookmarks(Win *w);
+gboolean path_on_network(const char *path);
 void places_fill_devices(Win *w);
 void places_bookmark_add(Win *w, GFile *folder);
 void places_watch_volumes(Win *w);

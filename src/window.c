@@ -1765,7 +1765,7 @@ Win *win_new(GtkApplication *app, GFile *start)
 void app_apply_look(GtkApplication *app, const Look *nl)
 {
     gboolean resort = nl->folders_first != LOOK.folders_first;
-    gboolean names = nl->gallery_names != LOOK.gallery_names;
+    gboolean names = nl->gallery_names != LOOK.gallery_names || nl->thumbs != LOOK.thumbs;
     char *col = g_strdup(nl->divider_color), *hl = g_strdup(nl->highlight);
     gboolean hl_changed = g_strcmp0(nl->highlight, LOOK.highlight);
     g_free(LOOK.divider_color);
