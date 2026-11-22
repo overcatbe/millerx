@@ -9,31 +9,6 @@ Like a mind map of your disk. Written in C with GTK 3 and GIO.
 > network folders (or always / never) · optional helpers can be switched off.
 >
 > **New in 0.7.2:** Settings → Column width: where new folder columns start (default 230).
->
-> **New in 0.7.1:** millerX remembers its window size and place · settings in tidy boxes ·
-> a narrow preview stacks the icon above the details.
->
-> **New in 0.7:** the gallery: select several thumbnails, drag them out, Ctrl+C/X · video
-> frames and music covers (through ffmpeg).
->
-> **New in 0.6.5:** extract and compress archives (zip, tar.gz/xz/zst, 7z) · a ready-built
-> Slackware .txz on every release.
->
-> **New in 0.6.4:** more windows: Ctrl+N, Menu → New window, or middle-click a folder.
->
-> **New in 0.6.3:** builds on Slackware 15.0 (GLib 2.70) again.
->
-> **New in 0.6.2:** your own highlight colour, picked live in the settings, and if you
-> like for all GTK programs.
->
-> **New in 0.6.1:** AVIF and HEIC pictures (through ffmpeg) · optional names under the
-> gallery's thumbnails.
->
-> **New in 0.6:** the preview takes the rest of the window and fits pictures into it ·
-> a fast gallery of a folder's pictures and PDFs, with its own right-click menu ·
-> thumbnails shared with Thunar in `~/.cache/thumbnails`, cleaned up automatically ·
-> WebP pictures · sorting per folder (date, size, type), clearly marked.
-> All the details: [CHANGELOG](CHANGELOG.md).
 
 ### Miller columns
 
