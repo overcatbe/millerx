@@ -9,6 +9,7 @@ Like a mind map of your disk. Written in C with GTK 3 and GIO.
 > network folders (or always / never) · optional helpers can be switched off.
 >
 > **New in 0.7.2:** Settings → Column width: where new folder columns start (default 230).
+> All the details: [CHANGELOG](CHANGELOG.md).
 
 ### Miller columns
 
