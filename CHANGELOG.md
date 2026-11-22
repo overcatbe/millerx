@@ -10,6 +10,10 @@
   folders (NFS, Samba, sshfs: plain icons there, so a slow share stays quick), or Never (plain icons
   everywhere). A file you click is still shown big.
 
+- **Settings in three tabs:** Look (dividers and highlight on the left, browsing and preview on the
+  right), Thumbnails (what to show, the cache, the optional helpers) and Folders (the ones sorted their
+  own way). Shorter, no scrolling; they open on the tab you used last.
+
 ## 0.7.2 (2026-11-21)
 
 - **Column width setting:** Settings → Browsing → Column width (120–600, default 230) sets where new

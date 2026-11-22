@@ -427,6 +427,35 @@ static void settings_close(GtkDialog *d, int r, Set *s)
  * the labels of all sections equally wide, so the frames line up. */
 static GtkWidget *SECTIONS;
 static GtkSizeGroup *LABELS;
+static int LAST_TAB;                   /* the settings open where they were left (this run) */
+
+/* the labels of a new column line up with each other, not with the other column */
+static void new_column(GtkWidget *col)
+{
+    SECTIONS = col;
+    g_clear_object(&LABELS);           /* the labels keep the old group alive */
+    LABELS = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
+}
+
+/* a tab: its sections in a box that scrolls if the screen is too small */
+static GtkWidget *tab(GtkWidget *nb, const char *title, int max_h)
+{
+    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+    g_object_set(box, "margin", 14, NULL);
+    GtkWidget *scroll = gtk_scrolled_window_new(NULL, NULL);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+    gtk_scrolled_window_set_propagate_natural_height(GTK_SCROLLED_WINDOW(scroll), TRUE);
+    gtk_scrolled_window_set_propagate_natural_width(GTK_SCROLLED_WINDOW(scroll), TRUE);
+    gtk_scrolled_window_set_max_content_height(GTK_SCROLLED_WINDOW(scroll), max_h);
+    gtk_container_add(GTK_CONTAINER(scroll), box);
+    gtk_notebook_append_page(GTK_NOTEBOOK(nb), scroll, gtk_label_new(title));
+    return box;
+}
+
+static void on_tab(GtkNotebook *nb, GtkWidget *page, guint n, gpointer d)
+{
+    LAST_TAB = (int) n;
+}
 
 static void srow(GtkWidget *grid, int *r, const char *label, GtkWidget *w)
 {
@@ -664,28 +693,31 @@ void dialog_settings(Win *w)
 {
     GtkWidget *d = gtk_dialog_new_with_buttons("millerX settings", GTK_WINDOW(w->window), 0, "Close",
                                                GTK_RESPONSE_CLOSE, NULL);
-    /* one framed box per section, all in a column that scrolls if the screen is too small */
-    SECTIONS = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
-    g_object_set(SECTIONS, "margin", 14, NULL);
-    LABELS = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
-    GtkWidget *scroll = gtk_scrolled_window_new(NULL, NULL);
-    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-    gtk_scrolled_window_set_propagate_natural_height(GTK_SCROLLED_WINDOW(scroll), TRUE);
-    gtk_scrolled_window_set_propagate_natural_width(GTK_SCROLLED_WINDOW(scroll), TRUE);
+    /* three tabs: Look (two columns), Thumbnails, Folders; every section a framed box */
     GdkRectangle area = { 0, 0, 0, 900 };
     GdkMonitor *mon = gdk_display_get_monitor_at_window(gtk_widget_get_display(w->window),
                                                         gtk_widget_get_window(w->window));
     if (mon)
         gdk_monitor_get_workarea(mon, &area);
-    gtk_scrolled_window_set_max_content_height(GTK_SCROLLED_WINDOW(scroll), MAX(300, area.height - 120));
-    gtk_container_add(GTK_CONTAINER(scroll), SECTIONS);
-    gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(d))), scroll, TRUE, TRUE, 0);
+    int max_h = MAX(300, area.height - 160);
+    GtkWidget *nb = gtk_notebook_new();
+    gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(d))), nb, TRUE, TRUE, 0);
+    GtkWidget *look = tab(nb, "Look", max_h);
+    GtkWidget *cols = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 14);
+    GtkWidget *left = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+    GtkWidget *right = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+    gtk_box_pack_start(GTK_BOX(cols), left, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(cols), right, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(look), cols, FALSE, FALSE, 0);
+    GtkWidget *thumbs_tab = tab(nb, "Thumbnails", max_h);
+    GtkWidget *folders_tab = tab(nb, "Folders", max_h);
     GtkWidget *grid = NULL;
     Set *s = g_new0(Set, 1);
     s->w = w;
     g_object_set_data_full(G_OBJECT(d), "set", s, g_free);
     int r = 0;
 
+    new_column(left);
     section(&grid, &r, "Column dividers");
     s->auto_rb = gtk_radio_button_new_with_label(NULL, "Follow the theme (20 % lighter / darker)");
     s->own_rb = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(s->auto_rb), "Own colour");
@@ -741,22 +773,7 @@ void dialog_settings(Win *w)
     gtk_box_pack_start(GTK_BOX(sysb), s->hl_sys, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(sysb), s->hl_unsys, FALSE, FALSE, 0);
     srow(grid, &r, "System", sysb);
-    section(&grid, &r, "Preview");
-    s->pw = gtk_spin_button_new_with_range(200, 900, 10);
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(s->pw), LOOK.preview_width);
-    srow(grid, &r, "Minimum width (px)", s->pw);   /* it takes the rest of the window */
-    s->names = gtk_check_button_new_with_label("Show names under thumbnails");
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(s->names), LOOK.gallery_names);
-    srow(grid, &r, "Gallery", s->names);
-    s->thumbs = gtk_combo_box_text_new();
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->thumbs), "always", "Always");
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->thumbs), "local", "Not in network folders");
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->thumbs), "never", "Never (plain icons)");
-    gtk_combo_box_set_active_id(GTK_COMBO_BOX(s->thumbs), LOOK.thumbs == THUMBS_LOCAL ? "local"
-                                                          : LOOK.thumbs == THUMBS_NEVER ? "never" : "always");
-    gtk_widget_set_tooltip_text(s->thumbs, "Pictures in the gallery under a folder. A file you click is always "
-                                           "shown big. Network folders (NFS, Samba, sshfs) can be slow with them.");
-    srow(grid, &r, "Thumbnails", s->thumbs);
+    new_column(right);
     section(&grid, &r, "Browsing");
     s->cw = gtk_spin_button_new_with_range(COL_MIN, 600, 10);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(s->cw), LOOK.column_width);
@@ -769,7 +786,25 @@ void dialog_settings(Win *w)
     s->sh = gtk_check_button_new_with_label("Show hidden files when millerX starts");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(s->sh), LOOK.show_hidden);
     srow(grid, &r, "Hidden files", s->sh);
-    section(&grid, &r, "Thumbnail cache (shared with Thunar)");
+    section(&grid, &r, "Preview");
+    s->pw = gtk_spin_button_new_with_range(200, 900, 10);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(s->pw), LOOK.preview_width);
+    srow(grid, &r, "Minimum width (px)", s->pw);   /* it takes the rest of the window */
+    s->names = gtk_check_button_new_with_label("Show names under thumbnails");
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(s->names), LOOK.gallery_names);
+    srow(grid, &r, "Gallery", s->names);
+    new_column(thumbs_tab);
+    section(&grid, &r, "Thumbnails");
+    s->thumbs = gtk_combo_box_text_new();
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->thumbs), "always", "Always");
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->thumbs), "local", "Not in network folders");
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->thumbs), "never", "Never (plain icons)");
+    gtk_combo_box_set_active_id(GTK_COMBO_BOX(s->thumbs), LOOK.thumbs == THUMBS_LOCAL ? "local"
+                                                          : LOOK.thumbs == THUMBS_NEVER ? "never" : "always");
+    gtk_widget_set_tooltip_text(s->thumbs, "Pictures in the gallery under a folder. A file you click is always "
+                                           "shown big. Network folders (NFS, Samba, sshfs) can be slow with them.");
+    srow(grid, &r, "Show", s->thumbs);
+    section(&grid, &r, "Cache (shared with Thunar)");
     s->cache_size = gtk_label_new("measuring…");
     gtk_label_set_xalign(GTK_LABEL(s->cache_size), 0);
     s->cache_clear = gtk_button_new_with_label("Clear…");
@@ -789,12 +824,13 @@ void dialog_settings(Win *w)
     thumbcache_measure(cache_measured, g_object_ref(s->cache_size));
     section(&grid, &r, "Optional helpers (millerX works without them)");
     helper_rows(grid, &r);
+    new_column(folders_tab);
     section(&grid, &r, "Folders sorted their own way (all others: by name)");
     s->sort_list = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
     GtkWidget *sl_scroll = gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sl_scroll), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
     gtk_scrolled_window_set_propagate_natural_height(GTK_SCROLLED_WINDOW(sl_scroll), TRUE);
-    gtk_scrolled_window_set_max_content_height(GTK_SCROLLED_WINDOW(sl_scroll), 220);
+    gtk_scrolled_window_set_max_content_height(GTK_SCROLLED_WINDOW(sl_scroll), MAX(220, max_h - 120));
     gtk_container_add(GTK_CONTAINER(sl_scroll), s->sort_list);
     gtk_grid_attach(GTK_GRID(grid), sl_scroll, 0, r++, 2, 1);
     fill_sort_list(s);
@@ -821,6 +857,8 @@ void dialog_settings(Win *w)
     SECTIONS = NULL;
     g_clear_object(&LABELS);           /* the labels keep the group alive */
     gtk_widget_show_all(d);
+    gtk_notebook_set_current_page(GTK_NOTEBOOK(nb), LAST_TAB);
+    g_signal_connect(nb, "switch-page", G_CALLBACK(on_tab), NULL);
 }
 
 void dialog_about(Win *w)
