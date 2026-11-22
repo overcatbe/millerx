@@ -1,3 +1,14 @@
+millerx (0.7.3) unstable; urgency=medium
+
+  * Drive button: every mounted disk (also from /etc/fstab) with its free
+    space, then removable media to mount, open and eject.
+  * Settings: thumbnails always / not in network folders / never.
+  * Settings in three tabs: Look, Thumbnails, Folders.
+  * Installed optional helpers (ffmpeg, pdftoppm, pkexec) can be switched off.
+  * NOTICE: forks welcome, the name and logo stay with the original.
+
+ -- overcatbe <1771834+overcatbe@users.noreply.github.com>  Sun, 22 Nov 2026 07:11:02 +0200
+
 millerx (0.7.2) unstable; urgency=medium
 
   * Settings: column width, where new folder columns start (120-600,

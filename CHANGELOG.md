@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.7.3 (2026-11-22)
 
 - **The drive button shows all your disks:** every mounted disk (also the ones from /etc/fstab,
   e.g. a second disk on /storage), with its free space, opens with one click. Below come USB sticks
@@ -17,6 +17,10 @@
 - **Optional helpers can be switched off:** Settings → Thumbnails → Optional helpers has a tick box
   for each one that's installed. ffmpeg off: no video frames, music covers or AVIF/HEIC; pdftoppm off:
   no PDF pages; pkexec off: "Open as root" disappears from every menu.
+
+- **Comments after values** in millerx.conf (`auto_clean = true   # …`, as in the README) are
+  ignored now instead of spoiling the value; colours like `#ff0000` still work.
+- **NOTICE:** forks are welcome; the name and the logo stay with the original.
 
 ## 0.7.2 (2026-11-21)
 

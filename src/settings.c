@@ -15,8 +15,15 @@ static char *config_file(void)
 static char *get_str(GKeyFile *kf, const char *sec, const char *key)
 {
     char *v = g_key_file_get_string(kf, sec, key, NULL);
-    if (v)
+    if (v) {
+        /* a comment after the value ("true   # once a day"), as in the README; "#rrggbb" stays */
+        for (char *c = v + 1; *c; c++)
+            if (*c == '#' && (c[-1] == ' ' || c[-1] == '\t')) {
+                *c = '\0';
+                break;
+            }
         g_strstrip(v);
+    }
     return v;
 }
 

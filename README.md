@@ -4,6 +4,9 @@ A small, native file browser with **Miller columns**: every folder from `/` down
 where you are sits in its own column, and the selected file is previewed on the right.
 Like a mind map of your disk. Written in C with GTK 3 and GIO.
 
+> **New in 0.7.3:** settings in three tabs · the drive button shows all your disks with free space ·
+> thumbnails always / not in network folders / never · optional helpers can be switched off.
+>
 > **New in 0.7.2:** Settings → Column width: where new folder columns start (default 230).
 >
 > **New in 0.7.1:** millerX remembers its window size and place · settings in tidy boxes ·
@@ -178,15 +181,24 @@ divider_style = solid    # solid | fade
 preview_width = 340      # 200-900, the least the preview gets; it takes the rest
 gallery_names = false    # a line with the name under each thumbnail
 highlight_color = auto   # auto = the theme's, or #rrggbb
+column_width = 230       # 120-600, where new folder columns start
 
 [browse]
 folders_first = true
 show_hidden = false
 
 [thumbnails]
+show = always            # always | local (none in network folders) | never
 max_mb = 1024            # cache size to shrink to, least used first
 max_days = 180           # forget thumbnails unused this long
 auto_clean = true        # once a day when millerX starts
+
+[helpers]                # installed helpers can be switched off
+ffmpeg = true            # video frames, music covers, AVIF/HEIC
+pdftoppm = true          # PDF pages
+pkexec = true            # "Open as root"
+
+[window]                 # written by millerX: where the last closed window was
 ```
 
 Folders with their own sorting are kept in `~/.config/millerx/sorting.conf`, one per line
