@@ -20,10 +20,6 @@
   for each one that's installed. ffmpeg off: no video frames, music covers or AVIF/HEIC; pdftoppm off:
   no PDF pages; pkexec off: "Open as root" disappears from every menu.
 
-- **Comments after values** in millerx.conf (`auto_clean = true   # …`, as in the README) are
-  ignored now instead of spoiling the value; colours like `#ff0000` still work.
-- **NOTICE:** forks are welcome; the name and the logo stay with the original.
-
 ## 0.7.2 (2026-11-21)
 
 - **Column width setting:** Settings → Browsing → Column width (120–600, default 230) sets where new
