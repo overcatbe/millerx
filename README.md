@@ -67,6 +67,8 @@ millerX carries his name.
 
 ![The preview fits a picture into the rest of the window](docs/preview.png?v=074)
 
+![The Computer column: disks, USB sticks and network, each with its free space](docs/computer.png?v=074)
+
 What changed in each version: [CHANGELOG](CHANGELOG.md).
 
 ## Keys
