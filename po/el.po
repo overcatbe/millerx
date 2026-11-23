@@ -1489,7 +1489,7 @@ msgstr "Εμφάνιση κρυφών αρχείων"
 
 #: src/window.c:1619
 msgid "Show in column"
-msgstr "Εμφάνιση στη στήλη"
+msgstr "Εμφάνιση σε στήλη"
 
 #: src/window.c:1645
 msgid "Copy paths"
