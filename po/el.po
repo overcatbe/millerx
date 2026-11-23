@@ -1,18 +1,20 @@
 # Greek translation of millerX.
 # This file is distributed under the same license as the millerX package.
+# SPDX-FileCopyrightText: 2026 rizitis <elahistos@yahoo.gr>
 msgid ""
 msgstr ""
 "Project-Id-Version: millerx\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-11-23 09:19+0200\n"
-"PO-Revision-Date: 2026-11-23 08:30+0200\n"
-"Last-Translator: overcatbe\n"
+"PO-Revision-Date: 2026-11-23 10:15+0200\n"
+"Last-Translator: rizitis <elahistos@yahoo.gr>\n"
 "Language-Team: Greek\n"
 "Language: el\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Lokalize 26.08.3\n"
 
 #: src/archive.c:36
 msgid " (extracted)"
@@ -24,11 +26,11 @@ msgstr "άγνωστο σφάλμα"
 
 #: src/archive.c:82
 msgid "Can't open the archive"
-msgstr "Δεν είναι δυνατό το άνοιγμα του αρχείου συμπίεσης"
+msgstr "Δεν είναι δυνατό το άνοιγμα του αρχείου"
 
 #: src/archive.c:90
 msgid "Broken archive"
-msgstr "Κατεστραμμένο αρχείο συμπίεσης"
+msgstr "Το αρχείο είναι κατεστραμμένο"
 
 #: src/archive.c:153
 #, c-format
@@ -43,7 +45,7 @@ msgstr "Δεν είναι δυνατή η εγγραφή σε αυτή τη μο
 
 #: src/archive.c:269
 msgid "Finishing the archive"
-msgstr "Ολοκλήρωση του αρχείου συμπίεσης"
+msgstr "Ολοκλήρωση συμπίεσης του αρχείου"
 
 #: src/column.c:76
 #, c-format
@@ -60,7 +62,7 @@ msgstr "Μετάβαση: %s"
 #: src/column.c:537
 #, c-format
 msgid "Jump: %s (no match)"
-msgstr "Μετάβαση: %s (κανένα αποτέλεσμα)"
+msgstr "Μετάβαση: %s (χωρίς αποτέλεσμα)"
 
 #: src/column.c:583
 msgid "Inside a trashed folder: delete the whole folder, or put it back first"
@@ -110,7 +112,9 @@ msgstr ""
 
 #: src/dialogs.c:20
 msgid "Merge the folders? Files with the same name will be replaced."
-msgstr "Συγχώνευση των φακέλων; Τα αρχεία με το ίδιο όνομα θα αντικατασταθούν."
+msgstr ""
+"Να γίνει συγχώνευση των φακέλων; Τα αρχεία με το ίδιο όνομα θα αντικατασταθούν"
+"."
 
 #: src/dialogs.c:21
 msgid "Replace the existing file?"
@@ -118,7 +122,7 @@ msgstr "Αντικατάσταση του υπάρχοντος αρχείου;"
 
 #: src/dialogs.c:22
 msgid "Do this for all conflicts"
-msgstr "Το ίδιο για όλες τις συγκρούσεις"
+msgstr "Εφαρμογή παντού και σε όλες τις επικαλύψεις"
 
 #: src/dialogs.c:26 src/window.c:159 src/window.c:170 src/window.c:627
 #: src/window.c:1166 src/window.c:1992
@@ -149,7 +153,7 @@ msgstr[1] "%llu φάκελοι"
 
 #: src/dialogs.c:178
 msgid "   (not yours, read only)"
-msgstr "   (δεν σας ανήκει, μόνο ανάγνωση)"
+msgstr "   (δεν σας ανήκει, μόνο για ανάγνωση)"
 
 #: src/dialogs.c:191
 msgid "Couldn't change permissions"
@@ -942,7 +946,7 @@ msgstr "Διαγράφηκε"
 
 #: src/search.c:153
 msgid "in "
-msgstr "στο"
+msgstr "μέσα - στο"
 
 #: src/search.c:153
 msgid "here"
@@ -1037,14 +1041,14 @@ msgstr[1] "Επαναφέρθηκαν %u στοιχεία εκεί που ήτα
 #, c-format
 msgid "Trash emptied: %u item deleted, %u couldn't be"
 msgid_plural "Trash emptied: %u items deleted, %u couldn't be"
-msgstr[0] "Ο κάδος αδειάστηκε: διαγράφηκε %u στοιχείο, %u όχι"
+msgstr[0] "Ο κάδος άδειασε: διαγράφηκε %u στοιχείο, %u όχι"
 msgstr[1] "Ο κάδος αδειάστηκε: διαγράφηκαν %u στοιχεία, %u όχι"
 
 #: src/trash.c:119
 #, c-format
 msgid "Trash emptied: %u item deleted"
 msgid_plural "Trash emptied: %u items deleted"
-msgstr[0] "Ο κάδος αδειάστηκε: διαγράφηκε %u στοιχείο"
+msgstr[0] "Ο κάδος άδειασε: διαγράφηκε %u στοιχείο"
 msgstr[1] "Ο κάδος αδειάστηκε: διαγράφηκαν %u στοιχεία"
 
 #: src/trash.c:134
@@ -1485,7 +1489,7 @@ msgstr "Εμφάνιση κρυφών αρχείων"
 
 #: src/window.c:1619
 msgid "Show in column"
-msgstr "Εμφάνιση στη στήλη"
+msgstr "Εμφάνιση σε στήλη "
 
 #: src/window.c:1645
 msgid "Copy paths"
@@ -1539,7 +1543,9 @@ msgstr "Όχι τώρα"
 #: src/window.c:2079
 msgid ""
 "Files are still being copied, moved or packed. Restart when that is done."
-msgstr "Γίνεται ακόμα αντιγραφή, μετακίνηση ή συμπίεση αρχείων. Κάντε επανεκκίνηση όταν τελειώσει."
+msgstr ""
+"Γίνεται ακόμα αντιγραφή, μετακίνηση ή συμπίεση αρχείων. Κάντε επανεκκίνηση ότα"
+"ν τελειώσει."
 
 #: src/window.c:2106
 msgid "Couldn't restart millerX"
