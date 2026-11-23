@@ -133,6 +133,7 @@ struct Column {
     GPtrArray *chain;          /* names still to select, one per column, when opening a path */
     char *pending_select;      /* select this name as soon as it shows up */
     gboolean loaded, closed;
+    gboolean added_early;      /* a change on disk added a row while the folder was still being read */
     GtkListStore *store;
     GtkWidget *view, *scroller, *frame, *divider;
     GFileMonitor *monitor;

@@ -98,6 +98,8 @@ void column_continue_chain(Column *c)
     win_chain_finished(c->win);
 }
 
+static gboolean find_iter(Column *c, GFile *f, GtkTreeIter *it);
+
 static void on_files(GObject *src, GAsyncResult *res, gpointer data)
 {
     Column *c = data;
@@ -115,7 +117,8 @@ static void on_files(GObject *src, GAsyncResult *res, gpointer data)
     for (GList *l = infos; l; l = l->next) {
         GFile *child = g_file_enumerator_get_child(en, l->data);
         GtkTreeIter it;
-        append_info(c, l->data, child, &it);
+        if (!c->added_early || !find_iter(c, child, &it))   /* not twice (the trash reports its */
+            append_info(c, l->data, child, &it);              /* items as new while being read) */
         g_object_unref(child);
     }
     if (infos) {
@@ -156,6 +159,7 @@ static void column_load(Column *c)
 {
     gtk_list_store_clear(c->store);
     c->loaded = FALSE;
+    c->added_early = FALSE;
     column_ref(c);
     g_file_enumerate_children_async(c->gfile, ATTRS, G_FILE_QUERY_INFO_NONE, G_PRIORITY_DEFAULT,
                                     c->cancel, on_enum, c);
@@ -186,6 +190,8 @@ void column_add_file(Column *c, GFile *f)
     GFileInfo *info = g_file_query_info(f, ATTRS, G_FILE_QUERY_INFO_NONE, NULL, NULL);
     if (!info)
         return;
+    if (!c->loaded)
+        c->added_early = TRUE;
     if (append_info(c, info, f, &it) && c->pending_select
         && !strcmp(c->pending_select, g_file_info_get_display_name(info))) {
         g_clear_pointer(&c->pending_select, g_free);

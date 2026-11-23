@@ -203,6 +203,34 @@ Column *win_last_column(Win *w)
     return l ? l->data : NULL;
 }
 
+/* The location bar's text. GVfs keeps trash and network addresses escaped (trash:///draft%20invoice.pdf):
+ * decode them for reading, except what would change the meaning (% / ? #, control characters).
+ * on_location reads it back with g_file_parse_name, which escapes again. */
+static char *location_text(GFile *f)
+{
+    char *s = g_file_get_parse_name(f);
+    if (!strstr(s, "://"))
+        return s;
+    GString *o = g_string_new(NULL);
+    for (const char *p = s; *p; p++) {
+        if (p[0] == '%' && g_ascii_isxdigit(p[1]) && g_ascii_isxdigit(p[2])) {
+            int c = g_ascii_xdigit_value(p[1]) * 16 + g_ascii_xdigit_value(p[2]);
+            if (c >= 0x20 && c != 0x7f && !strchr("%/?#", c)) {
+                g_string_append_c(o, (char) c);
+                p += 2;
+                continue;
+            }
+        }
+        g_string_append_c(o, *p);
+    }
+    if (!g_utf8_validate(o->str, -1, NULL)) {       /* not text after all: as it was */
+        g_string_free(o, TRUE);
+        return s;
+    }
+    g_free(s);
+    return g_string_free(o, FALSE);
+}
+
 static void update_location(Win *w, GFile *f)
 {
     if (file_is_computer(f)) {
@@ -211,7 +239,9 @@ static void update_location(Win *w, GFile *f)
         return;
     }
     char *p = file_path(f);
-    gtk_entry_set_text(GTK_ENTRY(w->location), p);
+    char *shown = location_text(f);            /* "trash:///draft invoice.pdf", not "…draft%20invoice.pdf" */
+    gtk_entry_set_text(GTK_ENTRY(w->location), shown);
+    g_free(shown);
     /* the title is just the folder's name, like Thunar's: in the panel the full paths were all
      * cut to the same "/home/…" (the location bar has the whole path, the yellow M says millerX) */
     char *name;
@@ -312,7 +342,18 @@ void win_open_path(Win *w, GFile *f)
     GFile *keep = g_object_ref(f);     /* f may belong to a column we're about to drop */
     char *path = g_file_get_path(keep);
     clear_columns(w);
-    if (!path) {
+    GFile *up = !path && !is_dir(keep, TRUE) ? g_file_get_parent(keep) : NULL;
+    if (up) {                          /* a file in the trash or on a server: its folder, it selected */
+        GFileInfo *fi = g_file_query_info(keep, G_FILE_ATTRIBUTE_STANDARD_DISPLAY_NAME,
+                                          G_FILE_QUERY_INFO_NONE, NULL, NULL);
+        GPtrArray *chain = g_ptr_array_new_with_free_func(g_free);
+        if (fi)
+            g_ptr_array_add(chain, g_strdup(g_file_info_get_display_name(fi)));
+        add_column(w, up, chain->len ? chain : NULL);
+        g_ptr_array_unref(chain);
+        g_clear_object(&fi);
+        g_object_unref(up);
+    } else if (!path) {
         add_column(w, keep, NULL);
     } else {
         char *norm = g_canonicalize_filename(path, "/");
@@ -468,7 +509,8 @@ static void on_location(GtkEntry *e, Win *w)
 {
     char *t = g_strstrip(g_strdup(gtk_entry_get_text(e)));
     char *exp = t[0] == '~' ? g_build_filename(g_get_home_dir(), t + 1, NULL) : g_strdup(t);
-    GFile *f = g_file_new_for_commandline_arg(exp);
+    /* an address as the bar shows it (trash:///a b) is read back the same way */
+    GFile *f = strstr(exp, "://") ? g_file_parse_name(exp) : g_file_new_for_commandline_arg(exp);
     if (file_is_computer(f) || g_file_query_exists(f, NULL))
         win_open_path(w, f);
     else
