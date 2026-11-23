@@ -60,9 +60,28 @@ gboolean is_root(void)
 }
 
 /* A second millerX as root, through pkexec: polkit asks for the password in its own
- * window, millerX never sees it. Needs /usr/share/polkit-1/actions/org.mix.millerx.policy
+ * window, millerX never sees it. Needs millerX's polkit policy (installed as MILLERX_POLICY)
  * and a polkit authentication agent in the session. */
-#define ROOT_POLICY "/usr/share/polkit-1/actions/org.mix.millerx.policy"
+#define ROOT_POLICY MILLERX_POLICY
+
+/* Is the policy where polkit looks? Newer polkit reads all of these (a copy in /etc wins, so a
+ * changed one survives updates); older ones only /usr/share. Installed elsewhere (a build into
+ * /usr/local) it is still found. */
+static gboolean root_policy_found(void)
+{
+    static const char *const dirs[] = { "/etc/polkit-1/actions", "/run/polkit-1/actions",
+                                        "/usr/local/share/polkit-1/actions", "/usr/share/polkit-1/actions" };
+    if (g_file_test(ROOT_POLICY, G_FILE_TEST_EXISTS))
+        return TRUE;
+    for (guint i = 0; i < G_N_ELEMENTS(dirs); i++) {
+        char *p = g_build_filename(dirs[i], "org.mix.millerx.policy", NULL);
+        gboolean ok = g_file_test(p, G_FILE_TEST_EXISTS);
+        g_free(p);
+        if (ok)
+            return TRUE;
+    }
+    return FALSE;
+}
 
 static void root_finished(GObject *src, GAsyncResult *res, gpointer data)
 {
@@ -106,7 +125,7 @@ void win_open_as_root(Win *w, GFile *folder)
         win_error(w, _("Can't open as root"),
                   _("This needs polkit (the pkexec program), which isn't installed. "
                   "Install polkit and a polkit authentication agent, then try again."));
-    } else if (!g_file_test(ROOT_POLICY, G_FILE_TEST_EXISTS)) {
+    } else if (!root_policy_found()) {
         char *m = g_strdup_printf(_("millerX's polkit policy isn't installed (%s). "
                                     "Install millerX as a package or with “ninja install”."), ROOT_POLICY);
         win_error(w, _("Can't open as root"), m);

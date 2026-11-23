@@ -32,6 +32,7 @@ add_project_arguments(
   '-DMILLERX_VERSION="@0@"'.format(meson.project_version()),
   '-DMILLERX_BINDIR="@0@"'.format(bindir),
   '-DMILLERX_POT="@0@"'.format(datadir / 'millerx' / 'millerx.pot'),
+  '-DMILLERX_POLICY="@0@"'.format(datadir / 'polkit-1' / 'actions' / 'org.mix.millerx.policy'),
   '-Wno-unused-parameter', '-Wno-missing-field-initializers',
   language : 'c')
 
