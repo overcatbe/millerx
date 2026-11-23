@@ -1,7 +1,7 @@
 # Maintainer: overcatbe <1771834+overcatbe@users.noreply.github.com>
 # Contributor: Claude (Anthropic)
 pkgname=millerx
-pkgver=0.7.7
+pkgver=0.7.8
 pkgrel=1
 pkgdesc="Small native file browser with Miller columns (GTK 3)"
 arch=('x86_64' 'aarch64')

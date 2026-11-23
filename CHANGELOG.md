@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.8 (2026-11-23)
+
+- **Restart now** (Settings → Language) brings the window back at the same size and place;
+  before, it came back at the size of the last time millerX was closed.
+
 ## 0.7.7 (2026-11-23)
 
 - **Gallery picks show in the column:** clicking a thumbnail highlights the same file in the

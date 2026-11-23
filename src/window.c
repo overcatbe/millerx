@@ -2082,6 +2082,11 @@ void app_restart(GtkApplication *app)
         }
     }
     look_save(NULL);
+    /* the new millerX opens its first window where the last closed one was: that is the oldest
+     * window here, which comes back first (a plain quit doesn't close windows, so save it now) */
+    Win *first = wins ? g_object_get_data(G_OBJECT(wins->data), "millerx-win") : NULL;
+    if (first && !first->dead)
+        geom_save(&first->geom);
     char *exe = g_file_read_link("/proc/self/exe", NULL);
     if (!exe)
         exe = g_build_filename(MILLERX_BINDIR, "millerx", NULL);
