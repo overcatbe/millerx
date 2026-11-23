@@ -65,6 +65,11 @@
   </keywords>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="0.8.2" date="2026-11-23">
+      <description>
+        <p>Your own languages: Settings → Language → "Your own…" adds a language file. Extra fun languages (pirate, LOLCAT) on GitHub. A busy folder no longer recounts its size over and over.</p>
+      </description>
+    </release>
     <release version="0.8.1" date="2026-11-23">
       <description>
         <p>Greek translation revised by a native speaker; the preview's details no longer stretch when millerX starts in a folder.</p>

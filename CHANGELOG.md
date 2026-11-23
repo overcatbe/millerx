@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.8.2 (2026-11-23)
+
+- **Your own languages:** Settings → Language → **"Your own…"** picks a language file (`.po` or
+  `.mo`), checks it and adds it to the list; "Restart now" and millerX speaks it. Make one from
+  the template that now comes with millerX (`/usr/share/millerx/millerx.pot`): fill in the
+  `msgstr` lines, empty ones stay English. A file with a mistake (a missing `%s`) is turned down
+  with the line that's wrong, so it can't crash millerX. The files live in
+  `~/.local/share/millerx/languages/`.
+- **Extra languages to download** in [extras/languages](extras/languages/), not part of the
+  package: **pirate** (family-friendly: Davy Jones' Locker, walk the plank), **pirate-salty**
+  (swears like a sailor, not for the kids) and **lolcat** (TEH LITTERBOX, NOM NOM NAO).
+- **No more endless counting:** a folder shown in the preview counted its size and items again
+  after every change in it, so during `slackpkg upgrade-all` it ran du over and over. It now
+  counts once when the folder is opened, and again on F5. Thanks, SCerovec, for finding it!
+- **Greek:** two more fixes by rizitis ("στο " in search results, "Show in column"), and the new
+  texts.
+- **Wizard, Wienerisch, German:** the new texts too.
+
 ## 0.8.1 (2026-11-23)
 
 - **Greek translation revised by rizitis**, a native speaker. Thank you!

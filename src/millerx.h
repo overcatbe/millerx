@@ -61,13 +61,17 @@ typedef struct {
     gboolean use_pkexec;    /* off: no "Open as root" anywhere */
     gboolean use_blender;   /* blender-thumbnailer: the picture saved inside .blend files */
     int thumb_size;         /* TSIZE_SMALL, _MEDIUM, _LARGE */
-    char *language;         /* "system", "en", "wizard" or "wienerisch": read once at start */
+    char *language;         /* "system", "en", "wizard", "wienerisch" or "own:NAME": read once at start */
 } Look;
 
 extern Look LOOK;
 
 void look_load(void);
 char *look_language(void);             /* the [look] language setting, before GTK starts */
+char *own_languages_dir(void);         /* ~/.local/share/millerx/languages: people's own NAME.po / NAME.mo */
+GPtrArray *own_languages_list(void);   /* the NAMEs found there, sorted */
+char *own_language_prepare(const char *name);   /* a folder to bind the text domain to, or NULL */
+char *own_language_add(const char *path, char **err);   /* checked and copied there: its NAME */
 extern char *LANGUAGE_AT_START;        /* the language this run started with */
 char **child_envp(void);               /* our environment, LANGUAGE as the session had it */
 GAppLaunchContext *child_launch_context(void);
@@ -171,7 +175,6 @@ struct Preview {
     GFileMonitor *grid_monitor;
     guint grid_refresh;
     GtkWidget *dir_size_l, *dir_count_l;   /* the shown folder's Size and Items rows (refs) */
-    guint sizes_refresh;             /* recount after the folder changed */
     guint sizes_gen;                 /* only the newest count may write the rows */
     gboolean header_narrow;          /* icon above the details (narrow pane) instead of beside */
     guint header_idle;

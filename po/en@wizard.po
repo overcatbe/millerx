@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: millerx\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-23 09:19+0200\n"
+"POT-Creation-Date: 2026-11-23 19:47+0200\n"
 "PO-Revision-Date: 2026-11-23 08:30+0200\n"
 "Last-Translator: overcatbe\n"
 "Language-Team: English (Wizard)\n"
@@ -91,7 +91,7 @@ msgstr "most ancient"
 msgid "Sort:"
 msgstr "Order by:"
 
-#: src/column.c:934 src/dialogs.c:630
+#: src/column.c:934 src/dialogs.c:675
 msgid "Sort by name again"
 msgstr "Return to the alphabet of old"
 
@@ -121,8 +121,8 @@ msgstr "Overwrite the scroll that dwells here?"
 msgid "Do this for all conflicts"
 msgstr "Let this be my answer to every such quarrel"
 
-#: src/dialogs.c:26 src/window.c:159 src/window.c:170 src/window.c:627
-#: src/window.c:1166 src/window.c:1992
+#: src/dialogs.c:26 src/dialogs.c:480 src/window.c:159 src/window.c:170
+#: src/window.c:640 src/window.c:1179 src/window.c:2005
 msgid "Cancel"
 msgstr "Retreat"
 
@@ -165,7 +165,7 @@ msgstr "It reveals nothing"
 msgid "Properties: %s"
 msgstr "Secrets of %s"
 
-#: src/dialogs.c:229 src/dialogs.c:721 src/window.c:145
+#: src/dialogs.c:229 src/dialogs.c:766 src/window.c:145
 msgid "Close"
 msgstr "Close"
 
@@ -173,7 +173,7 @@ msgstr "Close"
 msgid "Link to"
 msgstr "A portal to"
 
-#: src/dialogs.c:273 src/dialogs.c:861 src/preview.c:1569 src/preview.c:1704
+#: src/dialogs.c:273 src/dialogs.c:931 src/preview.c:1551 src/preview.c:1686
 msgid "Size"
 msgstr "Girth"
 
@@ -189,55 +189,72 @@ msgstr "Space left in this vault"
 msgid "Couldn't save the settings"
 msgstr "The settings would not be inscribed"
 
-#: src/dialogs.c:509
+#: src/dialogs.c:479
+msgid "Add a language file"
+msgstr "Bestow a new tongue"
+
+#: src/dialogs.c:480
+msgid "Add"
+msgstr "Bestow"
+
+#: src/dialogs.c:482
+msgid "Language files (.po, .mo)"
+msgstr "Tongue scrolls (.po, .mo)"
+
+#: src/dialogs.c:500
+#, c-format
+msgid "Couldn't add “%s”"
+msgstr "“%s” could not be bestowed"
+
+#: src/dialogs.c:554
 msgid "video frames, music covers, AVIF and HEIC pictures"
 msgstr "frames of moving pictures, music covers, AVIF and HEIC paintings"
 
-#: src/dialogs.c:510
+#: src/dialogs.c:555
 msgid "videos and music show their icon, AVIF/HEIC too"
 msgstr "moving pictures and music bear only their sigil, AVIF/HEIC too"
 
-#: src/dialogs.c:510
+#: src/dialogs.c:555
 msgid "ffmpeg (Slackware: l/ffmpeg)"
 msgstr "ffmpeg (in Slackware: l/ffmpeg)"
 
-#: src/dialogs.c:511
+#: src/dialogs.c:556
 msgid "the first page of PDFs"
 msgstr "the first page of PDF tomes"
 
-#: src/dialogs.c:512
+#: src/dialogs.c:557
 msgid "PDFs show their icon"
 msgstr "PDF tomes bear only their sigil"
 
-#: src/dialogs.c:512
+#: src/dialogs.c:557
 msgid "poppler (Debian/Ubuntu: poppler-utils)"
 msgstr "poppler (Debian/Ubuntu: poppler-utils)"
 
-#: src/dialogs.c:513
+#: src/dialogs.c:558
 msgid "“Open as root”"
 msgstr "“Open as the High Sorcerer”"
 
-#: src/dialogs.c:514
+#: src/dialogs.c:559
 msgid "no root window"
 msgstr "no window of the High Sorcerer"
 
-#: src/dialogs.c:514
+#: src/dialogs.c:559
 msgid "polkit, plus an authentication agent"
 msgstr "polkit, and a guardian spirit to ask for the password"
 
-#: src/dialogs.c:515
+#: src/dialogs.c:560
 msgid "the pictures saved in Blender (.blend) files"
 msgstr "the paintings hidden inside Blender (.blend) files"
 
-#: src/dialogs.c:516
+#: src/dialogs.c:561
 msgid ".blend files show their icon"
 msgstr ".blend files bear only their sigil"
 
-#: src/dialogs.c:516
+#: src/dialogs.c:561
 msgid "Blender (it comes with it; also found in /opt/blender*)"
 msgstr "Blender (it carries one inside; also sought in /opt/blender*)"
 
-#: src/dialogs.c:536
+#: src/dialogs.c:581
 #, c-format
 msgid ""
 "✗ not installed: %s.\n"
@@ -248,25 +265,25 @@ msgstr ""
 "<small>Summon %s\n"
 "for %s.</small>"
 
-#: src/dialogs.c:554
+#: src/dialogs.c:599
 #, c-format
 msgid "%s in %u thumbnail (%u deleted)"
 msgid_plural "%s in %u thumbnails (%u deleted)"
 msgstr[0] "%s in %u little painting (%u burned)"
 msgstr[1] "%s in %u little paintings (%u burned)"
 
-#: src/dialogs.c:556
+#: src/dialogs.c:601
 #, c-format
 msgid "%s in %u thumbnail"
 msgid_plural "%s in %u thumbnails"
 msgstr[0] "%s in %u little painting"
 msgstr[1] "%s in %u little paintings"
 
-#: src/dialogs.c:566
+#: src/dialogs.c:611
 msgid "Clear the thumbnail cache?"
 msgstr "Burn the gallery of little paintings?"
 
-#: src/dialogs.c:567
+#: src/dialogs.c:612
 msgid ""
 "All thumbnails in ~/.cache/thumbnails are deleted. Thunar and file dialogs "
 "use them too; everything is made again when it's needed."
@@ -274,39 +291,39 @@ msgstr ""
 "Every painting in ~/.cache/thumbnails is thrown into the fire. Thunar and "
 "the file dialogs gaze upon them too; all shall be painted anew when needed."
 
-#: src/dialogs.c:568
+#: src/dialogs.c:613
 msgid "Clear"
 msgstr "Burn them"
 
-#: src/dialogs.c:570
+#: src/dialogs.c:615
 msgid "clearing…"
 msgstr "burning…"
 
-#: src/dialogs.c:605
+#: src/dialogs.c:650
 msgid "None. Right-click a folder → Sort … to give it its own order."
 msgstr "None yet. Right-click a shelf → Order … to bend it to thy will."
 
-#: src/dialogs.c:621 src/window.c:1427
+#: src/dialogs.c:666 src/window.c:1440
 msgid "Name"
 msgstr "Name"
 
-#: src/dialogs.c:622
+#: src/dialogs.c:667
 msgid "Date (newest first)"
 msgstr "Date (freshest first)"
 
-#: src/dialogs.c:623 src/window.c:1427
+#: src/dialogs.c:668 src/window.c:1440
 msgid "Size (largest first)"
 msgstr "Girth (mightiest first)"
 
-#: src/dialogs.c:624 src/preview.c:1701 src/window.c:1428
+#: src/dialogs.c:669 src/preview.c:1683 src/window.c:1441
 msgid "Type"
 msgstr "Kind"
 
-#: src/dialogs.c:626 src/window.c:1440
+#: src/dialogs.c:671 src/window.c:1453
 msgid "Reversed"
 msgstr "Turned upon its head"
 
-#: src/dialogs.c:700
+#: src/dialogs.c:745
 #, c-format
 msgid ""
 "%s goes into ~/.config/gtk-3.0/gtk.css, in a block marked as millerX's; the "
@@ -317,7 +334,7 @@ msgstr ""
 "millerX's seal; the rest of that scroll stays untouched. GTK 3 programs "
 "behold it the next time they awaken. Thou mayest unweave it here again."
 
-#: src/dialogs.c:704
+#: src/dialogs.c:749
 msgid ""
 "millerX's block is taken out of ~/.config/gtk-3.0/gtk.css; the rest of that "
 "file stays. GTK 3 programs use the theme's colour again the next time they "
@@ -327,103 +344,103 @@ msgstr ""
 "scroll remains. GTK 3 programs return to the theme's hue when next they "
 "awaken."
 
-#: src/dialogs.c:707
+#: src/dialogs.c:752
 msgid "Use this highlight in all GTK programs?"
 msgstr "Bestow this glow upon all GTK programs?"
 
-#: src/dialogs.c:707
+#: src/dialogs.c:752
 msgid "Remove it from all GTK programs?"
 msgstr "Take it from all GTK programs?"
 
-#: src/dialogs.c:708
+#: src/dialogs.c:753
 msgid "Use it"
 msgstr "Bestow it"
 
-#: src/dialogs.c:708
+#: src/dialogs.c:753
 msgid "Remove"
 msgstr "Take it away"
 
-#: src/dialogs.c:711
+#: src/dialogs.c:756
 msgid "Couldn't write ~/.config/gtk-3.0/gtk.css"
 msgstr "The scroll ~/.config/gtk-3.0/gtk.css refused my quill"
 
-#: src/dialogs.c:721
+#: src/dialogs.c:766
 msgid "millerX settings"
 msgstr "The grimoire of millerX"
 
-#: src/dialogs.c:732
+#: src/dialogs.c:777
 msgid "Look"
 msgstr "Appearance"
 
-#: src/dialogs.c:739 src/dialogs.c:842
+#: src/dialogs.c:784 src/dialogs.c:912
 msgid "Thumbnails"
 msgstr "Little paintings"
 
-#: src/dialogs.c:740
+#: src/dialogs.c:785
 msgid "Folders"
 msgstr "Shelves"
 
-#: src/dialogs.c:748
+#: src/dialogs.c:793
 msgid "Column dividers"
 msgstr "Walls between the columns"
 
-#: src/dialogs.c:749
+#: src/dialogs.c:794
 msgid "Follow the theme (20 % lighter / darker)"
 msgstr "Follow the theme (20 % brighter / darker)"
 
-#: src/dialogs.c:750 src/dialogs.c:778
+#: src/dialogs.c:795 src/dialogs.c:823
 msgid "Own colour"
 msgstr "A hue of mine own"
 
-#: src/dialogs.c:767
+#: src/dialogs.c:812
 msgid "Colour"
 msgstr "Hue"
 
-#: src/dialogs.c:770
+#: src/dialogs.c:815
 msgid "Width (px)"
 msgstr "Thickness (px)"
 
-#: src/dialogs.c:772
+#: src/dialogs.c:817
 msgid "Solid"
 msgstr "Solid as stone"
 
-#: src/dialogs.c:773
+#: src/dialogs.c:818
 msgid "Fading at the ends"
 msgstr "Fading into the mist"
 
-#: src/dialogs.c:775
+#: src/dialogs.c:820
 msgid "Style"
 msgstr "Manner"
 
-#: src/dialogs.c:776
+#: src/dialogs.c:821
 msgid "Highlight colour"
 msgstr "The glow of the chosen"
 
-#: src/dialogs.c:777
+#: src/dialogs.c:822
 msgid "Follow the theme"
 msgstr "Follow the theme"
 
-#: src/dialogs.c:794 src/window.c:1915
+#: src/dialogs.c:839 src/window.c:1928
 msgid "millerX"
 msgstr "millerX"
 
-#: src/dialogs.c:795
+#: src/dialogs.c:840
 msgid "Use for all GTK programs…"
 msgstr "Bestow upon all GTK programs…"
 
-#: src/dialogs.c:796
+#: src/dialogs.c:841
 msgid "Remove from all"
 msgstr "Take from all"
 
-#: src/dialogs.c:802 src/dialogs.c:817
+#: src/dialogs.c:847 src/dialogs.c:862
 msgid "System"
 msgstr "The whole realm"
 
-#: src/dialogs.c:804
+#: src/dialogs.c:849
 msgid "Browsing"
 msgstr "Wandering"
 
-#: src/dialogs.c:807
+#: src/dialogs.c:852
 msgid ""
 "Where new columns start. A column you drag keeps its own width; double-click "
 "its divider to bring it back to this one."
@@ -431,39 +448,40 @@ msgstr ""
 "Where new columns are born. A column thou hast dragged keeps its own width; "
 "double-click its wall to restore it to this one."
 
-#: src/dialogs.c:809
+#: src/dialogs.c:854
 msgid "Column width (px)"
 msgstr "Column width (px)"
 
-#: src/dialogs.c:810
+#: src/dialogs.c:855
 msgid "Folders first"
 msgstr "Shelves first"
 
-#: src/dialogs.c:812
+#: src/dialogs.c:857
 msgid "Sort by name"
 msgstr "In order of name"
 
-#: src/dialogs.c:813
+#: src/dialogs.c:858
 msgid "Show hidden files when millerX starts"
 msgstr "Reveal hidden scrolls when millerX awakens"
 
-#: src/dialogs.c:815
+#: src/dialogs.c:860
 msgid "Hidden files"
 msgstr "Hidden scrolls"
 
-#: src/dialogs.c:818
+#: src/dialogs.c:863
 msgid "English"
 msgstr "The Common Tongue"
 
-#: src/dialogs.c:819
+#: src/dialogs.c:864
 msgid "Wizard (English, of a sort)"
 msgstr "The Tongue of Wizards"
 
-#: src/dialogs.c:820
+#: src/dialogs.c:865
 msgid "Wienerisch (Viennese slang)"
 msgstr "The Tongue of Vienna (Viennese slang)"
 
-#: src/dialogs.c:822
+#. its file is gone
+#: src/dialogs.c:877
 msgid ""
 "System: the language your computer is set to (English where there is no "
 "translation). Takes effect the next time millerX starts."
@@ -471,48 +489,63 @@ msgstr ""
 "System: the tongue thy machine was taught (the Common Tongue where no "
 "translation exists). It takes hold when millerX next awakens."
 
-#: src/dialogs.c:824
+#: src/dialogs.c:882
+msgid "Your own…"
+msgstr "Thine own tongue…"
+
+#: src/dialogs.c:883
+#, c-format
+msgid ""
+"Add a language file (.po or .mo), for example one from millerX's extras on "
+"GitHub. To write your own, copy %s and fill in the msgstr lines; lines you "
+"leave empty stay English."
+msgstr ""
+"Bestow a tongue scroll (.po or .mo), for example one from millerX's extras "
+"on GitHub. To conjure thine own, copy %s and fill in the msgstr lines; lines "
+"left empty stay plain English."
+
+#: src/dialogs.c:891 src/dialogs.c:893
 msgid "Language"
 msgstr "Tongue"
 
-#: src/dialogs.c:827
+#: src/dialogs.c:897
 msgid "Takes effect after a restart."
 msgstr "The spell takes hold once millerX is reborn."
 
-#: src/dialogs.c:829
+#: src/dialogs.c:899
 msgid "Restart now"
 msgstr "Be reborn now"
 
-#: src/dialogs.c:834
+#: src/dialogs.c:904
 msgid "Preview"
 msgstr "The scrying glass"
 
-#: src/dialogs.c:837
+#: src/dialogs.c:907
 msgid "Minimum width (px)"
 msgstr "Narrowest it may be (px)"
 
 #. it takes the rest of the window
-#: src/dialogs.c:838
+#: src/dialogs.c:908
 msgid "Show names under thumbnails"
 msgstr "Inscribe names beneath the paintings"
 
-#: src/dialogs.c:840
+#: src/dialogs.c:910
 msgid "Gallery"
 msgstr "Gallery"
 
-#: src/dialogs.c:844
+#: src/dialogs.c:914
 msgid "Always"
 msgstr "Always"
 
-#: src/dialogs.c:845
+#: src/dialogs.c:915
 msgid "Not in network folders"
 msgstr "Not on far-off network shelves"
 
-#: src/dialogs.c:846
+#: src/dialogs.c:916
 msgid "Never (plain icons)"
 msgstr "Never (bare sigils)"
 
-#: src/dialogs.c:849
+#: src/dialogs.c:919
 msgid ""
 "Pictures in the gallery under a folder. A file you click is always shown "
 "big. Network folders (NFS, Samba, sshfs) can be slow with them."
@@ -520,23 +553,23 @@ msgstr ""
 "Paintings in the gallery beneath a shelf. A scroll thou clickest is always "
 "shown large. Network shelves (NFS, Samba, sshfs) may be sluggish with them."
 
-#: src/dialogs.c:851
+#: src/dialogs.c:921
 msgid "Show"
 msgstr "Show"
 
-#: src/dialogs.c:853
+#: src/dialogs.c:923
 msgid "Small (about 100 px)"
 msgstr "Small (some 100 px)"
 
-#: src/dialogs.c:854
+#: src/dialogs.c:924
 msgid "Medium (about 200 px)"
 msgstr "Middling (some 200 px)"
 
-#: src/dialogs.c:855
+#: src/dialogs.c:925
 msgid "Large (about 400 px)"
 msgstr "Grand (some 400 px)"
 
-#: src/dialogs.c:858
+#: src/dialogs.c:928
 msgid ""
 "How big the gallery's pictures are. Large ones are made again the first time "
 "(bigger thumbnails, a bigger cache); a wide pane gets more of them per row, "
@@ -546,91 +579,91 @@ msgstr ""
 "first time (bigger paintings, a bigger hoard); a wide glass holds more of "
 "them in a row, not bigger ones."
 
-#: src/dialogs.c:862
+#: src/dialogs.c:932
 msgid "Cache (shared with Thunar)"
 msgstr "Hoard of paintings (shared with Thunar)"
 
-#: src/dialogs.c:863
+#: src/dialogs.c:933
 msgid "measuring…"
 msgstr "weighing the hoard…"
 
-#: src/dialogs.c:865
+#: src/dialogs.c:935
 msgid "Clear…"
 msgstr "Burn…"
 
-#: src/dialogs.c:869
+#: src/dialogs.c:939
 msgid "Now"
 msgstr "Now"
 
-#: src/dialogs.c:872
+#: src/dialogs.c:942
 msgid "Keep at most (MB)"
 msgstr "Hoard no more than (MB)"
 
-#: src/dialogs.c:875
+#: src/dialogs.c:945
 msgid "Forget unused after (days)"
 msgstr "Forget the unloved after (days)"
 
-#: src/dialogs.c:876
+#: src/dialogs.c:946
 msgid "Once a day when millerX starts"
 msgstr "Sweep once a day when millerX awakens"
 
-#: src/dialogs.c:878
+#: src/dialogs.c:948
 msgid "Clean up"
 msgstr "Sweeping"
 
-#: src/dialogs.c:880
+#: src/dialogs.c:950
 msgid "Optional helpers (millerX works without them; untick to not use one)"
 msgstr "Familiars (millerX needs them not; untick to dismiss one)"
 
-#: src/dialogs.c:883
+#: src/dialogs.c:953
 msgid "Folders sorted their own way (all others: by name)"
 msgstr "Shelves ordered in their own way (all others: by name)"
 
-#: src/dialogs.c:928
+#: src/dialogs.c:998
 msgid "Files in Miller columns, from / to where you are."
 msgstr ""
 "Scrolls in Miller columns, from the root of the world to where thou standest."
 
-#: src/dialogs.c:1015
+#: src/dialogs.c:1085
 msgid "✗ matches none of them"
 msgstr "✗ it matches none of them, beware"
 
-#: src/dialogs.c:1018
+#: src/dialogs.c:1088
 #, c-format
 msgid "✓ matches %s"
 msgstr "✓ it matches %s, the omens are good"
 
-#: src/dialogs.c:1022
+#: src/dialogs.c:1092
 msgid "…when the file is read"
 msgstr "…once the scroll is read"
 
-#: src/dialogs.c:1045
+#: src/dialogs.c:1115
 #, c-format
 msgid "✗ couldn't read the file: %s"
 msgstr "✗ the scroll could not be read: %s"
 
-#: src/dialogs.c:1088
+#: src/dialogs.c:1158
 #, c-format
 msgid "Checksums: %s"
 msgstr "Runes of %s"
 
-#: src/dialogs.c:1091
+#: src/dialogs.c:1161
 msgid "_Close"
 msgstr "_Close"
 
-#: src/dialogs.c:1103
+#: src/dialogs.c:1173
 msgid "reading…"
 msgstr "reading the runes…"
 
-#: src/dialogs.c:1111 src/window.c:1553 src/window.c:1639
+#: src/dialogs.c:1181 src/window.c:1566 src/window.c:1652
 msgid "Copy"
 msgstr "Copy"
 
-#: src/dialogs.c:1118
+#: src/dialogs.c:1188
 msgid "Compare"
 msgstr "Compare"
 
-#: src/dialogs.c:1121
+#: src/dialogs.c:1191
 msgid "paste the checksum you were given"
 msgstr "paste the runes thou wert given"
 
@@ -711,7 +744,7 @@ msgstr "Added to the sacred texts: %s"
 msgid "Bookmark removed: %s"
 msgstr "Struck from the sacred texts: %s"
 
-#: src/places.c:118 src/window.c:462
+#: src/places.c:118 src/window.c:475
 #, c-format
 msgid "Not found: %s"
 msgstr "Lost to the mists: %s"
@@ -730,11 +763,11 @@ msgstr "Strike “%s” from the sacred texts"
 msgid "Bookmark “%s”"
 msgstr "Add “%s” to the sacred texts"
 
-#: src/places.c:235
+#: src/places.c:235 src/window.c:220
 msgid "Trash"
 msgstr "The Void"
 
-#: src/places.c:236 src/window.c:1172
+#: src/places.c:236 src/window.c:1185
 #, c-format
 msgid "%u item"
 msgid_plural "%u items"
@@ -821,7 +854,7 @@ msgstr "%s: it may now leave in peace"
 msgid "%s unmounted"
 msgstr "%s sleeps"
 
-#: src/places.c:765 src/window.c:1528
+#: src/places.c:765 src/window.c:1541
 msgid "Open in new window"
 msgstr "Open in a new window"
 
@@ -834,7 +867,7 @@ msgstr "Look again (F5)"
 msgid "Drive connected: %s (drive button to open)"
 msgstr "A drive appeared: %s (the drive button opens it)"
 
-#: src/preview.c:1407
+#: src/preview.c:1404
 #, c-format
 msgid ""
 "%llu entry:\n"
@@ -849,7 +882,7 @@ msgstr[1] ""
 "%llu things within:\n"
 "%s… and %llu more"
 
-#: src/preview.c:1411
+#: src/preview.c:1408
 #, c-format
 msgid ""
 "%llu entry:\n"
@@ -864,73 +897,73 @@ msgstr[1] ""
 "%llu things within:\n"
 "%s"
 
-#: src/preview.c:1433
+#: src/preview.c:1430
 #, c-format
 msgid "%llu here, %llu file in total%s"
 msgid_plural "%llu here, %llu files in total%s"
 msgstr[0] "%llu here, %llu scroll in all%s"
 msgstr[1] "%llu here, %llu scrolls in all%s"
 
-#: src/preview.c:1436
+#: src/preview.c:1433
 #, c-format
 msgid "%llu file in total%s"
 msgid_plural "%llu files in total%s"
 msgstr[0] "%llu scroll in all%s"
 msgstr[1] "%llu scrolls in all%s"
 
-#: src/preview.c:1565
+#: src/preview.c:1547
 #, c-format
 msgid "<b>%u item selected</b>"
 msgid_plural "<b>%u items selected</b>"
 msgstr[0] "<b>%u thing chosen</b>"
 msgstr[1] "<b>%u things chosen</b>"
 
-#: src/preview.c:1570
+#: src/preview.c:1552
 msgid "Files"
 msgstr "Scrolls"
 
-#: src/preview.c:1621 src/preview.c:1748
+#: src/preview.c:1603 src/preview.c:1730
 msgid "Where"
 msgstr "Where it dwells"
 
-#: src/preview.c:1623
+#: src/preview.c:1605
 msgid "Device"
 msgstr "Device"
 
-#: src/preview.c:1625
+#: src/preview.c:1607
 msgid "File system"
 msgstr "Kind of vault"
 
-#: src/preview.c:1634
+#: src/preview.c:1616
 #, c-format
 msgid "%s free of %s"
 msgstr "%s free of %s"
 
-#: src/preview.c:1635
+#: src/preview.c:1617
 msgid "Space"
 msgstr "Room"
 
-#: src/preview.c:1638
+#: src/preview.c:1620
 msgid "Used"
 msgstr "Filled"
 
-#: src/preview.c:1706
+#: src/preview.c:1688
 msgid "Items"
 msgstr "Things"
 
-#: src/preview.c:1711
+#: src/preview.c:1693
 msgid "Modified"
 msgstr "Last touched"
 
-#: src/preview.c:1728
+#: src/preview.c:1710
 msgid "Permissions"
 msgstr "Who may"
 
-#: src/preview.c:1736
+#: src/preview.c:1718
 msgid "Deleted from"
 msgstr "Banished from"
 
-#: src/preview.c:1741
+#: src/preview.c:1723
 msgid "Deleted"
 msgstr "Banished on"
 
@@ -982,7 +1015,18 @@ msgstr "Back to the columns (Escape)"
 msgid "Search in “%s” and the folders in it"
 msgstr "Seek on “%s” and every shelf below it"
 
-#: src/settings.c:344
+#: src/settings.c:223
+msgid "Pick a language file: a .po or .mo file."
+msgstr "Choose a tongue scroll: a .po or .mo file."
+
+#: src/settings.c:230
+msgid ""
+"A .po file needs msgfmt (gettext) to be checked, and it isn't installed."
+msgstr ""
+"A .po scroll must be examined by msgfmt (gettext), and it dwelleth not on "
+"this machine."
+
+#: src/settings.c:500
 msgid "Drag to resize, double-click for the default width"
 msgstr "Drag to stretch, double-click for the width of old"
 
@@ -1052,8 +1096,8 @@ msgid_plural ""
 "All %u items in the trash are deleted for good, on every disk. This can't be "
 "undone."
 msgstr[0] ""
-"The %u thing in the Void shall be destroyed forever, on every disk. No "
-"spell can undo this."
+"The %u thing in the Void shall be destroyed forever, on every disk. No spell "
+"can undo this."
 msgstr[1] ""
 "All %u things in the Void shall be destroyed forever, on every disk. No "
 "spell can undo this."
@@ -1074,7 +1118,7 @@ msgstr "Emptying the Void…"
 msgid "Put back"
 msgstr "Summon back"
 
-#: src/trash.c:224 src/window.c:1566 src/window.c:1643
+#: src/trash.c:224 src/window.c:1579 src/window.c:1656
 msgid "Delete permanently…"
 msgstr "Destroy forever…"
 
@@ -1175,7 +1219,7 @@ msgstr ""
 "\n"
 "This demands the High Sorcerer’s powers."
 
-#: src/window.c:146 src/window.c:1581
+#: src/window.c:146 src/window.c:1594
 msgid "Open as root…"
 msgstr "Open as the High Sorcerer…"
 
@@ -1191,61 +1235,61 @@ msgstr "HIGH SORCERER: The Realm"
 msgid "Computer"
 msgstr "The Realm"
 
-#: src/window.c:215
+#: src/window.c:226
 #, c-format
 msgid "ROOT: %s"
 msgstr "HIGH SORCERER: %s"
 
-#: src/window.c:332
+#: src/window.c:345
 msgid "Computer: click a disk to open it, right-click to eject"
 msgstr "The Realm: click a disk to enter, right-click to cast it out"
 
-#: src/window.c:380
+#: src/window.c:393
 #, c-format
 msgid "%d item selected"
 msgid_plural "%d items selected"
 msgstr[0] "%d thing chosen"
 msgstr[1] "%d things chosen"
 
-#: src/window.c:488
+#: src/window.c:501
 msgid "Hidden files shown"
 msgstr "Hidden scrolls are revealed"
 
-#: src/window.c:488
+#: src/window.c:501
 msgid "Hidden files hidden"
 msgstr "Hidden scrolls are concealed once more"
 
-#: src/window.c:624
+#: src/window.c:637
 #, c-format
 msgid "“%s” is a script"
 msgstr "“%s” is an incantation"
 
-#: src/window.c:626
+#: src/window.c:639
 msgid "Run it, or open it to read what it does?"
 msgstr "Cast it, or merely read what it would do?"
 
-#: src/window.c:628 src/window.c:1527 src/window.c:1530 src/window.c:1613
-#: src/window.c:1615
+#: src/window.c:641 src/window.c:1540 src/window.c:1543 src/window.c:1626
+#: src/window.c:1628
 msgid "Open"
 msgstr "Open"
 
-#: src/window.c:629
+#: src/window.c:642
 msgid "Run in terminal"
 msgstr "Cast in the Crucible"
 
-#: src/window.c:630
+#: src/window.c:643
 msgid "Run"
 msgstr "Cast"
 
-#: src/window.c:714
+#: src/window.c:727
 msgid "Couldn't run it"
 msgstr "The incantation failed"
 
-#: src/window.c:768 src/window.c:807
+#: src/window.c:781 src/window.c:820
 msgid "No terminal found"
 msgstr "No terminal found. An impressive omission."
 
-#: src/window.c:769 src/window.c:808
+#: src/window.c:782 src/window.c:821
 msgid ""
 "Install a terminal (xterm, xfce4-terminal, konsole, …) or set the TERMINAL "
 "environment variable to the one you use."
@@ -1253,47 +1297,47 @@ msgstr ""
 "Summon a terminal (xterm, xfce4-terminal, konsole, …) for the Crucible, or "
 "name thine own in the TERMINAL environment variable."
 
-#: src/window.c:815
+#: src/window.c:828
 msgid "New folder"
 msgstr "New shelf"
 
-#: src/window.c:815
+#: src/window.c:828
 msgid "New Folder"
 msgstr ""
 
-#: src/window.c:822 src/window.c:824
+#: src/window.c:835 src/window.c:837
 msgid "Couldn't create the folder"
 msgstr "The shelf would not be built"
 
-#: src/window.c:842
+#: src/window.c:855
 msgid "Rename"
 msgstr "Rename"
 
-#: src/window.c:846
+#: src/window.c:859
 #, c-format
 msgid "“%s” already exists."
 msgstr "“%s” already dwells here."
 
-#: src/window.c:847 src/window.c:853
+#: src/window.c:860 src/window.c:866
 msgid "Couldn't rename"
 msgstr "The name would not change"
 
-#: src/window.c:909
+#: src/window.c:922
 msgid "Some items couldn't be deleted"
 msgstr "Some things refused to be destroyed"
 
-#: src/window.c:913
+#: src/window.c:926
 #, c-format
 msgid "%u item deleted"
 msgid_plural "%u items deleted"
 msgstr[0] "%u thing destroyed"
 msgstr[1] "%u things destroyed"
 
-#: src/window.c:987 src/window.c:995
+#: src/window.c:1000 src/window.c:1008
 msgid "Can't move to trash"
 msgstr "It will not go into the Void"
 
-#: src/window.c:994
+#: src/window.c:1007
 #, c-format
 msgid ""
 "%s: %s\n"
@@ -1304,25 +1348,25 @@ msgstr ""
 "\n"
 "Destroy it forever instead?"
 
-#: src/window.c:995
+#: src/window.c:1008
 msgid "Delete permanently"
 msgstr "Destroy forever"
 
-#: src/window.c:1002
+#: src/window.c:1015
 #, c-format
 msgid "%u item moved to the trash"
 msgid_plural "%u items moved to the trash"
 msgstr[0] "%u thing banished to the Void"
 msgstr[1] "%u things banished to the Void"
 
-#: src/window.c:1013
+#: src/window.c:1026
 #, c-format
 msgid "Delete %u item permanently?"
 msgid_plural "Delete %u items permanently?"
 msgstr[0] "Destroy %u thing forever?"
 msgstr[1] "Destroy %u things forever?"
 
-#: src/window.c:1014
+#: src/window.c:1027
 #, c-format
 msgid ""
 "%s\n"
@@ -1333,207 +1377,209 @@ msgstr ""
 "\n"
 "No spell can undo this."
 
-#: src/window.c:1015
+#: src/window.c:1028
 msgid "Delete"
 msgstr "Destroy"
 
-#: src/window.c:1082
+#: src/window.c:1095
 #, c-format
 msgid "%u item cut"
 msgid_plural "%u items cut"
 msgstr[0] "%u thing severed"
 msgstr[1] "%u things severed"
 
-#: src/window.c:1084
+#: src/window.c:1097
 #, c-format
 msgid "%u item copied"
 msgid_plural "%u items copied"
 msgstr[0] "%u thing duplicated"
 msgstr[1] "%u things duplicated"
 
-#: src/window.c:1130
+#: src/window.c:1143
 msgid "Nothing to paste"
 msgstr "Nothing awaits to be conjured"
 
-#: src/window.c:1165 src/window.c:1166
+#: src/window.c:1178 src/window.c:1179
 msgid "Compress"
 msgstr "Bind"
 
-#: src/window.c:1173
+#: src/window.c:1186
 #, c-format
 msgid "Pack “%s” into an archive in the same folder:"
 msgstr "Bind “%s” into a spellbook on the same shelf:"
 
-#: src/window.c:1200
+#: src/window.c:1213
 #, c-format
 msgid "“%s” already exists. Pick another name."
 msgstr "“%s” already dwells here. Choose another name."
 
-#: src/window.c:1201
+#: src/window.c:1214
 msgid "Couldn't compress"
 msgstr "The binding failed"
 
-#: src/window.c:1251
+#: src/window.c:1264
 msgid "Couldn't tell what kind of file this is"
 msgstr "Its nature is a mystery"
 
-#: src/window.c:1253
+#: src/window.c:1266
 msgid "Couldn't set the default program"
 msgstr "The default program would not obey"
 
-#: src/window.c:1257
+#: src/window.c:1270
 #, c-format
 msgid "%s opens with %s now"
 msgstr "%s now answers to %s"
 
-#: src/window.c:1427
+#: src/window.c:1440
 msgid "Date modified (newest first)"
 msgstr "Date last touched (freshest first)"
 
-#: src/window.c:1446
+#: src/window.c:1459
 msgid "Back to name"
 msgstr "Back to the alphabet"
 
-#: src/window.c:1452
+#: src/window.c:1465
 #, c-format
 msgid "Sort “%s”"
 msgstr "Order “%s”"
 
-#: src/window.c:1494
+#: src/window.c:1507
 msgid "Set default"
 msgstr "Make it the default"
 
-#: src/window.c:1498
+#: src/window.c:1511
 msgid "Open with"
 msgstr "Open with"
 
-#: src/window.c:1538 src/window.c:1624
+#: src/window.c:1551 src/window.c:1637
 msgid "Extract here"
 msgstr "Unbind here"
 
-#: src/window.c:1541 src/window.c:1627
+#: src/window.c:1554 src/window.c:1640
 #, c-format
 msgid "Extract to “%s/”"
 msgstr "Unbind into “%s/”"
 
-#: src/window.c:1547 src/window.c:1633
+#: src/window.c:1560 src/window.c:1646
 msgid "Extract each to its own folder"
 msgstr "Unbind each onto its own shelf"
 
-#: src/window.c:1550 src/window.c:1636
+#: src/window.c:1563 src/window.c:1649
 msgid "Compress…"
 msgstr "Bind into a spellbook…"
 
-#: src/window.c:1552 src/window.c:1638
+#: src/window.c:1565 src/window.c:1651
 msgid "Cut"
 msgstr "Sever"
 
-#: src/window.c:1556
+#: src/window.c:1569
 #, c-format
 msgid "Paste into “%s”"
 msgstr "Conjure into “%s”"
 
-#: src/window.c:1561 src/window.c:1569
+#: src/window.c:1574 src/window.c:1582
 msgid "Paste"
 msgstr "Conjure here"
 
-#: src/window.c:1564 src/window.c:1641
+#: src/window.c:1577 src/window.c:1654
 msgid "Rename…"
 msgstr "Rename…"
 
-#: src/window.c:1565 src/window.c:1642
+#: src/window.c:1578 src/window.c:1655
 msgid "Move to trash"
 msgstr "Banish to the Void"
 
-#: src/window.c:1572
+#: src/window.c:1585
 msgid "New folder…"
 msgstr "New shelf…"
 
 #. the highlighted folder, else this column's own
-#: src/window.c:1574
+#: src/window.c:1587
 msgid "Open terminal here"
 msgstr "Open the Crucible here"
 
-#: src/window.c:1576 src/window.c:1645
+#: src/window.c:1589 src/window.c:1658
 msgid "Copy path"
 msgstr "Copy the path"
 
-#: src/window.c:1578 src/window.c:1647
+#: src/window.c:1591 src/window.c:1660
 msgid "Checksums…"
 msgstr "Read the runes…"
 
-#: src/window.c:1579
+#: src/window.c:1592
 msgid "Add to bookmarks"
 msgstr "Add to sacred texts"
 
-#: src/window.c:1583 src/window.c:1648
+#: src/window.c:1596 src/window.c:1661
 msgid "Properties…"
 msgstr "Secrets…"
 
-#: src/window.c:1585
+#: src/window.c:1598
 msgid "Show hidden files"
 msgstr "Reveal hidden scrolls"
 
-#: src/window.c:1619
+#: src/window.c:1632
 msgid "Show in column"
 msgstr "Show in the column"
 
-#: src/window.c:1645
+#: src/window.c:1658
 msgid "Copy paths"
 msgstr "Copy the paths"
 
-#: src/window.c:1924
+#: src/window.c:1937
 msgid "Parent folder (Backspace, Alt+Up)"
 msgstr "Up to the shelf above (Backspace, Alt+Up)"
 
-#: src/window.c:1926
+#: src/window.c:1939
 msgid "Home (Alt+Home)"
 msgstr "Home, sweet tower (Alt+Home)"
 
-#: src/window.c:1928
+#: src/window.c:1941
 msgid "Computer: disks, USB sticks, network (Alt+/)"
 msgstr "The Realm: disks, USB sticks, network (Alt+/)"
 
-#: src/window.c:1932
+#: src/window.c:1945
 msgid "Bookmarks (Ctrl+D adds this folder)"
 msgstr "Sacred texts (Ctrl+D adds this shelf)"
 
-#: src/window.c:1936
+#: src/window.c:1949
 msgid "New window"
 msgstr "A new window"
 
-#: src/window.c:1942
+#: src/window.c:1955
 msgid "Open this folder as root…"
 msgstr "Open this shelf as the High Sorcerer…"
 
-#: src/window.c:1948
+#: src/window.c:1961
 msgid "Search here…"
 msgstr "Seek here…"
 
-#: src/window.c:1952
+#: src/window.c:1965
 msgid "Settings…"
 msgstr "The grimoire…"
 
-#: src/window.c:1955
+#: src/window.c:1968
 msgid "About millerX"
 msgstr "Of millerX"
 
-#: src/window.c:2005
+#: src/window.c:2018
 msgid ""
 "<b>You are root:</b> every change here is made as administrator. Be careful."
 msgstr ""
 "<b>Thou art the High Sorcerer:</b> every change here is made with the "
 "highest powers. Tread carefully."
 
-#: src/window.c:2079
+#: src/window.c:2092
 msgid "Not now"
 msgstr "Not yet, impatient one"
 
-#: src/window.c:2079
+#: src/window.c:2092
 msgid ""
 "Files are still being copied, moved or packed. Restart when that is done."
-msgstr "Scrolls are still being copied, moved or bound. Seek rebirth once the work is done."
+msgstr ""
+"Scrolls are still being copied, moved or bound. Seek rebirth once the work "
+"is done."
 
-#: src/window.c:2106
+#: src/window.c:2124
 msgid "Couldn't restart millerX"
 msgstr "millerX could not be reborn"

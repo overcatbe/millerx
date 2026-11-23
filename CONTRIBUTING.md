@@ -28,8 +28,11 @@ Translations live in `po/`. To add a language (here `xx`, e.g. `fr` or `pt_BR`):
 3. Check it: `msgfmt --check -c -o /dev/null po/xx.po` must print nothing.
 4. Add `xx` to `po/LINGUAS` and send a pull request.
 
-Corrections to an existing language are just as welcome, especially for Greek, which isn't from
-a native speaker.
+Corrections to an existing language are just as welcome.
+
+Just for fun? A joke language (pirate, LOLCAT, …) doesn't need to go into `po/`: anyone can add one
+with Settings → Language → "Your own…". Send it as a pull request to
+[extras/languages](extras/languages/) so others can download it.
 
 ## Code
 

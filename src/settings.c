@@ -3,6 +3,7 @@
 /* Settings (~/.config/millerx/millerx.conf), sort order and the column dividers. */
 #include "millerx.h"
 #include <string.h>
+#include <glib/gstdio.h>
 
 Look LOOK = { NULL, 2, FALSE, PREVIEW_DEFAULT, TRUE, FALSE, .column_width = COL_DEFAULT,
               .use_ffmpeg = TRUE, .use_pdftoppm = TRUE, .use_pkexec = TRUE, .use_blender = TRUE,
@@ -91,7 +92,7 @@ void look_load(void)
     g_free(LOOK.language);
     LOOK.language = get_str(kf, "look", "language");
     if (!LOOK.language || (strcmp(LOOK.language, "en") && strcmp(LOOK.language, "wizard")
-                              && strcmp(LOOK.language, "wienerisch"))) {
+                              && strcmp(LOOK.language, "wienerisch") && !g_str_has_prefix(LOOK.language, "own:"))) {
         g_free(LOOK.language);
         LOOK.language = g_strdup("system");
     }
@@ -159,6 +160,161 @@ char *look_language(void)
     g_free(path);
     g_key_file_unref(kf);
     return l ? l : g_strdup("system");
+}
+
+/* ---- own languages -----------------------------------------------------------------
+ * Anyone can write millerX's texts their own way: copy millerx.pot, fill in the msgstr lines and
+ * put it as NAME.po (or compiled, NAME.mo) into ~/.local/share/millerx/languages. It shows up in
+ * Settings → Language as NAME. */
+char *own_languages_dir(void)
+{
+    return g_build_filename(g_get_user_data_dir(), "millerx", "languages", NULL);
+}
+
+static gboolean own_name_ok(const char *name)
+{
+    return name && *name && name[0] != '.' && !strchr(name, '/') && g_utf8_validate(name, -1, NULL);
+}
+
+static int name_cmp(gconstpointer a, gconstpointer b)    /* g_ptr_array_sort hands pointers to the entries */
+{
+    return g_utf8_collate(*(char *const *) a, *(char *const *) b);
+}
+
+GPtrArray *own_languages_list(void)
+{
+    GPtrArray *names = g_ptr_array_new_with_free_func(g_free);
+    char *dir = own_languages_dir();
+    GDir *d = g_dir_open(dir, 0, NULL);
+    char *msgfmt = g_find_program_in_path("msgfmt");    /* a .po needs it to be turned into a .mo */
+    const char *e;
+    while (d && (e = g_dir_read_name(d))) {
+        gboolean po = g_str_has_suffix(e, ".po"), mo = g_str_has_suffix(e, ".mo");
+        if (!mo && !(po && msgfmt))
+            continue;
+        char *name = g_strndup(e, strlen(e) - 3);
+        gboolean dup = FALSE;
+        for (guint i = 0; i < names->len && !dup; i++)
+            dup = !strcmp(names->pdata[i], name);
+        if (own_name_ok(name) && !dup)
+            g_ptr_array_add(names, name);
+        else
+            g_free(name);
+    }
+    if (d)
+        g_dir_close(d);
+    g_free(msgfmt);
+    g_free(dir);
+    g_ptr_array_sort(names, name_cmp);
+    return names;
+}
+
+/* Settings → Language → "Your own…": a picked file is checked (a .po: its %s and the like must
+ * match, or millerX could crash) and copied into the folder, made if needed. Returns its NAME;
+ * on failure NULL with *err saying why. */
+char *own_language_add(const char *path, char **err)
+{
+    char *base = g_path_get_basename(path);
+    gboolean po = g_str_has_suffix(base, ".po"), mo = g_str_has_suffix(base, ".mo");
+    char *name = po || mo ? g_strndup(base, strlen(base) - 3) : NULL;
+    char *dir = NULL, *other = NULL;
+    GFile *src = NULL, *dst = NULL;
+    if (!own_name_ok(name)) {
+        *err = g_strdup(_("Pick a language file: a .po or .mo file."));
+        goto fail;
+    }
+    if (po) {
+        char *msgfmt = g_find_program_in_path("msgfmt"), *out = NULL;
+        int status = 0;
+        if (!msgfmt) {
+            *err = g_strdup(_("A .po file needs msgfmt (gettext) to be checked, and it isn't installed."));
+            goto fail;
+        }
+        char *argv[] = { msgfmt, (char *) "--check-format", (char *) "-o", (char *) "/dev/null", (char *) path, NULL };
+        gboolean ok = g_spawn_sync(NULL, argv, NULL, G_SPAWN_STDOUT_TO_DEV_NULL, NULL, NULL, NULL, &out, &status, NULL)
+                      && g_spawn_check_wait_status(status, NULL);
+        g_free(msgfmt);
+        if (!ok) {
+            *err = out ? out : g_strdup("msgfmt");          /* msgfmt says which line is wrong */
+            goto fail;
+        }
+        g_free(out);
+    }
+    dir = own_languages_dir();
+    g_mkdir_with_parents(dir, 0755);
+    src = g_file_new_for_path(path);
+    dst = g_file_new_build_filename(dir, base, NULL);
+    GError *e = NULL;
+    if (!g_file_equal(src, dst) && !g_file_copy(src, dst, G_FILE_COPY_OVERWRITE, NULL, NULL, NULL, &e)) {
+        *err = g_strdup(e->message);
+        g_error_free(e);
+        goto fail;
+    }
+    other = g_strconcat(dir, G_DIR_SEPARATOR_S, name, po ? ".mo" : ".po", NULL);
+    g_unlink(other);                 /* the same NAME as the other kind: the new file is the one used */
+    g_free(other);
+    g_free(dir);
+    g_free(base);
+    g_object_unref(src);
+    g_object_unref(dst);
+    return name;
+fail:
+    g_free(name);
+    g_free(dir);
+    g_free(base);
+    if (src)
+        g_object_unref(src);
+    if (dst)
+        g_object_unref(dst);
+    return NULL;
+}
+
+/* gettext looks for LANG/LC_MESSAGES/millerx.mo under the folder it is bound to: put the chosen
+ * file there as "en@own" (a .po is checked and compiled by msgfmt first; it wins over a .mo) */
+char *own_language_prepare(const char *name)
+{
+    if (!own_name_ok(name))
+        return NULL;
+    char *dir = own_languages_dir();
+    char *po = g_strconcat(dir, G_DIR_SEPARATOR_S, name, ".po", NULL);
+    char *mo = g_strconcat(dir, G_DIR_SEPARATOR_S, name, ".mo", NULL);
+    char *base = g_build_filename(g_get_user_cache_dir(), "millerx", "language", NULL);
+    char *lc = g_build_filename(base, "en@own", "LC_MESSAGES", NULL);
+    char *out = g_build_filename(lc, "millerx.mo", NULL);
+    gboolean ok = FALSE;
+    g_mkdir_with_parents(lc, 0700);
+    g_unlink(out);
+    if (g_file_test(po, G_FILE_TEST_IS_REGULAR)) {
+        char *msgfmt = g_find_program_in_path("msgfmt"), *err = NULL;
+        int status = 0;
+        if (msgfmt) {
+            char *argv[] = { msgfmt, (char *) "--check-format", (char *) "-o", out, po, NULL };   /* a wrong %s would crash */
+            ok = g_spawn_sync(NULL, argv, NULL, G_SPAWN_STDOUT_TO_DEV_NULL, NULL, NULL, NULL, &err, &status, NULL)
+                 && g_spawn_check_wait_status(status, NULL);
+            if (!ok)
+                g_printerr("millerX: %s has mistakes, using English:\n%s", po, err ? err : "");
+        } else {
+            g_printerr("millerX: %s needs msgfmt (gettext), using English\n", po);
+        }
+        g_free(err);
+        g_free(msgfmt);
+    } else {
+        char *data;
+        gsize len;
+        ok = g_file_get_contents(mo, &data, &len, NULL) && g_file_set_contents(out, data, (gssize) len, NULL);
+        if (ok)
+            g_free(data);
+    }
+    g_free(dir);
+    g_free(po);
+    g_free(mo);
+    g_free(lc);
+    g_free(out);
+    if (!ok) {
+        g_free(base);
+        return NULL;
+    }
+    return base;
 }
 
 void geom_load(Geom *g)

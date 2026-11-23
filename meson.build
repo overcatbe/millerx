@@ -1,5 +1,5 @@
 project('millerx', 'c',
-  version : '0.8.1',
+  version : '0.8.2',
   license : 'GPL-2.0-or-later',
   meson_version : '>= 0.60',
   default_options : ['c_std=gnu11', 'warning_level=2', 'buildtype=release'])
@@ -31,6 +31,7 @@ datadir = get_option('prefix') / get_option('datadir')
 add_project_arguments(
   '-DMILLERX_VERSION="@0@"'.format(meson.project_version()),
   '-DMILLERX_BINDIR="@0@"'.format(bindir),
+  '-DMILLERX_POT="@0@"'.format(datadir / 'millerx' / 'millerx.pot'),
   '-Wno-unused-parameter', '-Wno-missing-field-initializers',
   language : 'c')
 
@@ -44,6 +45,7 @@ executable('millerx',
 install_data('data/millerx.desktop', install_dir : datadir / 'applications')
 install_data('data/org.mix.millerx.metainfo.xml', install_dir : datadir / 'metainfo')
 install_man('data/millerx.1')
+install_data('po/millerx.pot', install_dir : datadir / 'millerx')   # the start for people's own languages
 install_data('data/icons/millerx.svg', install_dir : datadir / 'icons/hicolor/scalable/apps')
 foreach s : ['16', '24', '32', '48', '64', '128', '256']
   install_data('data/icons/millerx-' + s + '.png',

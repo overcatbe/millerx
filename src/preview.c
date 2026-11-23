@@ -807,10 +807,6 @@ static void grid_stop(Preview *p)
         g_source_remove(p->grid_refresh);
         p->grid_refresh = 0;
     }
-    if (p->sizes_refresh) {
-        g_source_remove(p->sizes_refresh);
-        p->sizes_refresh = 0;
-    }
     g_clear_object(&p->dir_size_l);
     g_clear_object(&p->dir_count_l);
     if (p->grid_monitor) {
@@ -861,16 +857,13 @@ static gboolean grid_reload(gpointer data)
     return G_SOURCE_REMOVE;
 }
 
-static gboolean sizes_reload(gpointer data);
-
 /* Gone or renamed thumbnails are changed in place, so the grid doesn't jump back to the top.
- * Any change also counts the folder's size and items again, a moment later. */
+ * The folder's size and items are not counted again: a busy folder (slackpkg, a download, a
+ * build) would recount its whole tree over and over. They are counted when the folder is
+ * opened and on F5. */
 static void on_grid_changed(GFileMonitor *m, GFile *f, GFile *other, GFileMonitorEvent ev, Preview *p)
 {
     (void) m;
-    if (ev != G_FILE_MONITOR_EVENT_ATTRIBUTE_CHANGED && ev != G_FILE_MONITOR_EVENT_PRE_UNMOUNT
-        && ev != G_FILE_MONITOR_EVENT_UNMOUNTED && !p->sizes_refresh)
-        p->sizes_refresh = g_timeout_add(500, sizes_reload, p);
     char *path = g_file_get_path(f);
     GtkWidget *t = path ? thumb_for(p, path) : NULL;
     switch (ev) {
@@ -1542,21 +1535,6 @@ static void start_sizes(Preview *p, GPtrArray *paths, GtkWidget *size_l, GtkWidg
     b->count_label = g_object_ref(count_l);
     b->gen = (guint) g_atomic_int_add((gint *) &p->sizes_gen, 1) + 1;   /* older counts stop writing */
     spawn_bg(b, sizes_thread);
-}
-
-/* the folder on show changed: count its size and items again (its rows stay where they are) */
-static gboolean sizes_reload(gpointer data)
-{
-    Preview *p = data;
-    p->sizes_refresh = 0;
-    char *path = p->current ? g_file_get_path(p->current) : NULL;
-    if (path && p->dir_size_l && p->dir_count_l) {
-        GPtrArray *paths = g_ptr_array_new_with_free_func(g_free);
-        g_ptr_array_add(paths, g_strdup(path));
-        start_sizes(p, paths, p->dir_size_l, p->dir_count_l, path);
-    }
-    g_free(path);
-    return G_SOURCE_REMOVE;
 }
 
 /* ---- public ------------------------------------------------------------------------ */

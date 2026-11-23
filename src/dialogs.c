@@ -471,6 +471,51 @@ static void on_tab(GtkNotebook *nb, GtkWidget *page, guint n, gpointer d)
     LAST_TAB = (int) n;
 }
 
+#ifdef ENABLE_NLS
+/* "Your own…": pick a language file; it is checked, copied where millerX looks and chosen */
+static void on_own_languages(GtkButton *b, Set *s)
+{
+    GtkWindow *top = GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(b)));
+    GtkWidget *d = gtk_file_chooser_dialog_new(_("Add a language file"), top, GTK_FILE_CHOOSER_ACTION_OPEN,
+                                               _("Cancel"), GTK_RESPONSE_CANCEL, _("Add"), GTK_RESPONSE_ACCEPT, NULL);
+    GtkFileFilter *f = gtk_file_filter_new();
+    gtk_file_filter_set_name(f, _("Language files (.po, .mo)"));
+    gtk_file_filter_add_pattern(f, "*.po");
+    gtk_file_filter_add_pattern(f, "*.mo");
+    gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(d), f);
+    const char *dl = g_get_user_special_dir(G_USER_DIRECTORY_DOWNLOAD);   /* where a download lands */
+    char *dl2 = dl ? g_strdup(dl) : g_build_filename(g_get_home_dir(), "Downloads", NULL);
+    gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(d),
+                                        g_file_test(dl2, G_FILE_TEST_IS_DIR) ? dl2 : g_get_home_dir());
+    g_free(dl2);
+    char *path = gtk_dialog_run(GTK_DIALOG(d)) == GTK_RESPONSE_ACCEPT
+                 ? gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(d)) : NULL;
+    gtk_widget_destroy(d);
+    if (!path)
+        return;
+    char *err = NULL, *name = own_language_add(path, &err);
+    if (!name) {
+        char *base = g_path_get_basename(path);
+        GtkWidget *m = gtk_message_dialog_new(top, GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_CLOSE,
+                                              _("Couldn't add “%s”"), base);
+        gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(m), "%s", err);
+        gtk_dialog_run(GTK_DIALOG(m));
+        gtk_widget_destroy(m);
+        g_free(base);
+    } else {
+        char *id = g_strconcat("own:", name, NULL);
+        if (!gtk_combo_box_set_active_id(GTK_COMBO_BOX(s->lang), id)) {   /* new: into the list */
+            gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->lang), id, name);
+            gtk_combo_box_set_active_id(GTK_COMBO_BOX(s->lang), id);
+        }
+        g_free(id);
+    }
+    g_free(err);
+    g_free(name);
+    g_free(path);
+}
+#endif
+
 static void srow(GtkWidget *grid, int *r, const char *label, GtkWidget *w)
 {
     GtkWidget *l = gtk_label_new(label);
@@ -818,10 +863,35 @@ void dialog_settings(Win *w)
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->lang), "en", _("English"));
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->lang), "wizard", _("Wizard (English, of a sort)"));
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->lang), "wienerisch", _("Wienerisch (Viennese slang)"));
-    gtk_combo_box_set_active_id(GTK_COMBO_BOX(s->lang), LOOK.language ? LOOK.language : "system");
+#ifdef ENABLE_NLS
+    GPtrArray *own = own_languages_list();          /* people's own files, under their file names */
+    for (guint i = 0; i < own->len; i++) {
+        char *id = g_strconcat("own:", (char *) own->pdata[i], NULL);
+        gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->lang), id, own->pdata[i]);
+        g_free(id);
+    }
+    g_ptr_array_unref(own);
+#endif
+    if (!gtk_combo_box_set_active_id(GTK_COMBO_BOX(s->lang), LOOK.language ? LOOK.language : "system"))
+        gtk_combo_box_set_active_id(GTK_COMBO_BOX(s->lang), "system");   /* its file is gone */
     gtk_widget_set_tooltip_text(s->lang, _("System: the language your computer is set to (English where there is "
                                            "no translation). Takes effect the next time millerX starts."));
+#ifdef ENABLE_NLS
+    GtkWidget *lrow = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+    gtk_box_pack_start(GTK_BOX(lrow), s->lang, FALSE, FALSE, 0);
+    GtkWidget *ob = gtk_button_new_with_label(_("Your own…"));
+    char *tip = g_strdup_printf(_("Add a language file (.po or .mo), for example one from millerX's extras "
+                                  "on GitHub. To write your own, copy %s and fill in the msgstr lines; "
+                                  "lines you leave empty stay English."),
+                                MILLERX_POT);
+    gtk_widget_set_tooltip_text(ob, tip);
+    g_free(tip);
+    g_signal_connect(ob, "clicked", G_CALLBACK(on_own_languages), s);
+    gtk_box_pack_start(GTK_BOX(lrow), ob, FALSE, FALSE, 0);
+    srow(grid, &r, _("Language"), lrow);
+#else
     srow(grid, &r, _("Language"), s->lang);
+#endif
     /* a language other than the one millerX started with: how to get it now */
     s->lang_note = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
     GtkWidget *ln = gtk_label_new(_("Takes effect after a restart."));

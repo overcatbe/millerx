@@ -134,6 +134,18 @@ int main(int argc, char **argv)
     }
     char *lang = look_language();
     LANGUAGE_AT_START = g_strdup(lang);
+    char *localedir = NULL;                         /* an own language file: bound instead of ours */
+#ifdef ENABLE_NLS
+    if (g_str_has_prefix(lang, "own:")) {
+        localedir = own_language_prepare(lang + 4);
+        if (localedir)
+            setenv("LANGUAGE", "en@own:en", 1);
+        else {                                       /* gone or broken: the system's language */
+            g_free(lang);
+            lang = g_strdup("system");
+        }
+    }
+#endif
     if (!strcmp(lang, "en"))
         setenv("LANGUAGE", "en", 1);
     else if (!strcmp(lang, "wizard"))
@@ -148,8 +160,9 @@ int main(int argc, char **argv)
             setlocale(LC_MESSAGES, "C.UTF-8");
     }
     g_free(lang);
+    (void) localedir;
 #ifdef ENABLE_NLS
-    bindtextdomain(GETTEXT_PACKAGE, LOCALEDIR);
+    bindtextdomain(GETTEXT_PACKAGE, localedir ? localedir : LOCALEDIR);
     bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8");
     textdomain(GETTEXT_PACKAGE);
 #endif

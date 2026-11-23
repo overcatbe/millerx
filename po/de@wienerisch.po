@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: millerx\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-23 09:19+0200\n"
+"POT-Creation-Date: 2026-11-23 19:47+0200\n"
 "PO-Revision-Date: 2026-11-23 08:30+0200\n"
 "Last-Translator: overcatbe\n"
 "Language-Team: Viennese (Wienerisch)\n"
@@ -92,7 +92,7 @@ msgstr "des Ölteste"
 msgid "Sort:"
 msgstr "Sortier:"
 
-#: src/column.c:934 src/dialogs.c:630
+#: src/column.c:934 src/dialogs.c:675
 msgid "Sort by name again"
 msgstr "Wieda noch'm Nam sortiern"
 
@@ -122,8 +122,8 @@ msgstr "Des Ding, des do scho liegt, übaschreibn?"
 msgid "Do this for all conflicts"
 msgstr "Moch des bei ollen Konfliktn so"
 
-#: src/dialogs.c:26 src/window.c:159 src/window.c:170 src/window.c:627
-#: src/window.c:1166 src/window.c:1992
+#: src/dialogs.c:26 src/dialogs.c:480 src/window.c:159 src/window.c:170
+#: src/window.c:640 src/window.c:1179 src/window.c:2005
 msgid "Cancel"
 msgstr "Loss guat sein"
 
@@ -166,7 +166,7 @@ msgstr "Do gibt's nix zum Sogn"
 msgid "Properties: %s"
 msgstr "Wos is des: %s"
 
-#: src/dialogs.c:229 src/dialogs.c:721 src/window.c:145
+#: src/dialogs.c:229 src/dialogs.c:766 src/window.c:145
 msgid "Close"
 msgstr "Zuamochn"
 
@@ -174,7 +174,7 @@ msgstr "Zuamochn"
 msgid "Link to"
 msgstr "Zeigt auf"
 
-#: src/dialogs.c:273 src/dialogs.c:861 src/preview.c:1569 src/preview.c:1704
+#: src/dialogs.c:273 src/dialogs.c:931 src/preview.c:1551 src/preview.c:1686
 msgid "Size"
 msgstr "Größn"
 
@@ -190,55 +190,72 @@ msgstr "Wos no frei is"
 msgid "Couldn't save the settings"
 msgstr "De Einstellungen hob i ned speichern kenna"
 
-#: src/dialogs.c:509
+#: src/dialogs.c:479
+msgid "Add a language file"
+msgstr "A Sprochdatei dazuagebn"
+
+#: src/dialogs.c:480
+msgid "Add"
+msgstr "Dazuagebn"
+
+#: src/dialogs.c:482
+msgid "Language files (.po, .mo)"
+msgstr "Sprochdateien (.po, .mo)"
+
+#: src/dialogs.c:500
+#, c-format
+msgid "Couldn't add “%s”"
+msgstr "„%s“ hama ned dazuagebn kennan"
+
+#: src/dialogs.c:554
 msgid "video frames, music covers, AVIF and HEIC pictures"
 msgstr "Büdln aus Videos, Musik-Cover, AVIF- und HEIC-Büdln"
 
-#: src/dialogs.c:510
+#: src/dialogs.c:555
 msgid "videos and music show their icon, AVIF/HEIC too"
 msgstr "Videos und Musik zeigen nur ihr Zeichn, AVIF/HEIC a"
 
-#: src/dialogs.c:510
+#: src/dialogs.c:555
 msgid "ffmpeg (Slackware: l/ffmpeg)"
 msgstr "ffmpeg (Slackware: l/ffmpeg)"
 
-#: src/dialogs.c:511
+#: src/dialogs.c:556
 msgid "the first page of PDFs"
 msgstr "de erste Seitn vo de PDFs"
 
-#: src/dialogs.c:512
+#: src/dialogs.c:557
 msgid "PDFs show their icon"
 msgstr "PDFs zeigen nur ihr Zeichn"
 
-#: src/dialogs.c:512
+#: src/dialogs.c:557
 msgid "poppler (Debian/Ubuntu: poppler-utils)"
 msgstr "poppler (Debian/Ubuntu: poppler-utils)"
 
-#: src/dialogs.c:513
+#: src/dialogs.c:558
 msgid "“Open as root”"
 msgstr "„Ois Kaiser aufmochn“"
 
-#: src/dialogs.c:514
+#: src/dialogs.c:559
 msgid "no root window"
 msgstr "ka Kaiser-Fensta"
 
-#: src/dialogs.c:514
+#: src/dialogs.c:559
 msgid "polkit, plus an authentication agent"
 msgstr "polkit, und wer, der noch'm Passwort frogt"
 
-#: src/dialogs.c:515
+#: src/dialogs.c:560
 msgid "the pictures saved in Blender (.blend) files"
 msgstr "de Büdln, de in Blender-Dinga (.blend) drinnen san"
 
-#: src/dialogs.c:516
+#: src/dialogs.c:561
 msgid ".blend files show their icon"
 msgstr ".blend-Dinga zeigen nur ihr Zeichn"
 
-#: src/dialogs.c:516
+#: src/dialogs.c:561
 msgid "Blender (it comes with it; also found in /opt/blender*)"
 msgstr "Blender (is eh dabei; i schau a in /opt/blender* noch)"
 
-#: src/dialogs.c:536
+#: src/dialogs.c:581
 #, c-format
 msgid ""
 "✗ not installed: %s.\n"
@@ -249,25 +266,25 @@ msgstr ""
 "<small>Hau %s drauf\n"
 "für %s.</small>"
 
-#: src/dialogs.c:554
+#: src/dialogs.c:599
 #, c-format
 msgid "%s in %u thumbnail (%u deleted)"
 msgid_plural "%s in %u thumbnails (%u deleted)"
 msgstr[0] "%s in %u Büdl (%u weg)"
 msgstr[1] "%s in %u Büdln (%u weg)"
 
-#: src/dialogs.c:556
+#: src/dialogs.c:601
 #, c-format
 msgid "%s in %u thumbnail"
 msgid_plural "%s in %u thumbnails"
 msgstr[0] "%s in %u Büdl"
 msgstr[1] "%s in %u Büdln"
 
-#: src/dialogs.c:566
+#: src/dialogs.c:611
 msgid "Clear the thumbnail cache?"
 msgstr "De kloanen Büdln olle wegschmeißn?"
 
-#: src/dialogs.c:567
+#: src/dialogs.c:612
 msgid ""
 "All thumbnails in ~/.cache/thumbnails are deleted. Thunar and file dialogs "
 "use them too; everything is made again when it's needed."
@@ -275,41 +292,41 @@ msgstr ""
 "Olle Büdln in ~/.cache/thumbnails kumman weg. Da Thunar und de Dateidialoge "
 "brauchn des Zeugs a; des wird wieda neich gmocht, wenn ma's braucht."
 
-#: src/dialogs.c:568
+#: src/dialogs.c:613
 msgid "Clear"
 msgstr "Weg damit"
 
-#: src/dialogs.c:570
+#: src/dialogs.c:615
 msgid "clearing…"
 msgstr "am Putzn"
 
-#: src/dialogs.c:605
+#: src/dialogs.c:650
 msgid "None. Right-click a folder → Sort … to give it its own order."
 msgstr ""
 "Ka Ordna. Rechtsklick auf an Ordna → Sortier … und er kriagt sei eigene "
 "Ordnung."
 
-#: src/dialogs.c:621 src/window.c:1427
+#: src/dialogs.c:666 src/window.c:1440
 msgid "Name"
 msgstr "Nam"
 
-#: src/dialogs.c:622
+#: src/dialogs.c:667
 msgid "Date (newest first)"
 msgstr "Datum (Neichste z'erst)"
 
-#: src/dialogs.c:623 src/window.c:1427
+#: src/dialogs.c:668 src/window.c:1440
 msgid "Size (largest first)"
 msgstr "Größn (de Fettn z'erst)"
 
-#: src/dialogs.c:624 src/preview.c:1701 src/window.c:1428
+#: src/dialogs.c:669 src/preview.c:1683 src/window.c:1441
 msgid "Type"
 msgstr "Sortn"
 
-#: src/dialogs.c:626 src/window.c:1440
+#: src/dialogs.c:671 src/window.c:1453
 msgid "Reversed"
 msgstr "Umkehrt"
 
-#: src/dialogs.c:700
+#: src/dialogs.c:745
 #, c-format
 msgid ""
 "%s goes into ~/.config/gtk-3.0/gtk.css, in a block marked as millerX's; the "
@@ -320,7 +337,7 @@ msgstr ""
 "da Rest vo dem Ding bleibt, wia er is. GTK-3-Programme nehman des, wann's es "
 "nächste Moi aufwochn. Du kaunst es do wieda rausnehman."
 
-#: src/dialogs.c:704
+#: src/dialogs.c:749
 msgid ""
 "millerX's block is taken out of ~/.config/gtk-3.0/gtk.css; the rest of that "
 "file stays. GTK 3 programs use the theme's colour again the next time they "
@@ -329,103 +346,103 @@ msgstr ""
 "Da millerX-Block kummt aus ~/.config/gtk-3.0/gtk.css raus; da Rest bleibt. "
 "GTK-3-Programme nehman beim nächstn Start wieda de Farb vom Theme."
 
-#: src/dialogs.c:707
+#: src/dialogs.c:752
 msgid "Use this highlight in all GTK programs?"
 msgstr "De Farb in olle GTK-Programme einehaun?"
 
-#: src/dialogs.c:707
+#: src/dialogs.c:752
 msgid "Remove it from all GTK programs?"
 msgstr "Aus ollen GTK-Programmen wieda raus?"
 
-#: src/dialogs.c:708
+#: src/dialogs.c:753
 msgid "Use it"
 msgstr "Passt"
 
-#: src/dialogs.c:708
+#: src/dialogs.c:753
 msgid "Remove"
 msgstr "Raus damit"
 
-#: src/dialogs.c:711
+#: src/dialogs.c:756
 msgid "Couldn't write ~/.config/gtk-3.0/gtk.css"
 msgstr "~/.config/gtk-3.0/gtk.css lasst si ned schreibn"
 
-#: src/dialogs.c:721
+#: src/dialogs.c:766
 msgid "millerX settings"
 msgstr "millerX-Einstellungen"
 
-#: src/dialogs.c:732
+#: src/dialogs.c:777
 msgid "Look"
 msgstr "Wia's ausschaut"
 
-#: src/dialogs.c:739 src/dialogs.c:842
+#: src/dialogs.c:784 src/dialogs.c:912
 msgid "Thumbnails"
 msgstr "Kloane Büdln"
 
-#: src/dialogs.c:740
+#: src/dialogs.c:785
 msgid "Folders"
 msgstr "Ordna"
 
-#: src/dialogs.c:748
+#: src/dialogs.c:793
 msgid "Column dividers"
 msgstr "De Strichal zwischn de Spoitn"
 
-#: src/dialogs.c:749
+#: src/dialogs.c:794
 msgid "Follow the theme (20 % lighter / darker)"
 msgstr "Wia's Theme (20 % heller / dunkler)"
 
-#: src/dialogs.c:750 src/dialogs.c:778
+#: src/dialogs.c:795 src/dialogs.c:823
 msgid "Own colour"
 msgstr "Mei eigene Farb"
 
-#: src/dialogs.c:767
+#: src/dialogs.c:812
 msgid "Colour"
 msgstr "Farb"
 
-#: src/dialogs.c:770
+#: src/dialogs.c:815
 msgid "Width (px)"
 msgstr "Dicke (px)"
 
-#: src/dialogs.c:772
+#: src/dialogs.c:817
 msgid "Solid"
 msgstr "Durchgehend"
 
-#: src/dialogs.c:773
+#: src/dialogs.c:818
 msgid "Fading at the ends"
 msgstr "Zu de Endn hin blasser"
 
-#: src/dialogs.c:775
+#: src/dialogs.c:820
 msgid "Style"
 msgstr "Wia"
 
-#: src/dialogs.c:776
+#: src/dialogs.c:821
 msgid "Highlight colour"
 msgstr "Markierfarb"
 
-#: src/dialogs.c:777
+#: src/dialogs.c:822
 msgid "Follow the theme"
 msgstr "Wia's Theme"
 
-#: src/dialogs.c:794 src/window.c:1915
+#: src/dialogs.c:839 src/window.c:1928
 msgid "millerX"
 msgstr "millerX"
 
-#: src/dialogs.c:795
+#: src/dialogs.c:840
 msgid "Use for all GTK programs…"
 msgstr "Für olle GTK-Programme…"
 
-#: src/dialogs.c:796
+#: src/dialogs.c:841
 msgid "Remove from all"
 msgstr "Aus ollen raus"
 
-#: src/dialogs.c:802 src/dialogs.c:817
+#: src/dialogs.c:847 src/dialogs.c:862
 msgid "System"
 msgstr "System"
 
-#: src/dialogs.c:804
+#: src/dialogs.c:849
 msgid "Browsing"
 msgstr "Umadumschaun"
 
-#: src/dialogs.c:807
+#: src/dialogs.c:852
 msgid ""
 "Where new columns start. A column you drag keeps its own width; double-click "
 "its divider to bring it back to this one."
@@ -433,39 +450,40 @@ msgstr ""
 "Mit der Breitn faungan neiche Spoitn aun. A Spoitn, de du ziagst, b'hoit "
 "ihre Breitn; Doppelklick aufs Strichal, und sie is wieda wia do."
 
-#: src/dialogs.c:809
+#: src/dialogs.c:854
 msgid "Column width (px)"
 msgstr "Spoitnbreitn (px)"
 
-#: src/dialogs.c:810
+#: src/dialogs.c:855
 msgid "Folders first"
 msgstr "Ordna z'erst"
 
-#: src/dialogs.c:812
+#: src/dialogs.c:857
 msgid "Sort by name"
 msgstr "Noch'm Nam"
 
-#: src/dialogs.c:813
+#: src/dialogs.c:858
 msgid "Show hidden files when millerX starts"
 msgstr "Versteckte Dinga zeigen, wann millerX aufwocht"
 
-#: src/dialogs.c:815
+#: src/dialogs.c:860
 msgid "Hidden files"
 msgstr "Versteckte Dinga"
 
-#: src/dialogs.c:818
+#: src/dialogs.c:863
 msgid "English"
 msgstr "Englisch"
 
-#: src/dialogs.c:819
+#: src/dialogs.c:864
 msgid "Wizard (English, of a sort)"
 msgstr "Zauberer (Englisch, quasi)"
 
-#: src/dialogs.c:820
+#: src/dialogs.c:865
 msgid "Wienerisch (Viennese slang)"
 msgstr "Weanarisch (wia ma redt)"
 
-#: src/dialogs.c:822
+#. its file is gone
+#: src/dialogs.c:877
 msgid ""
 "System: the language your computer is set to (English where there is no "
 "translation). Takes effect the next time millerX starts."
@@ -473,48 +491,63 @@ msgstr ""
 "Wia's System eingstöt is (Englisch, wo's ka Übersetzung gibt). Gilt ab'm "
 "nächstn Start vo millerX."
 
-#: src/dialogs.c:824
+#: src/dialogs.c:882
+msgid "Your own…"
+msgstr "A eigene …"
+
+#: src/dialogs.c:883
+#, c-format
+msgid ""
+"Add a language file (.po or .mo), for example one from millerX's extras on "
+"GitHub. To write your own, copy %s and fill in the msgstr lines; lines you "
+"leave empty stay English."
+msgstr ""
+"Gib a Sprochdatei dazua (.po oda .mo), zum Beispü ane aus de Extras vom "
+"millerX auf GitHub. Fia a eigene kopier %s und füll de msgstr-Zeün aus; wos "
+"laar bleibt, bleibt Englisch."
+
+#: src/dialogs.c:891 src/dialogs.c:893
 msgid "Language"
 msgstr "Sproch"
 
-#: src/dialogs.c:827
+#: src/dialogs.c:897
 msgid "Takes effect after a restart."
 msgstr "Geht erst noch an Neistart."
 
-#: src/dialogs.c:829
+#: src/dialogs.c:899
 msgid "Restart now"
 msgstr "Jetzt neich startn"
 
-#: src/dialogs.c:834
+#: src/dialogs.c:904
 msgid "Preview"
 msgstr "Vuaschau"
 
-#: src/dialogs.c:837
+#: src/dialogs.c:907
 msgid "Minimum width (px)"
 msgstr "Mindestens so breit (px)"
 
 #. it takes the rest of the window
-#: src/dialogs.c:838
+#: src/dialogs.c:908
 msgid "Show names under thumbnails"
 msgstr "Nam unter de Büdln schreibn"
 
-#: src/dialogs.c:840
+#: src/dialogs.c:910
 msgid "Gallery"
 msgstr "Galerie"
 
-#: src/dialogs.c:844
+#: src/dialogs.c:914
 msgid "Always"
 msgstr "Imma"
 
-#: src/dialogs.c:845
+#: src/dialogs.c:915
 msgid "Not in network folders"
 msgstr "Ned in de Netzwerk-Ordna"
 
-#: src/dialogs.c:846
+#: src/dialogs.c:916
 msgid "Never (plain icons)"
 msgstr "Nie (nur Zeichn)"
 
-#: src/dialogs.c:849
+#: src/dialogs.c:919
 msgid ""
 "Pictures in the gallery under a folder. A file you click is always shown "
 "big. Network folders (NFS, Samba, sshfs) can be slow with them."
@@ -522,23 +555,23 @@ msgstr ""
 "Büdln in da Galerie unter an Ordna. A Ding, des du aunklickst, wird imma "
 "groß aungezeigt. Netzwerk-Ordna (NFS, Samba, sshfs) kennan do ur zach sein."
 
-#: src/dialogs.c:851
+#: src/dialogs.c:921
 msgid "Show"
 msgstr "Zeign"
 
-#: src/dialogs.c:853
+#: src/dialogs.c:923
 msgid "Small (about 100 px)"
 msgstr "Kloa (so 100 px)"
 
-#: src/dialogs.c:854
+#: src/dialogs.c:924
 msgid "Medium (about 200 px)"
 msgstr "Mittel (so 200 px)"
 
-#: src/dialogs.c:855
+#: src/dialogs.c:925
 msgid "Large (about 400 px)"
 msgstr "Groß (so 400 px)"
 
-#: src/dialogs.c:858
+#: src/dialogs.c:928
 msgid ""
 "How big the gallery's pictures are. Large ones are made again the first time "
 "(bigger thumbnails, a bigger cache); a wide pane gets more of them per row, "
@@ -548,90 +581,90 @@ msgstr ""
 "(größere Büdln, mehr Plotz); a broads Fensta zeigt mehr davon nebanaund, ned "
 "größere."
 
-#: src/dialogs.c:862
+#: src/dialogs.c:932
 msgid "Cache (shared with Thunar)"
 msgstr "Büdl-Lager (des nutzt da Thunar a)"
 
-#: src/dialogs.c:863
+#: src/dialogs.c:933
 msgid "measuring…"
 msgstr "i mess no…"
 
-#: src/dialogs.c:865
+#: src/dialogs.c:935
 msgid "Clear…"
 msgstr "Weg damit…"
 
-#: src/dialogs.c:869
+#: src/dialogs.c:939
 msgid "Now"
 msgstr "Grod"
 
-#: src/dialogs.c:872
+#: src/dialogs.c:942
 msgid "Keep at most (MB)"
 msgstr "Höchstns b'haltn (MB)"
 
-#: src/dialogs.c:875
+#: src/dialogs.c:945
 msgid "Forget unused after (days)"
 msgstr "Wos kana braucht, vergessn noch (Tog)"
 
-#: src/dialogs.c:876
+#: src/dialogs.c:946
 msgid "Once a day when millerX starts"
 msgstr "Oamoi am Tog, wann millerX aufwocht"
 
-#: src/dialogs.c:878
+#: src/dialogs.c:948
 msgid "Clean up"
 msgstr "Zaumraman"
 
-#: src/dialogs.c:880
+#: src/dialogs.c:950
 msgid "Optional helpers (millerX works without them; untick to not use one)"
 msgstr "Hawara (millerX geht a ohne; Hakerl weg, wennst an ned wüst)"
 
-#: src/dialogs.c:883
+#: src/dialogs.c:953
 msgid "Folders sorted their own way (all others: by name)"
 msgstr "Ordna mit eigener Ordnung (olle aundan: noch'm Nam)"
 
-#: src/dialogs.c:928
+#: src/dialogs.c:998
 msgid "Files in Miller columns, from / to where you are."
 msgstr "Dinga in Miller-Spoitn, vo / bis dorthin, wo du grod bist."
 
-#: src/dialogs.c:1015
+#: src/dialogs.c:1085
 msgid "✗ matches none of them"
 msgstr "✗ passt zu goar nix. Is do a Ganeff im Spü?"
 
-#: src/dialogs.c:1018
+#: src/dialogs.c:1088
 #, c-format
 msgid "✓ matches %s"
 msgstr "✓ passt zu %s, Masl ghobt"
 
-#: src/dialogs.c:1022
+#: src/dialogs.c:1092
 msgid "…when the file is read"
 msgstr "…wann des Ding glesn is"
 
-#: src/dialogs.c:1045
+#: src/dialogs.c:1115
 #, c-format
 msgid "✗ couldn't read the file: %s"
 msgstr "✗ des Ding kann i ned lesn: %s"
 
-#: src/dialogs.c:1088
+#: src/dialogs.c:1158
 #, c-format
 msgid "Checksums: %s"
 msgstr "Prüfsummen: %s"
 
-#: src/dialogs.c:1091
+#: src/dialogs.c:1161
 msgid "_Close"
 msgstr "_Zuamochn"
 
-#: src/dialogs.c:1103
+#: src/dialogs.c:1173
 msgid "reading…"
 msgstr "i les no…"
 
-#: src/dialogs.c:1111 src/window.c:1553 src/window.c:1639
+#: src/dialogs.c:1181 src/window.c:1566 src/window.c:1652
 msgid "Copy"
 msgstr "Kopiern"
 
-#: src/dialogs.c:1118
+#: src/dialogs.c:1188
 msgid "Compare"
 msgstr "Vergleichn"
 
-#: src/dialogs.c:1121
+#: src/dialogs.c:1191
 msgid "paste the checksum you were given"
 msgstr "de Prüfsumm, de's da gebn haum, do einepickn"
 
@@ -712,7 +745,7 @@ msgstr "Lesezeichn gsetzt: %s"
 msgid "Bookmark removed: %s"
 msgstr "Lesezeichn weg: %s"
 
-#: src/places.c:118 src/window.c:462
+#: src/places.c:118 src/window.c:475
 #, c-format
 msgid "Not found: %s"
 msgstr "Gibt's ned: %s"
@@ -731,11 +764,11 @@ msgstr "„%s“ rausnehman"
 msgid "Bookmark “%s”"
 msgstr "„%s“ ois Lesezeichn"
 
-#: src/places.c:235
+#: src/places.c:235 src/window.c:220
 msgid "Trash"
 msgstr "Mistkübel"
 
-#: src/places.c:236 src/window.c:1172
+#: src/places.c:236 src/window.c:1185
 #, c-format
 msgid "%u item"
 msgid_plural "%u items"
@@ -821,7 +854,7 @@ msgstr "%s: kaunst jetzt ausstecka"
 msgid "%s unmounted"
 msgstr "%s is ausghängt"
 
-#: src/places.c:765 src/window.c:1528
+#: src/places.c:765 src/window.c:1541
 msgid "Open in new window"
 msgstr "In an neichn Fensta aufmochn"
 
@@ -834,7 +867,7 @@ msgstr "Nomoi schaun (F5)"
 msgid "Drive connected: %s (drive button to open)"
 msgstr "Laufwerk aungsteckt: %s (Laufwerksknopf zum Aufmochn)"
 
-#: src/preview.c:1407
+#: src/preview.c:1404
 #, c-format
 msgid ""
 "%llu entry:\n"
@@ -849,7 +882,7 @@ msgstr[1] ""
 "%llu Trümmer drin:\n"
 "%s… und no %llu"
 
-#: src/preview.c:1411
+#: src/preview.c:1408
 #, c-format
 msgid ""
 "%llu entry:\n"
@@ -864,73 +897,73 @@ msgstr[1] ""
 "%llu Trümmer drin:\n"
 "%s"
 
-#: src/preview.c:1433
+#: src/preview.c:1430
 #, c-format
 msgid "%llu here, %llu file in total%s"
 msgid_plural "%llu here, %llu files in total%s"
 msgstr[0] "%llu do, %llu Ding insgesamt%s"
 msgstr[1] "%llu do, %llu Dinga insgesamt%s"
 
-#: src/preview.c:1436
+#: src/preview.c:1433
 #, c-format
 msgid "%llu file in total%s"
 msgid_plural "%llu files in total%s"
 msgstr[0] "%llu Ding insgesamt%s"
 msgstr[1] "%llu Dinga insgesamt%s"
 
-#: src/preview.c:1565
+#: src/preview.c:1547
 #, c-format
 msgid "<b>%u item selected</b>"
 msgid_plural "<b>%u items selected</b>"
 msgstr[0] "<b>%u Trumm ausgsucht</b>"
 msgstr[1] "<b>%u Trümmer ausgsucht</b>"
 
-#: src/preview.c:1570
+#: src/preview.c:1552
 msgid "Files"
 msgstr "Dinga"
 
-#: src/preview.c:1621 src/preview.c:1748
+#: src/preview.c:1603 src/preview.c:1730
 msgid "Where"
 msgstr "Wo"
 
-#: src/preview.c:1623
+#: src/preview.c:1605
 msgid "Device"
 msgstr "Gerät"
 
-#: src/preview.c:1625
+#: src/preview.c:1607
 msgid "File system"
 msgstr "Dateisystem"
 
-#: src/preview.c:1634
+#: src/preview.c:1616
 #, c-format
 msgid "%s free of %s"
 msgstr "%s frei vo %s"
 
-#: src/preview.c:1635
+#: src/preview.c:1617
 msgid "Space"
 msgstr "Plotz"
 
-#: src/preview.c:1638
+#: src/preview.c:1620
 msgid "Used"
 msgstr "Belegt"
 
-#: src/preview.c:1706
+#: src/preview.c:1688
 msgid "Items"
 msgstr "Trümmer"
 
-#: src/preview.c:1711
+#: src/preview.c:1693
 msgid "Modified"
 msgstr "Zletzt grührt"
 
-#: src/preview.c:1728
+#: src/preview.c:1710
 msgid "Permissions"
 msgstr "Wer derf"
 
-#: src/preview.c:1736
+#: src/preview.c:1718
 msgid "Deleted from"
 msgstr "Weggschmissn aus"
 
-#: src/preview.c:1741
+#: src/preview.c:1723
 msgid "Deleted"
 msgstr "Weggschmissn am"
 
@@ -982,7 +1015,17 @@ msgstr "Z'ruck zu de Spoitn (Escape)"
 msgid "Search in “%s” and the folders in it"
 msgstr "Wo is des Glump? In „%s“ und de Ordna drin"
 
-#: src/settings.c:344
+#: src/settings.c:223
+msgid "Pick a language file: a .po or .mo file."
+msgstr "Nimm a Sprochdatei: a .po- oda .mo-Datei."
+
+#: src/settings.c:230
+msgid ""
+"A .po file needs msgfmt (gettext) to be checked, and it isn't installed."
+msgstr ""
+"A .po-Datei braucht msgfmt (gettext) zum Prüfn, und des is ned installiert."
+
+#: src/settings.c:500
 msgid "Drag to resize, double-click for the default width"
 msgstr "Ziagn für de Breitn, Doppelklick, und sie is wieda normal"
 
@@ -1074,7 +1117,7 @@ msgstr "I leer den Mistkübel aus…"
 msgid "Put back"
 msgstr "Z'ruckholn"
 
-#: src/trash.c:224 src/window.c:1566 src/window.c:1643
+#: src/trash.c:224 src/window.c:1579 src/window.c:1656
 msgid "Delete permanently…"
 msgstr "Fia imma weg…"
 
@@ -1174,7 +1217,7 @@ msgstr ""
 "\n"
 "Do muasst scho da Kaiser sein."
 
-#: src/window.c:146 src/window.c:1581
+#: src/window.c:146 src/window.c:1594
 msgid "Open as root…"
 msgstr "Ois Kaiser aufmochn…"
 
@@ -1190,61 +1233,61 @@ msgstr "KAISER: Kastl"
 msgid "Computer"
 msgstr "Kastl"
 
-#: src/window.c:215
+#: src/window.c:226
 #, c-format
 msgid "ROOT: %s"
 msgstr "KAISER: %s"
 
-#: src/window.c:332
+#: src/window.c:345
 msgid "Computer: click a disk to open it, right-click to eject"
 msgstr "Kastl: Klick auf a Plattn zum Aufmochn, Rechtsklick zum Auswerfn"
 
-#: src/window.c:380
+#: src/window.c:393
 #, c-format
 msgid "%d item selected"
 msgid_plural "%d items selected"
 msgstr[0] "%d Trumm ausgsucht"
 msgstr[1] "%d Trümmer ausgsucht"
 
-#: src/window.c:488
+#: src/window.c:501
 msgid "Hidden files shown"
 msgstr "Versteckte Dinga aungezeigt"
 
-#: src/window.c:488
+#: src/window.c:501
 msgid "Hidden files hidden"
 msgstr "Versteckte Dinga wieda versteckt"
 
-#: src/window.c:624
+#: src/window.c:637
 #, c-format
 msgid "“%s” is a script"
 msgstr "„%s“ is a Skript"
 
-#: src/window.c:626
+#: src/window.c:639
 msgid "Run it, or open it to read what it does?"
 msgstr "Rennen lossn, oda aufmochn und lesn, wos des mocht?"
 
-#: src/window.c:628 src/window.c:1527 src/window.c:1530 src/window.c:1613
-#: src/window.c:1615
+#: src/window.c:641 src/window.c:1540 src/window.c:1543 src/window.c:1626
+#: src/window.c:1628
 msgid "Open"
 msgstr "Aufmochn"
 
-#: src/window.c:629
+#: src/window.c:642
 msgid "Run in terminal"
 msgstr "Im Terminal rennen lossn"
 
-#: src/window.c:630
+#: src/window.c:643
 msgid "Run"
 msgstr "Rennen lossn"
 
-#: src/window.c:714
+#: src/window.c:727
 msgid "Couldn't run it"
 msgstr "Des rennt ned"
 
-#: src/window.c:768 src/window.c:807
+#: src/window.c:781 src/window.c:820
 msgid "No terminal found"
 msgstr "Ka Terminal do, a so a Schlamassl"
 
-#: src/window.c:769 src/window.c:808
+#: src/window.c:782 src/window.c:821
 msgid ""
 "Install a terminal (xterm, xfce4-terminal, konsole, …) or set the TERMINAL "
 "environment variable to the one you use."
@@ -1252,47 +1295,47 @@ msgstr ""
 "Hau a Terminal drauf (xterm, xfce4-terminal, konsole, …) oder setz de "
 "Umgebungsvariable TERMINAL auf deins."
 
-#: src/window.c:815
+#: src/window.c:828
 msgid "New folder"
 msgstr "Neicher Ordna"
 
-#: src/window.c:815
+#: src/window.c:828
 msgid "New Folder"
 msgstr ""
 
-#: src/window.c:822 src/window.c:824
+#: src/window.c:835 src/window.c:837
 msgid "Couldn't create the folder"
 msgstr "Den Ordna kriag i ned zaum"
 
-#: src/window.c:842
+#: src/window.c:855
 msgid "Rename"
 msgstr "Umtaufn"
 
-#: src/window.c:846
+#: src/window.c:859
 #, c-format
 msgid "“%s” already exists."
 msgstr "„%s“ gibt's eh scho."
 
-#: src/window.c:847 src/window.c:853
+#: src/window.c:860 src/window.c:866
 msgid "Couldn't rename"
 msgstr "Umtaufn geht ned"
 
-#: src/window.c:909
+#: src/window.c:922
 msgid "Some items couldn't be deleted"
 msgstr "A poa Sochn wolln ned weg"
 
-#: src/window.c:913
+#: src/window.c:926
 #, c-format
 msgid "%u item deleted"
 msgid_plural "%u items deleted"
 msgstr[0] "%u Trumm weg"
 msgstr[1] "%u Trümmer weg"
 
-#: src/window.c:987 src/window.c:995
+#: src/window.c:1000 src/window.c:1008
 msgid "Can't move to trash"
 msgstr "Des geht ned in'n Mistkübel"
 
-#: src/window.c:994
+#: src/window.c:1007
 #, c-format
 msgid ""
 "%s: %s\n"
@@ -1303,25 +1346,25 @@ msgstr ""
 "\n"
 "Dann glei fia imma weg?"
 
-#: src/window.c:995
+#: src/window.c:1008
 msgid "Delete permanently"
 msgstr "Fia imma weg"
 
-#: src/window.c:1002
+#: src/window.c:1015
 #, c-format
 msgid "%u item moved to the trash"
 msgid_plural "%u items moved to the trash"
 msgstr[0] "%u Trumm in'n Mistkübel ghaut"
 msgstr[1] "%u Trümmer in'n Mistkübel ghaut"
 
-#: src/window.c:1013
+#: src/window.c:1026
 #, c-format
 msgid "Delete %u item permanently?"
 msgid_plural "Delete %u items permanently?"
 msgstr[0] "%u Trumm fia imma löschn?"
 msgstr[1] "%u Trümmer fia imma löschn?"
 
-#: src/window.c:1014
+#: src/window.c:1027
 #, c-format
 msgid ""
 "%s\n"
@@ -1332,207 +1375,208 @@ msgstr ""
 "\n"
 "Des kriagst nimma z'ruck, Oida."
 
-#: src/window.c:1015
+#: src/window.c:1028
 msgid "Delete"
 msgstr "Weg damit"
 
-#: src/window.c:1082
+#: src/window.c:1095
 #, c-format
 msgid "%u item cut"
 msgid_plural "%u items cut"
 msgstr[0] "%u Trumm ausgschnittn"
 msgstr[1] "%u Trümmer ausgschnittn"
 
-#: src/window.c:1084
+#: src/window.c:1097
 #, c-format
 msgid "%u item copied"
 msgid_plural "%u items copied"
 msgstr[0] "%u Trumm kopiert"
 msgstr[1] "%u Trümmer kopiert"
 
-#: src/window.c:1130
+#: src/window.c:1143
 msgid "Nothing to paste"
 msgstr "Mei, do is nix zum Hinpicken"
 
-#: src/window.c:1165 src/window.c:1166
+#: src/window.c:1178 src/window.c:1179
 msgid "Compress"
 msgstr "Eipackn"
 
-#: src/window.c:1173
+#: src/window.c:1186
 #, c-format
 msgid "Pack “%s” into an archive in the same folder:"
 msgstr "„%s“ in a Packerl im söbn Ordna eipackn:"
 
-#: src/window.c:1200
+#: src/window.c:1213
 #, c-format
 msgid "“%s” already exists. Pick another name."
 msgstr "„%s“ gibt's eh scho. Nimm an aundan Nam."
 
-#: src/window.c:1201
+#: src/window.c:1214
 msgid "Couldn't compress"
 msgstr "Eipackn geht ned"
 
-#: src/window.c:1251
+#: src/window.c:1264
 msgid "Couldn't tell what kind of file this is"
 msgstr "Wos des fia a Ding is? Ka Ahnung, a Schmonzes."
 
-#: src/window.c:1253
+#: src/window.c:1266
 msgid "Couldn't set the default program"
 msgstr "Des Standardprogramm lasst si ned setzn"
 
-#: src/window.c:1257
+#: src/window.c:1270
 #, c-format
 msgid "%s opens with %s now"
 msgstr "%s geht jetzt mit %s auf"
 
-#: src/window.c:1427
+#: src/window.c:1440
 msgid "Date modified (newest first)"
 msgstr "Zletzt grührt (Neichste z'erst)"
 
-#: src/window.c:1446
+#: src/window.c:1459
 msgid "Back to name"
 msgstr "Z'ruck zum Nam"
 
-#: src/window.c:1452
+#: src/window.c:1465
 #, c-format
 msgid "Sort “%s”"
 msgstr "„%s“ sortiern"
 
-#: src/window.c:1494
+#: src/window.c:1507
 msgid "Set default"
 msgstr "Ois Standard festlegn"
 
-#: src/window.c:1498
+#: src/window.c:1511
 msgid "Open with"
 msgstr "Aufmochn mit"
 
-#: src/window.c:1538 src/window.c:1624
+#: src/window.c:1551 src/window.c:1637
 msgid "Extract here"
 msgstr "Do auspackn"
 
-#: src/window.c:1541 src/window.c:1627
+#: src/window.c:1554 src/window.c:1640
 #, c-format
 msgid "Extract to “%s/”"
 msgstr "Auspackn in „%s/“"
 
-#: src/window.c:1547 src/window.c:1633
+#: src/window.c:1560 src/window.c:1646
 msgid "Extract each to its own folder"
 msgstr "Jeds in an eigenen Ordna auspackn"
 
-#: src/window.c:1550 src/window.c:1636
+#: src/window.c:1563 src/window.c:1649
 msgid "Compress…"
 msgstr "Eipackn…"
 
-#: src/window.c:1552 src/window.c:1638
+#: src/window.c:1565 src/window.c:1651
 msgid "Cut"
 msgstr "Ausschneidn"
 
-#: src/window.c:1556
+#: src/window.c:1569
 #, c-format
 msgid "Paste into “%s”"
 msgstr "Hinpicken in „%s“"
 
-#: src/window.c:1561 src/window.c:1569
+#: src/window.c:1574 src/window.c:1582
 msgid "Paste"
 msgstr "Hinpicken"
 
-#: src/window.c:1564 src/window.c:1641
+#: src/window.c:1577 src/window.c:1654
 msgid "Rename…"
 msgstr "Umtaufn…"
 
-#: src/window.c:1565 src/window.c:1642
+#: src/window.c:1578 src/window.c:1655
 msgid "Move to trash"
 msgstr "In'n Mistkübel haun"
 
-#: src/window.c:1572
+#: src/window.c:1585
 msgid "New folder…"
 msgstr "Neicher Ordna…"
 
 #. the highlighted folder, else this column's own
-#: src/window.c:1574
+#: src/window.c:1587
 msgid "Open terminal here"
 msgstr "Terminal do aufmochn"
 
-#: src/window.c:1576 src/window.c:1645
+#: src/window.c:1589 src/window.c:1658
 msgid "Copy path"
 msgstr "Pfad kopiern"
 
-#: src/window.c:1578 src/window.c:1647
+#: src/window.c:1591 src/window.c:1660
 msgid "Checksums…"
 msgstr "Prüfsummen…"
 
-#: src/window.c:1579
+#: src/window.c:1592
 msgid "Add to bookmarks"
 msgstr "Zu de Lesezeichn"
 
-#: src/window.c:1583 src/window.c:1648
+#: src/window.c:1596 src/window.c:1661
 msgid "Properties…"
 msgstr "Wos is des…"
 
-#: src/window.c:1585
+#: src/window.c:1598
 msgid "Show hidden files"
 msgstr "Versteckte Dinga zeign"
 
-#: src/window.c:1619
+#: src/window.c:1632
 msgid "Show in column"
 msgstr "In da Spoitn zeign"
 
-#: src/window.c:1645
+#: src/window.c:1658
 msgid "Copy paths"
 msgstr "Pfade kopiern"
 
-#: src/window.c:1924
+#: src/window.c:1937
 msgid "Parent folder (Backspace, Alt+Up)"
 msgstr "A Stockwerk aufe (Rücktaste, Alt+Auf)"
 
-#: src/window.c:1926
+#: src/window.c:1939
 msgid "Home (Alt+Home)"
 msgstr "Dahoam (Alt+Pos1)"
 
-#: src/window.c:1928
+#: src/window.c:1941
 msgid "Computer: disks, USB sticks, network (Alt+/)"
 msgstr "Kastl: Plattn, USB-Stickerl, Netzwerk (Alt+/)"
 
-#: src/window.c:1932
+#: src/window.c:1945
 msgid "Bookmarks (Ctrl+D adds this folder)"
 msgstr "Lesezeichn (Strg+D merkt si den Ordna)"
 
-#: src/window.c:1936
+#: src/window.c:1949
 msgid "New window"
 msgstr "Neiches Fensta"
 
-#: src/window.c:1942
+#: src/window.c:1955
 msgid "Open this folder as root…"
 msgstr "Den Ordna ois Kaiser aufmochn…"
 
-#: src/window.c:1948
+#: src/window.c:1961
 msgid "Search here…"
 msgstr "Wo is des Glump?…"
 
-#: src/window.c:1952
+#: src/window.c:1965
 msgid "Settings…"
 msgstr "Einstellungen…"
 
-#: src/window.c:1955
+#: src/window.c:1968
 msgid "About millerX"
 msgstr "Üba millerX"
 
-#: src/window.c:2005
+#: src/window.c:2018
 msgid ""
 "<b>You are root:</b> every change here is made as administrator. Be careful."
 msgstr ""
 "<b>Du bist da Kaiser:</b> ois, wos'd do mochst, mochst mit kaiserlicher "
 "Gwoit. Pass auf, Oida."
 
-#: src/window.c:2079
+#: src/window.c:2092
 msgid "Not now"
 msgstr "Jetzt ned"
 
-#: src/window.c:2079
+#: src/window.c:2092
 msgid ""
 "Files are still being copied, moved or packed. Restart when that is done."
-msgstr "Es wird no kopiert, verschobn oder eipackt. Start neich, wann des fertig is."
+msgstr ""
+"Es wird no kopiert, verschobn oder eipackt. Start neich, wann des fertig is."
 
-#: src/window.c:2106
+#: src/window.c:2124
 msgid "Couldn't restart millerX"
 msgstr "millerX lasst si ned neich startn"

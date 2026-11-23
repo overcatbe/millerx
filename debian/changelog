@@ -1,3 +1,13 @@
+millerx (0.8.2) unstable; urgency=medium
+
+  * Own languages: Settings > Language > "Your own..." adds a checked .po/.mo file;
+    the template is installed as /usr/share/millerx/millerx.pot.
+  * Extra languages (pirate, pirate-salty, lolcat) in extras/languages, not installed.
+  * Preview: a busy folder no longer recounts its size after every change (F5 does).
+  * Greek fixes by rizitis; new texts in all languages.
+
+ -- overcatbe <1771834+overcatbe@users.noreply.github.com>  Mon, 23 Nov 2026 19:55:46 +0200
+
 millerx (0.8.1) unstable; urgency=medium
 
   * Greek translation revised by rizitis.

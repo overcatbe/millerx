@@ -4,7 +4,11 @@ A small, native file browser with **Miller columns**: every folder from `/` down
 where you are sits in its own column, and the selected file is previewed on the right.
 Like a mind map of your disk. Written in C with GTK 3 and GIO.
 
-> **New in 0.8.1:** Greek revised by a native speaker (thanks, rizitis!) · the preview no longer
+> **New in 0.8.2:** **your own languages**: Settings → Language → "Your own…" adds a language
+> file · extra fun ones to download: [pirate, pirate-salty and LOLCAT](extras/languages/) · a busy
+> folder no longer recounts its size over and over.
+>
+> **0.8.1:** Greek revised by a native speaker (thanks, rizitis!) · the preview no longer
 > stretches when millerX starts in a folder.
 >
 > **0.8.0:** the preview's name is a title across the top.
@@ -86,9 +90,15 @@ millerX carries his name.
 - **Languages:** English, German and Greek, following your system; Settings → Language can
   also pick English anyway, or one of two joke languages: **Wizard** ("Banish to the Void",
   "Thou art not worthy") and **Wienerisch** (Viennese slang, root is "da Kaiser").
-  The Greek isn't from a native speaker, so corrections are very welcome. Translators welcome
+  The Greek is looked after by rizitis, a native speaker. Translators welcome
   too: copy `po/millerx.pot` to `po/xx.po`, translate, send a pull request. Only the language in
   use is ever loaded; each one is about 30 KB on disk.
+- **Your own language:** write millerX's texts any way you like (pirate, Shakespeare, your
+  grandmother). Copy `/usr/share/millerx/millerx.pot` to `NAME.po` and fill in the `msgstr`
+  lines; lines you leave empty stay English. Settings → Language → "Your own…" picks the file,
+  checks it and adds it to the list as NAME. Made a good one?
+  Share it in [Discussions](https://github.com/overcatbe/millerx/discussions). Ready-made fun
+  ones, like pirate speak, are in [extras/languages](extras/languages/).
 - Columns follow changes on disk. Names sort case-insensitive and naturally (file2 before
   file10), folders first (optional).
 
