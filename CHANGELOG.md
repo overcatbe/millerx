@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.0 (2026-11-23)
+
+- **The preview's name is a title across the top**, over the icon and the details: it lines up
+  with them, and long file names get the whole width.
+
 ## 0.7.9 (2026-11-23)
 
 - **Resizing fixed:** the window couldn't be made lower than a certain height, and pulling its

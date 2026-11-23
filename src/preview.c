@@ -1864,16 +1864,18 @@ Preview *preview_new(Win *w)
     p->details = gtk_grid_new();
     gtk_grid_set_column_spacing(GTK_GRID(p->details), 10);
     gtk_grid_set_row_spacing(GTK_GRID(p->details), 3);
-    /* header: icon left, name + details right; then a line; then picture, text or gallery */
+    /* the name as a title across the whole pane (long names get the full width); under it the
+     * header: icon left, details right; then a line; then picture, text or gallery */
     GtkWidget *info = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
     gtk_widget_set_hexpand(info, TRUE);
-    gtk_box_pack_start(GTK_BOX(info), p->title, FALSE, FALSE, 0);
+    gtk_widget_set_valign(info, GTK_ALIGN_CENTER);
     gtk_box_pack_start(GTK_BOX(info), p->details, FALSE, FALSE, 0);
     p->header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 12);
     gtk_box_pack_start(GTK_BOX(p->header), p->icon, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(p->header), info, TRUE, TRUE, 0);
     p->sep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
     gtk_widget_set_no_show_all(p->sep, TRUE);
+    gtk_box_pack_start(GTK_BOX(p->box), p->title, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(p->box), p->header, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(p->box), p->sep, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(p->box), p->image_scroll, TRUE, TRUE, 0);

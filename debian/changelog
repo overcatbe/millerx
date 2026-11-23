@@ -1,3 +1,9 @@
+millerx (0.8.0) unstable; urgency=medium
+
+  * Preview: the name is a title across the top, over the icon and details.
+
+ -- overcatbe <1771834+overcatbe@users.noreply.github.com>  Mon, 23 Nov 2026 10:34:10 +0200
+
 millerx (0.7.9) unstable; urgency=medium
 
   * Resizing fixed: the preview no longer sets the window's minimum height.
