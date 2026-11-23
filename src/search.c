@@ -150,7 +150,7 @@ static gboolean flush(gpointer data)
         const char *rel = dirn + MIN(strlen(dirn), rlen);
         char *where = g_filename_display_name(*rel ? rel + (*rel == '/') : "");
         char *m = g_markup_printf_escaped("%s\n<small><span alpha='70%%'>%s%s</span></small>", bd,
-                                          *where ? "in " : "here", where);
+                                          *where ? _("in ") : _("here"), where);
         gboolean isdir = g_file_test(path, G_FILE_TEST_IS_DIR);
         char *ct = isdir ? NULL : g_content_type_guess(base, NULL, 0, NULL);
         GIcon *ic = isdir ? g_themed_icon_new("folder") : g_content_type_get_icon(ct);
@@ -166,12 +166,12 @@ static gboolean flush(gpointer data)
     g_ptr_array_unref(batch);
     char *t;
     if (!done)
-        t = g_strdup_printf("%u found, searching… (%u folders)", total, folders);
+        t = g_strdup_printf(ngettext("%u found, searching… (%u folders)", "%u found, searching… (%u folders)", total),
+                            total, folders);
     else if (full)
-        t = g_strdup_printf("the first %u found (%u folders); type more to narrow it down", total, folders);
+        t = g_strdup_printf(_("the first %u found (%u folders); type more to narrow it down"), total, folders);
     else
-        t = total == 1 ? g_strdup_printf("1 found in %u folders", folders)
-                       : g_strdup_printf("%u found in %u folders", total, folders);
+        t = g_strdup_printf(ngettext("%u found in %u folders", "%u found in %u folders", total), total, folders);
     set_info(s, t);
     g_free(t);
     gtk_widget_set_visible(s->stop, !done);
@@ -206,7 +206,7 @@ static gboolean start(gpointer data)
     const char *text = gtk_entry_get_text(GTK_ENTRY(s->entry));
     char *root = g_file_get_path(s->root);
     if (!*text || !root) {
-        set_info(s, root ? "" : "only folders on this computer can be searched");
+        set_info(s, root ? "" : _("only folders on this computer can be searched"));
         g_free(root);
         return G_SOURCE_REMOVE;
     }
@@ -221,7 +221,7 @@ static gboolean start(gpointer data)
     s->job = j;
     g_thread_unref(g_thread_new("millerx-search", walk, job_ref(j)));
     s->flush = g_timeout_add(150, flush, s);
-    set_info(s, "searching…");
+    set_info(s, _("searching…"));
     gtk_widget_show(s->stop);
     return G_SOURCE_REMOVE;
 }
@@ -308,10 +308,10 @@ void search_build(Win *w, GtkWidget *bar_box, GtkWidget *pane)
     gtk_widget_set_hexpand(s->entry, TRUE);
     s->info = gtk_label_new(NULL);
     gtk_widget_set_opacity(s->info, 0.8);
-    s->stop = gtk_button_new_with_label("Stop");
+    s->stop = gtk_button_new_with_label(_("Stop"));
     GtkWidget *close = gtk_button_new_from_icon_name("window-close-symbolic", GTK_ICON_SIZE_BUTTON);
     gtk_button_set_relief(GTK_BUTTON(close), GTK_RELIEF_NONE);
-    gtk_widget_set_tooltip_text(close, "Back to the columns (Escape)");
+    gtk_widget_set_tooltip_text(close, _("Back to the columns (Escape)"));
     s->bar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
     g_object_set(s->bar, "margin-start", 4, "margin-end", 4, "margin-bottom", 4, NULL);
     gtk_box_pack_start(GTK_BOX(s->bar), s->entry, TRUE, TRUE, 0);
@@ -361,7 +361,7 @@ void search_open(Win *w)
     g_clear_object(&s->root);
     s->root = win_current_folder(w);
     char *name = g_file_get_basename(s->root);
-    char *ph = g_strdup_printf("Search in “%s” and the folders in it", name && strcmp(name, "/") ? name : "/");
+    char *ph = g_strdup_printf(_("Search in “%s” and the folders in it"), name && strcmp(name, "/") ? name : "/");
     gtk_entry_set_placeholder_text(GTK_ENTRY(s->entry), ph);
     g_free(ph);
     g_free(name);

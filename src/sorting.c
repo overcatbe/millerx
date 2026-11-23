@@ -108,10 +108,10 @@ GList *sorting_paths(void)
 char *sorting_describe(FolderSort s)
 {
     switch (s.by) {
-    case SORT_DATE: return g_strdup(s.reverse ? "date, oldest first" : "date, newest first");
-    case SORT_SIZE: return g_strdup(s.reverse ? "size, smallest first" : "size, largest first");
-    case SORT_TYPE: return g_strdup(s.reverse ? "type, Z to A" : "type");
-    default: return g_strdup(s.reverse ? "name, Z to A" : "name");
+    case SORT_DATE: return g_strdup(s.reverse ? _("date, oldest first") : _("date, newest first"));
+    case SORT_SIZE: return g_strdup(s.reverse ? _("size, smallest first") : _("size, largest first"));
+    case SORT_TYPE: return g_strdup(s.reverse ? _("type, Z to A") : _("type"));
+    default: return g_strdup(s.reverse ? _("name, Z to A") : _("name"));
     }
 }
 

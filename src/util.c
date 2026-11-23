@@ -42,8 +42,8 @@ GFile *unique_child(GFile *folder, const char *name)
         ext = g_strdup(dot);
     }
     for (int n = 1;; n++) {
-        char *cand = n == 1 ? g_strdup_printf("%s (copy)%s", base, ext)
-                            : g_strdup_printf("%s (copy %d)%s", base, n, ext);
+        char *cand = n == 1 ? g_strdup_printf(_("%s (copy)%s"), base, ext)
+                            : g_strdup_printf(_("%s (copy %d)%s"), base, n, ext);
         GFile *child = g_file_get_child(folder, cand);
         g_free(cand);
         if (!g_file_query_exists(child, NULL)) {
@@ -93,7 +93,7 @@ char *format_size_full(guint64 n)
             g_string_append_c(s, ' ');
         g_string_append_c(s, digits[i]);
     }
-    char *r = g_strdup_printf("%s (%s bytes)", h, s->str);
+    char *r = g_strdup_printf(_("%s (%s bytes)"), h, s->str);
     g_string_free(s, TRUE);
     g_free(h);
     return r;

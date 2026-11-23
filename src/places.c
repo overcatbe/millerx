@@ -56,7 +56,7 @@ static void bookmarks_write(Win *w, GPtrArray *a)
     g_mkdir_with_parents(dir, 0700);
     GError *err = NULL;
     if (!g_file_set_contents(path, s->str, s->len, &err)) {   /* writes a temp file, then renames */
-        win_error(w, "Couldn't save the bookmarks", err->message);
+        win_error(w, _("Couldn't save the bookmarks"), err->message);
         g_error_free(err);
     }
     g_free(dir);
@@ -72,14 +72,14 @@ void places_bookmark_add(Win *w, GFile *folder)
     for (guint i = 0; i < a->len && !have; i++)
         have = !strcmp(((Mark *) g_ptr_array_index(a, i))->uri, uri);
     if (have) {
-        win_status(w, "Already bookmarked: %s", p);
+        win_status(w, _("Already bookmarked: %s"), p);
     } else {
         Mark *m = g_new0(Mark, 1);
         m->uri = g_strdup(uri);
         m->label = g_strdup("");
         g_ptr_array_add(a, m);
         bookmarks_write(w, a);
-        win_status(w, "Bookmarked: %s", p);
+        win_status(w, _("Bookmarked: %s"), p);
     }
     g_ptr_array_unref(a);
     g_free(p);
@@ -98,7 +98,7 @@ static void bookmark_remove(Win *w, const char *uri)
     g_ptr_array_unref(a);
     GFile *f = g_file_new_for_uri(uri);
     char *p = file_path(f);
-    win_status(w, "Bookmark removed: %s", p);
+    win_status(w, _("Bookmark removed: %s"), p);
     g_free(p);
     g_object_unref(f);
 }
@@ -115,7 +115,7 @@ static void on_open_bookmark(GtkMenuItem *mi, Win *w)
     GFile *f = g_object_get_data(G_OBJECT(mi), "file");
     char *path = g_file_get_path(f);
     if (path && !g_file_query_exists(f, NULL))
-        win_status(w, "Not found: %s", path);
+        win_status(w, _("Not found: %s"), path);
     else
         win_open_path(w, f);
     g_free(path);
@@ -154,7 +154,7 @@ static gboolean on_mark_release(GtkWidget *mi, GdkEventButton *ev, Win *w)
     for (GList *l = kids; l; l = l->next)
         any |= g_object_get_data(G_OBJECT(l->data), "uri") != NULL;
     if (!any) {
-        GtkWidget *none = menu_item_new("No bookmarks yet", NULL, NULL);
+        GtkWidget *none = menu_item_new(_("No bookmarks yet"), NULL, NULL);
         gtk_widget_set_sensitive(none, FALSE);
         gtk_menu_shell_prepend(GTK_MENU_SHELL(menu), none);
         gtk_widget_show_all(none);
@@ -213,14 +213,14 @@ void places_fill_bookmarks(Win *w)
         g_object_unref(f);
     }
     if (!a->len) {
-        GtkWidget *mi = menu_item_new("No bookmarks yet", NULL, NULL);
+        GtkWidget *mi = menu_item_new(_("No bookmarks yet"), NULL, NULL);
         gtk_widget_set_sensitive(mi, FALSE);
         add(m, mi, NULL, NULL, w);
     }
     if (!file_in_trash(cur)) {          /* the trash has its own line below */
         gtk_menu_shell_append(GTK_MENU_SHELL(m), gtk_separator_menu_item_new());
         char *base = g_file_get_basename(cur);
-        char *label = g_strdup_printf(cur_marked ? "Remove “%s”" : "Bookmark “%s”", base ? base : "/");
+        char *label = g_strdup_printf(cur_marked ? _("Remove “%s”") : _("Bookmark “%s”"), base ? base : "/");
         add(m, menu_item_new(label, NULL, cur_marked ? "list-remove" : "bookmark-new"), cur,
             cur_marked ? G_CALLBACK(on_remove_here) : G_CALLBACK(on_add_here), w);
         g_free(label);
@@ -232,8 +232,8 @@ void places_fill_bookmarks(Win *w)
     GFileInfo *ti = g_file_query_info(trash, "trash::item-count", G_FILE_QUERY_INFO_NONE, NULL, NULL);
     guint32 tn = ti ? g_file_info_get_attribute_uint32(ti, "trash::item-count") : 0;
     g_clear_object(&ti);
-    GtkWidget *tmi = menu_item_new("Trash", NULL, tn ? "user-trash-full" : "user-trash");
-    char *ttip = tn ? g_strdup_printf("%u item(s)", tn) : g_strdup("empty");
+    GtkWidget *tmi = menu_item_new(_("Trash"), NULL, tn ? "user-trash-full" : "user-trash");
+    char *ttip = tn ? g_strdup_printf(ngettext("%u item", "%u items", tn), tn) : g_strdup(_("empty"));
     gtk_widget_set_tooltip_text(tmi, ttip);
     g_free(ttip);
     add(m, tmi, trash, G_CALLBACK(on_open_trash), w);
@@ -350,7 +350,7 @@ static void fill_disks(Column *c, GHashTable *gio_paths, gboolean want_net)
             continue;
         g_hash_table_add(done, g_strdup(e->mnt_dir));
         GFile *root = g_file_new_for_path(e->mnt_dir);
-        char *name = !strcmp(e->mnt_dir, "/") ? g_strdup("File System") : g_path_get_basename(e->mnt_dir);
+        char *name = !strcmp(e->mnt_dir, "/") ? g_strdup(_("File System")) : g_path_get_basename(e->mnt_dir);
         char *info = g_strdup_printf("%s\n%s\n%s", e->mnt_dir, e->mnt_fsname, e->mnt_type);
         GIcon *icon = g_themed_icon_new(net ? "folder-remote" : "drive-harddisk");
         add_row(c, net ? 3 : 1, K_DISK, name, icon, root, NULL, info);
@@ -436,7 +436,7 @@ void computer_fill(Column *c)
     fill_disks(c, none, TRUE);                          /* NFS / Samba / sshfs from fstab */
     g_hash_table_unref(none);
     GIcon *plus = g_themed_icon_new("network-server");
-    add_row(c, 9, K_CONNECT, "Connect to server…", plus, NULL, NULL, NULL);
+    add_row(c, 9, K_CONNECT, _("Connect to server…"), plus, NULL, NULL, NULL);
     g_object_unref(plus);
 }
 
@@ -505,8 +505,8 @@ void computer_preview(Column *c)
     gtk_tree_model_get(GTK_TREE_MODEL(c->store), &it, C_ICON, &icon, C_FILE, &root, -1);
     char **f = g_strsplit(info ? info : "", "\n", 3);
     const char *where = f[0] ? f[0] : "", *dev = f[0] && f[1] ? f[1] : "", *fs = f[0] && f[1] && f[2] ? f[2] : "";
-    const char *note = kind == K_VOLUME ? "Not mounted: click to mount it."
-                     : kind == K_CONNECT ? "sftp://, smb://, ftp://, dav:// … through GVfs. Click to enter an address."
+    const char *note = kind == K_VOLUME ? _("Not mounted: click to mount it.")
+                     : kind == K_CONNECT ? _("sftp://, smb://, ftp://, dav:// … through GVfs. Click to enter an address.")
                      : NULL;
     preview_show_disk(c->win->preview, name, icon, root, where, dev, fs, note);
     g_strfreev(f);
@@ -526,7 +526,7 @@ static void connect_done(GObject *src, GAsyncResult *res, gpointer data)
         !g_error_matches(err, G_IO_ERROR, G_IO_ERROR_ALREADY_MOUNTED)) {
         if (!w->dead && !g_error_matches(err, G_IO_ERROR, G_IO_ERROR_FAILED_HANDLED)) {
             char *u = g_file_get_uri(G_FILE(src));
-            char *t = g_strdup_printf("Couldn't connect to %s", u);
+            char *t = g_strdup_printf(_("Couldn't connect to %s"), u);
             win_error(w, t, err->message);
             g_free(t);
             g_free(u);
@@ -550,7 +550,7 @@ static void connect_done(GObject *src, GAsyncResult *res, gpointer data)
 
 static void connect_to_server(Win *w)
 {
-    char *addr = win_ask_name(w, "Connect to server", "sftp://", FALSE);
+    char *addr = win_ask_name(w, _("Connect to server"), "sftp://", FALSE);
     if (!addr)
         return;
     g_strstrip(addr);
@@ -559,9 +559,9 @@ static void connect_to_server(Win *w)
         !g_file_has_uri_scheme(f, "ftp") && !g_file_has_uri_scheme(f, "ftps") &&
         !g_file_has_uri_scheme(f, "dav") && !g_file_has_uri_scheme(f, "davs") &&
         !g_file_has_uri_scheme(f, "nfs") && !g_file_has_uri_scheme(f, "afp")) {
-        win_error(w, "Not a server address", "Use sftp://, smb://, ftp://, dav:// or nfs:// in front of the server.");
+        win_error(w, _("Not a server address"), _("Use sftp://, smb://, ftp://, dav:// or nfs:// in front of the server."));
     } else {
-        win_status(w, "Connecting to %s …", addr);
+        win_status(w, _("Connecting to %s …"), addr);
         GMountOperation *op = gtk_mount_operation_new(GTK_WINDOW(w->window));
         g_file_mount_enclosing_volume(f, G_MOUNT_MOUNT_NONE, op, NULL, connect_done, win_ref(w));
         g_object_unref(op);
@@ -639,7 +639,7 @@ static void mounted(GObject *src, GAsyncResult *res, gpointer data)
     GError *err = NULL;
     if (!g_volume_mount_finish(v, res, &err)) {
         if (!o->w->dead && !g_error_matches(err, G_IO_ERROR, G_IO_ERROR_FAILED_HANDLED)) {
-            char *t = g_strdup_printf("Couldn't mount %s", o->name);
+            char *t = g_strdup_printf(_("Couldn't mount %s"), o->name);
             win_error(o->w, t, err->message);
             win_status(o->w, " ");
             g_free(t);
@@ -649,7 +649,7 @@ static void mounted(GObject *src, GAsyncResult *res, gpointer data)
         GMount *mnt = g_volume_get_mount(v);
         if (mnt) {
             GFile *root = g_mount_get_root(mnt);
-            win_status(o->w, "Mounted: %s", o->name);
+            win_status(o->w, _("Mounted: %s"), o->name);
             if (!computer_select_root(o->w, root))
                 win_open_path(o->w, root);
             g_object_unref(root);
@@ -664,7 +664,7 @@ static void mount_volume(Win *w, GVolume *v)
     Op *o = g_new0(Op, 1);
     o->w = win_ref(w);
     o->name = g_volume_get_name(v);
-    win_status(w, "Mounting %s …", o->name);
+    win_status(w, _("Mounting %s …"), o->name);
     GMountOperation *op = gtk_mount_operation_new(GTK_WINDOW(w->window));
     g_volume_mount(v, G_MOUNT_MOUNT_NONE, op, NULL, mounted, o);
     g_object_unref(op);
@@ -678,14 +678,14 @@ static void unmounted(GObject *src, GAsyncResult *res, gpointer data)
                            : g_mount_unmount_with_operation_finish(G_MOUNT(src), res, &err);
     if (!o->w->dead) {
         if (!ok) {
-            char *t = g_strdup_printf("Couldn't %s %s", o->eject ? "eject" : "unmount", o->name);
+            char *t = g_strdup_printf(o->eject ? _("Couldn't eject %s") : _("Couldn't unmount %s"), o->name);
             win_error(o->w, t, err->message);
             win_status(o->w, " ");
             g_free(t);
         } else if (o->eject) {
-            win_status(o->w, "%s: safe to remove", o->name);
+            win_status(o->w, _("%s: safe to remove"), o->name);
         } else {
-            win_status(o->w, "%s unmounted", o->name);
+            win_status(o->w, _("%s unmounted"), o->name);
         }
         computer_refresh(o->w);
     }
@@ -762,7 +762,7 @@ void computer_menu(Win *w, Column *c, GdkEventButton *ev)
     if (kind >= 0)
         gtk_tree_model_get(GTK_TREE_MODEL(c->store), &it, C_FILE, &root, -1);
     if (root)
-        cm_item(menu, w, "Open in new window", CM_OPEN_NEW, NULL, root, TRUE);
+        cm_item(menu, w, _("Open in new window"), CM_OPEN_NEW, NULL, root, TRUE);
     if (kind == K_VOLUME)
         cm_item(menu, w, "Mount", CM_MOUNT, obj, NULL, obj != NULL);
     if (kind == K_MOUNT && obj) {
@@ -771,8 +771,8 @@ void computer_menu(Win *w, Column *c, GdkEventButton *ev)
     }
     if (kind >= 0)
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), gtk_separator_menu_item_new());
-    cm_item(menu, w, "Connect to server…", CM_CONNECT, NULL, NULL, TRUE);
-    cm_item(menu, w, "Refresh (F5)", CM_REFRESH, NULL, NULL, TRUE);
+    cm_item(menu, w, _("Connect to server…"), CM_CONNECT, NULL, NULL, TRUE);
+    cm_item(menu, w, _("Refresh (F5)"), CM_REFRESH, NULL, NULL, TRUE);
     g_clear_object(&root);
     g_free(info);
     g_free(name);
@@ -790,7 +790,7 @@ static void on_mount_added(GVolumeMonitor *vm, GMount *mnt, Win *w)
 {
     (void) vm;
     char *n = g_mount_get_name(mnt);
-    win_status(w, "Mounted: %s", n);
+    win_status(w, _("Mounted: %s"), n);
     g_free(n);
 }
 
@@ -798,7 +798,7 @@ static void on_volume_added(GVolumeMonitor *vm, GVolume *v, Win *w)
 {
     (void) vm;
     char *n = g_volume_get_name(v);
-    win_status(w, "Drive connected: %s (drive button to open)", n);
+    win_status(w, _("Drive connected: %s (drive button to open)"), n);
     g_free(n);
 }
 

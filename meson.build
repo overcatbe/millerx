@@ -16,6 +16,15 @@ if webp.found()
   add_project_arguments('-DHAVE_WEBP', language : 'c')
 endif
 
+# Translations: only when msgfmt is there (or asked for with -Dnls=enabled); otherwise English only
+msgfmt = find_program('msgfmt', required : get_option('nls'))
+if msgfmt.found()
+  i18n = import('i18n')
+  add_project_arguments('-DENABLE_NLS', '-DGETTEXT_PACKAGE="millerx"',
+    '-DLOCALEDIR="@0@"'.format(get_option('prefix') / get_option('localedir')), language : 'c')
+  subdir('po')
+endif
+
 bindir = get_option('prefix') / get_option('bindir')
 datadir = get_option('prefix') / get_option('datadir')
 

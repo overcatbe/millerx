@@ -72,8 +72,8 @@ static void loading_done(Column *c)
     column_continue_chain(c);
     if (c == win_last_column(c->win)) {
         char *p = file_path(c->gfile);
-        win_status(c->win, "%s: %d items", p,
-                   gtk_tree_model_iter_n_children(GTK_TREE_MODEL(c->store), NULL));
+        int n = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(c->store), NULL);
+        win_status(c->win, ngettext("%s: %d item", "%s: %d items", n), p, n);
         g_free(p);
     }
 }
@@ -503,9 +503,9 @@ static void type_jump(Column *c, gunichar ch)
     }
     if (found) {
         column_select_iter(c, &hit);
-        win_status(c->win, "Jump: %s", want);
+        win_status(c->win, _("Jump: %s"), want);
     } else {
-        win_status(c->win, "Jump: %s (no match)", c->typed->str);
+        win_status(c->win, _("Jump: %s (no match)"), c->typed->str);
     }
 }
 
@@ -551,7 +551,7 @@ static gboolean on_key(GtkWidget *view, GdkEventKey *ev, Column *c)
             if (top)
                 win_delete_forever(w, files);
             else if (files)
-                win_status(w, "Inside a trashed folder: delete the whole folder, or put it back first");
+                win_status(w, _("Inside a trashed folder: delete the whole folder, or put it back first"));
             g_list_free_full(files, g_object_unref);
             return TRUE;
         }
@@ -729,10 +729,10 @@ static int sort_func(GtkTreeModel *m, GtkTreeIter *a, GtkTreeIter *b, gpointer d
  * of this run. */
 static FolderSort TRASH_SORT = { SORT_NAME, FALSE };
 static const struct { const char *label; SortBy by; gboolean reverse; } TRASH_SORTS[] = {
-    { "name", SORT_NAME, FALSE },
-    { "size", SORT_SIZE, FALSE },          /* largest first */
-    { "newest", SORT_DATE, FALSE },        /* deleted last first */
-    { "oldest", SORT_DATE, TRUE },
+    { N_("name"), SORT_NAME, FALSE },
+    { N_("size"), SORT_SIZE, FALSE },          /* largest first */
+    { N_("newest"), SORT_DATE, FALSE },        /* deleted last first */
+    { N_("oldest"), SORT_DATE, TRUE },
 };
 
 /* like radio buttons: the pressed one is the order; pressing it again keeps it */
@@ -760,11 +760,11 @@ static GtkWidget *trash_sort_bar(Column *c)
 {
     GtkWidget *bar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
     g_object_set(bar, "margin", 4, NULL);
-    GtkWidget *l = gtk_label_new("Sort:");
+    GtkWidget *l = gtk_label_new(_("Sort:"));
     gtk_widget_set_opacity(l, 0.7);
     gtk_box_pack_start(GTK_BOX(bar), l, FALSE, FALSE, 2);
     for (guint i = 0; i < G_N_ELEMENTS(TRASH_SORTS); i++) {
-        GtkWidget *b = gtk_toggle_button_new_with_label(TRASH_SORTS[i].label);
+        GtkWidget *b = gtk_toggle_button_new_with_label(_(TRASH_SORTS[i].label));
         gtk_button_set_relief(GTK_BUTTON(b), GTK_RELIEF_NONE);
         g_object_set_data(G_OBJECT(b), "i", GUINT_TO_POINTER(i));
         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), TRASH_SORTS[i].by == TRASH_SORT.by
@@ -902,7 +902,7 @@ Column *column_new(Win *w, GFile *gfile, GPtrArray *chain)
     gtk_widget_set_opacity(c->sortlabel, 0.7);
     GtkWidget *x = gtk_button_new_from_icon_name("window-close-symbolic", GTK_ICON_SIZE_MENU);
     gtk_button_set_relief(GTK_BUTTON(x), GTK_RELIEF_NONE);
-    gtk_widget_set_tooltip_text(x, "Sort by name again");
+    gtk_widget_set_tooltip_text(x, _("Sort by name again"));
     g_signal_connect(x, "clicked", G_CALLBACK(sortbar_reset), c);
     c->sortbar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
     g_object_set(c->sortbar, "margin-start", 6, NULL);

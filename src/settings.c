@@ -88,6 +88,12 @@ void look_load(void)
     LOOK.thumb_size = !g_strcmp0(ts, "small") ? TSIZE_SMALL : !g_strcmp0(ts, "large") ? TSIZE_LARGE : TSIZE_MEDIUM;
     g_free(ts);
     LOOK.gallery_names = get_bool(kf, "look", "gallery_names", TRUE);
+    g_free(LOOK.language);
+    LOOK.language = get_str(kf, "look", "language");
+    if (!LOOK.language || (strcmp(LOOK.language, "en") && strcmp(LOOK.language, "wizard"))) {
+        g_free(LOOK.language);
+        LOOK.language = g_strdup("system");
+    }
     char *hl = get_str(kf, "look", "highlight_color");
     GdkRGBA hc;
     g_free(LOOK.highlight);
@@ -118,6 +124,7 @@ gboolean look_save(GError **err)
     g_key_file_set_integer(kf, "look", "preview_width", LOOK.preview_width);
     g_key_file_set_integer(kf, "look", "column_width", LOOK.column_width);
     g_key_file_set_boolean(kf, "look", "gallery_names", LOOK.gallery_names);
+    g_key_file_set_string(kf, "look", "language", LOOK.language ? LOOK.language : "system");
     g_key_file_set_string(kf, "look", "highlight_color", LOOK.highlight);
     g_key_file_set_boolean(kf, "browse", "folders_first", LOOK.folders_first);
     g_key_file_set_boolean(kf, "browse", "show_hidden", LOOK.show_hidden);
@@ -139,6 +146,18 @@ gboolean look_save(GError **err)
     g_free(path);
     g_key_file_unref(kf);
     return ok;
+}
+
+/* main() asks before anything else runs: the language has to be chosen before GTK starts */
+char *look_language(void)
+{
+    GKeyFile *kf = g_key_file_new();
+    char *path = config_file();
+    g_key_file_load_from_file(kf, path, G_KEY_FILE_NONE, NULL);
+    char *l = get_str(kf, "look", "language");
+    g_free(path);
+    g_key_file_unref(kf);
+    return l ? l : g_strdup("system");
 }
 
 void geom_load(Geom *g)
@@ -321,7 +340,7 @@ GtkWidget *divider_new(DragFn drag, PlainFn reset, PlainFn done, gpointer data, 
     if (drag) {
         gtk_widget_add_events(area, GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK
                                     | GDK_POINTER_MOTION_MASK);
-        gtk_widget_set_tooltip_text(area, "Drag to resize, double-click for the default width");
+        gtk_widget_set_tooltip_text(area, _("Drag to resize, double-click for the default width"));
         g_signal_connect(area, "realize", G_CALLBACK(div_realize), d);
         g_signal_connect(area, "button-press-event", G_CALLBACK(div_press), d);
         g_signal_connect(area, "motion-notify-event", G_CALLBACK(div_motion), d);

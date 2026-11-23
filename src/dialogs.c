@@ -15,17 +15,17 @@ Choice dialog_conflict(Win *w, GFile *src, GFile *dst, gboolean merge, gboolean 
     GFile *parent = g_file_get_parent(dst);
     char *where = parent ? file_path(parent) : g_strdup("/");
     GtkWidget *d = gtk_message_dialog_new(GTK_WINDOW(w->window), GTK_DIALOG_MODAL, GTK_MESSAGE_QUESTION,
-                                          GTK_BUTTONS_NONE, "“%s” already exists", base);
-    gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(d), "in %s.\n%s", where,
-        merge ? "Merge the folders? Files with the same name will be replaced."
-              : "Replace the existing file?");
-    GtkWidget *allc = gtk_check_button_new_with_label("Do this for all conflicts");
+                                          GTK_BUTTONS_NONE, _("“%s” already exists"), base);
+    gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(d), _("in %s.\n%s"), where,
+        merge ? _("Merge the folders? Files with the same name will be replaced.")
+              : _("Replace the existing file?"));
+    GtkWidget *allc = gtk_check_button_new_with_label(_("Do this for all conflicts"));
     gtk_box_pack_start(GTK_BOX(gtk_message_dialog_get_message_area(GTK_MESSAGE_DIALOG(d))), allc,
                        FALSE, FALSE, 0);
     gtk_widget_show(allc);
-    gtk_dialog_add_button(GTK_DIALOG(d), "Cancel", 1);
-    gtk_dialog_add_button(GTK_DIALOG(d), "Skip", 2);
-    gtk_dialog_add_button(GTK_DIALOG(d), "Keep both", 3);
+    gtk_dialog_add_button(GTK_DIALOG(d), _("Cancel"), 1);
+    gtk_dialog_add_button(GTK_DIALOG(d), _("Skip"), 2);
+    gtk_dialog_add_button(GTK_DIALOG(d), _("Keep both"), 3);
     gtk_dialog_add_button(GTK_DIALOG(d), merge ? "Merge" : "Replace", 4);
     gtk_dialog_set_default_response(GTK_DIALOG(d), 2);
     int r = gtk_dialog_run(GTK_DIALOG(d));
@@ -82,8 +82,13 @@ static gboolean count_show(gpointer data)
     Count *c = data;
     if (!g_cancellable_is_cancelled(c->stop)) {
         char *sz = format_size_full(c->total);
-        char *t = g_strdup_printf("%s\n%" G_GUINT64_FORMAT " files, %" G_GUINT64_FORMAT " folders%s",
-                                  sz, c->files, c->dirs, c->running ? " …" : "");
+        char *nf = g_strdup_printf(ngettext("%llu file", "%llu files", c->files),
+                                   (unsigned long long) c->files);
+        char *nd = g_strdup_printf(ngettext("%llu folder", "%llu folders", c->dirs),
+                                   (unsigned long long) c->dirs);
+        char *t = g_strdup_printf("%s\n%s, %s%s", sz, nf, nd, c->running ? " …" : "");
+        g_free(nf);
+        g_free(nd);
         gtk_label_set_text(GTK_LABEL(c->label), t);
         g_free(t);
         g_free(sz);
@@ -170,7 +175,7 @@ static void show_octal(Perm *p, mode_t m)
     for (int i = 0; i < 9; i++)
         s[i + 1] = m & (1 << (8 - i)) ? rwx[i] : '-';
     s[10] = 0;
-    char *t = g_strdup_printf("%s   %04o%s", s, (unsigned) (m & 07777), p->mine ? "" : "   (not yours, read only)");
+    char *t = g_strdup_printf("%s   %04o%s", s, (unsigned) (m & 07777), p->mine ? "" : _("   (not yours, read only)"));
     gtk_label_set_text(GTK_LABEL(p->octal), t);
     g_free(t);
 }
@@ -183,7 +188,7 @@ static void perm_toggled(GtkToggleButton *cb, Perm *p)
         return;
     mode_t m = gtk_toggle_button_get_active(cb) ? (st.st_mode | bit) : (st.st_mode & ~bit);
     if (chmod(p->path, m & 07777) != 0) {
-        win_error(p->w, "Couldn't change permissions", g_strerror(errno));
+        win_error(p->w, _("Couldn't change permissions"), g_strerror(errno));
         g_signal_handlers_block_by_func(cb, perm_toggled, p);
         gtk_toggle_button_set_active(cb, !gtk_toggle_button_get_active(cb));
         g_signal_handlers_unblock_by_func(cb, perm_toggled, p);
@@ -212,7 +217,7 @@ void dialog_properties(Win *w, GFile *f)
     GFileInfo *info = g_file_query_info(f, "standard::*,time::*,unix::*,owner::*", G_FILE_QUERY_INFO_NONE,
                                         NULL, &err);
     if (!info) {
-        win_error(w, "No properties", err->message);
+        win_error(w, _("No properties"), err->message);
         g_error_free(err);
         return;
     }
@@ -220,8 +225,8 @@ void dialog_properties(Win *w, GFile *f)
                                          G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS, NULL, NULL);
     gboolean isdir = g_file_info_get_file_type(info) == G_FILE_TYPE_DIRECTORY;
     const char *dname = g_file_info_get_display_name(info);
-    char *title = g_strdup_printf("Properties: %s", dname);
-    GtkWidget *d = gtk_dialog_new_with_buttons(title, GTK_WINDOW(w->window), 0, "Close",
+    char *title = g_strdup_printf(_("Properties: %s"), dname);
+    GtkWidget *d = gtk_dialog_new_with_buttons(title, GTK_WINDOW(w->window), 0, _("Close"),
                                                GTK_RESPONSE_CLOSE, NULL);
     g_free(title);
     gtk_window_set_default_size(GTK_WINDOW(d), 460, -1);
@@ -260,12 +265,12 @@ void dialog_properties(Win *w, GFile *f)
     g_clear_object(&parent);
     if (linfo && g_file_info_get_is_symlink(linfo)) {
         const char *t = g_file_info_get_symlink_target(linfo);
-        prow(&r, "Link to", t ? t : "?", NULL);
+        prow(&r, _("Link to"), t ? t : "?", NULL);
     }
     GCancellable *stop = g_cancellable_new();
     g_signal_connect_data(d, "response", G_CALLBACK(on_props_response), stop, unref_notify, 0);
     if (isdir) {
-        GtkWidget *size_l = prow(&r, "Size", "counting …", NULL);
+        GtkWidget *size_l = prow(&r, _("Size"), _("counting …"), NULL);
         char *path = g_file_get_path(f);
         if (path) {
             Count *c = g_new0(Count, 1);
@@ -282,7 +287,7 @@ void dialog_properties(Win *w, GFile *f)
             const char *fst = g_file_info_get_attribute_string(fs, "filesystem::type");
             char *t = fst ? g_strdup_printf("%s of %s  (%s)", free_s, tot_s, fst)
                           : g_strdup_printf("%s of %s", free_s, tot_s);
-            prow(&r, "Free space", t, NULL);
+            prow(&r, _("Free space"), t, NULL);
             g_free(t);
             g_free(tot_s);
             g_free(free_s);
@@ -364,7 +369,7 @@ typedef struct {
     Win *w;
     GtkWidget *auto_rb, *own_rb, *colour, *width, *style, *pw, *cw, *ff, *sh;
     GtkWidget *cache_size, *cache_clear, *cache_mb, *cache_days, *cache_auto;
-    GtkWidget *sort_list, *names, *thumbs, *tsize;
+    GtkWidget *sort_list, *names, *thumbs, *tsize, *lang;
     GtkWidget *use[4];         /* the optional helpers, when installed; NULL when not */
     GtkWidget *hl_auto, *hl_own, *hl_colour, *hl_sys, *hl_unsys;
 } Set;
@@ -402,6 +407,7 @@ static void settings_changed(GtkWidget *any, Set *s)
     nl.column_width = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(s->cw));
     nl.folders_first = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->ff));
     nl.show_hidden = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->sh));
+    nl.language = (char *) gtk_combo_box_get_active_id(GTK_COMBO_BOX(s->lang));   /* copied by app_apply_look */
     nl.gallery_names = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->names));
     gboolean *uses[] = { &nl.use_ffmpeg, &nl.use_pdftoppm, &nl.use_pkexec, &nl.use_blender };
     for (int i = 0; i < 4; i++)
@@ -424,7 +430,7 @@ static void settings_close(GtkDialog *d, int r, Set *s)
     (void) r;
     GError *err = NULL;
     if (!look_save(&err)) {
-        win_error(s->w, "Couldn't save the settings", err->message);
+        win_error(s->w, _("Couldn't save the settings"), err->message);
         g_error_free(err);
     }
     gtk_widget_destroy(GTK_WIDGET(d));
@@ -499,14 +505,14 @@ static void section(GtkWidget **grid, int *r, const char *text)
 /* Optional programs millerX uses if they are there: what each one gives, and what to install
  * if it is missing. Looked up when the settings open, so a fresh install shows up next time. */
 static const struct { const char *prog, *gives, *without, *package; } HELPERS[] = {
-    { "ffmpeg", "video frames, music covers, AVIF and HEIC pictures",
-      "videos and music show their icon, AVIF/HEIC too", "ffmpeg (Slackware: l/ffmpeg)" },
-    { "pdftoppm", "the first page of PDFs",
-      "PDFs show their icon", "poppler (Debian/Ubuntu: poppler-utils)" },
-    { "pkexec", "“Open as root”",
-      "no root window", "polkit, plus an authentication agent" },
-    { "blender-thumbnailer", "the pictures saved in Blender (.blend) files",
-      ".blend files show their icon", "Blender (it comes with it; also found in /opt/blender*)" },
+    { "ffmpeg", N_("video frames, music covers, AVIF and HEIC pictures"),
+      N_("videos and music show their icon, AVIF/HEIC too"), N_("ffmpeg (Slackware: l/ffmpeg)") },
+    { "pdftoppm", N_("the first page of PDFs"),
+      N_("PDFs show their icon"), N_("poppler (Debian/Ubuntu: poppler-utils)") },
+    { "pkexec", N_("“Open as root”"),
+      N_("no root window"), N_("polkit, plus an authentication agent") },
+    { "blender-thumbnailer", N_("the pictures saved in Blender (.blend) files"),
+      N_(".blend files show their icon"), N_("Blender (it comes with it; also found in /opt/blender*)") },
 };
 
 /* found: a tick box to use it or not; missing: what it would give and where to get it */
@@ -518,7 +524,7 @@ static void helper_rows(GtkWidget *grid, int *r, Set *s)
         char *found = !strcmp(HELPERS[i].prog, "blender-thumbnailer") ? blender_thumbnailer()
                                                                        : g_find_program_in_path(HELPERS[i].prog);
         if (found) {
-            s->use[i] = gtk_check_button_new_with_label(HELPERS[i].gives);
+            s->use[i] = gtk_check_button_new_with_label(_(HELPERS[i].gives));
             gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(s->use[i]), on[i]);
             if (strncmp(found, "/usr/", 5))          /* /opt/blender-4.2/…: say which one */
                 gtk_widget_set_tooltip_text(s->use[i], found);
@@ -526,8 +532,8 @@ static void helper_rows(GtkWidget *grid, int *r, Set *s)
             g_free(found);
             continue;
         }
-        char *m = g_markup_printf_escaped("✗ not installed: %s.\n<small>Install %s\nfor %s.</small>",
-                                      HELPERS[i].without, HELPERS[i].package, HELPERS[i].gives);
+        char *m = g_markup_printf_escaped(_("✗ not installed: %s.\n<small>Install %s\nfor %s.</small>"),
+                                      _(HELPERS[i].without), _(HELPERS[i].package), _(HELPERS[i].gives));
         GtkWidget *l = gtk_label_new(NULL);
         gtk_label_set_markup(GTK_LABEL(l), m);
         gtk_label_set_xalign(GTK_LABEL(l), 0);
@@ -544,8 +550,9 @@ static void cache_measured(guint64 bytes, guint files, guint removed, gpointer d
 {
     GtkWidget *l = data;
     char *sz = g_format_size(bytes);
-    char *t = removed ? g_strdup_printf("%s in %u thumbnails (%u deleted)", sz, files, removed)
-                      : g_strdup_printf("%s in %u thumbnails", sz, files);
+    char *t = removed ? g_strdup_printf(ngettext("%s in %u thumbnail (%u deleted)", "%s in %u thumbnails (%u deleted)",
+                                                files), sz, files, removed)
+                      : g_strdup_printf(ngettext("%s in %u thumbnail", "%s in %u thumbnails", files), sz, files);
     gtk_label_set_text(GTK_LABEL(l), t);
     g_free(t);
     g_free(sz);
@@ -555,11 +562,11 @@ static void cache_measured(guint64 bytes, guint files, guint removed, gpointer d
 static void cache_clear_clicked(GtkButton *b, Set *s)
 {
     (void) b;
-    if (!win_confirm(s->w, "Clear the thumbnail cache?",
-                     "All thumbnails in ~/.cache/thumbnails are deleted. Thunar and file dialogs use them "
-                     "too; everything is made again when it's needed.", "Clear"))
+    if (!win_confirm(s->w, _("Clear the thumbnail cache?"),
+                     _("All thumbnails in ~/.cache/thumbnails are deleted. Thunar and file dialogs use them "
+                     "too; everything is made again when it's needed."), _("Clear")))
         return;
-    gtk_label_set_text(GTK_LABEL(s->cache_size), "clearing…");
+    gtk_label_set_text(GTK_LABEL(s->cache_size), _("clearing…"));
     thumbcache_clear(cache_measured, g_object_ref(s->cache_size));
 }
 
@@ -594,7 +601,7 @@ static void fill_sort_list(Set *s)
     g_list_free(kids);
     GList *paths = sorting_paths();
     if (!paths) {
-        GtkWidget *l = gtk_label_new("None. Right-click a folder → Sort … to give it its own order.");
+        GtkWidget *l = gtk_label_new(_("None. Right-click a folder → Sort … to give it its own order."));
         gtk_label_set_xalign(GTK_LABEL(l), 0);
         gtk_widget_set_opacity(l, 0.7);
         gtk_box_pack_start(GTK_BOX(s->sort_list), l, FALSE, FALSE, 0);
@@ -610,16 +617,16 @@ static void fill_sort_list(Set *s)
         gtk_label_set_width_chars(GTK_LABEL(name), 24);
         gtk_widget_set_tooltip_text(name, p->data);
         GtkWidget *combo = gtk_combo_box_text_new();
-        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), "Name");
-        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), "Date (newest first)");
-        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), "Size (largest first)");
-        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), "Type");
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), _("Name"));
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), _("Date (newest first)"));
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), _("Size (largest first)"));
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), _("Type"));
         gtk_combo_box_set_active(GTK_COMBO_BOX(combo), fs.by);
-        GtkWidget *rev = gtk_check_button_new_with_label("Reversed");
+        GtkWidget *rev = gtk_check_button_new_with_label(_("Reversed"));
         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rev), fs.reverse);
         GtkWidget *x = gtk_button_new_from_icon_name("window-close-symbolic", GTK_ICON_SIZE_MENU);
         gtk_button_set_relief(GTK_BUTTON(x), GTK_RELIEF_NONE);
-        gtk_widget_set_tooltip_text(x, "Sort by name again");
+        gtk_widget_set_tooltip_text(x, _("Sort by name again"));
         g_object_set_data(G_OBJECT(row), "combo", combo);
         g_object_set_data(G_OBJECT(row), "rev", rev);
         g_object_set_data(G_OBJECT(combo), "row", row);
@@ -689,18 +696,18 @@ static GtkWidget *swatches(Set *s)
 static void hl_system_clicked(GtkButton *b, Set *s)
 {
     gboolean add = GTK_WIDGET(b) == s->hl_sys;
-    char *msg = add ? g_strdup_printf("%s goes into ~/.config/gtk-3.0/gtk.css, in a block marked as "
+    char *msg = add ? g_strdup_printf(_("%s goes into ~/.config/gtk-3.0/gtk.css, in a block marked as "
                                       "millerX's; the rest of that file stays as it is. GTK 3 programs "
-                                      "use it the next time they start. You can remove it here again.",
+                                      "use it the next time they start. You can remove it here again."),
                                       LOOK.highlight)
-                    : g_strdup("millerX's block is taken out of ~/.config/gtk-3.0/gtk.css; the rest of "
+                    : g_strdup(_("millerX's block is taken out of ~/.config/gtk-3.0/gtk.css; the rest of "
                                "that file stays. GTK 3 programs use the theme's colour again the next "
-                               "time they start.");
-    if (win_confirm(s->w, add ? "Use this highlight in all GTK programs?" : "Remove it from all GTK programs?",
-                    msg, add ? "Use it" : "Remove")) {
+                               "time they start."));
+    if (win_confirm(s->w, add ? _("Use this highlight in all GTK programs?") : _("Remove it from all GTK programs?"),
+                    msg, add ? _("Use it") : _("Remove"))) {
         GError *err = NULL;
         if (!highlight_system_set(add ? LOOK.highlight : NULL, &err)) {
-            win_error(s->w, "Couldn't write ~/.config/gtk-3.0/gtk.css", err->message);
+            win_error(s->w, _("Couldn't write ~/.config/gtk-3.0/gtk.css"), err->message);
             g_error_free(err);
         }
         gtk_widget_set_sensitive(s->hl_unsys, highlight_system_has());
@@ -710,7 +717,7 @@ static void hl_system_clicked(GtkButton *b, Set *s)
 
 void dialog_settings(Win *w)
 {
-    GtkWidget *d = gtk_dialog_new_with_buttons("millerX settings", GTK_WINDOW(w->window), 0, "Close",
+    GtkWidget *d = gtk_dialog_new_with_buttons(_("millerX settings"), GTK_WINDOW(w->window), 0, _("Close"),
                                                GTK_RESPONSE_CLOSE, NULL);
     /* three tabs: Look (two columns), Thumbnails, Folders; every section a framed box */
     GdkRectangle area = { 0, 0, 0, 900 };
@@ -721,15 +728,15 @@ void dialog_settings(Win *w)
     int max_h = MAX(300, area.height - 160);
     GtkWidget *nb = gtk_notebook_new();
     gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(d))), nb, TRUE, TRUE, 0);
-    GtkWidget *look = tab(nb, "Look", max_h);
+    GtkWidget *look = tab(nb, _("Look"), max_h);
     GtkWidget *cols = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 14);
     GtkWidget *left = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
     GtkWidget *right = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
     gtk_box_pack_start(GTK_BOX(cols), left, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(cols), right, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(look), cols, FALSE, FALSE, 0);
-    GtkWidget *thumbs_tab = tab(nb, "Thumbnails", max_h);
-    GtkWidget *folders_tab = tab(nb, "Folders", max_h);
+    GtkWidget *thumbs_tab = tab(nb, _("Thumbnails"), max_h);
+    GtkWidget *folders_tab = tab(nb, _("Folders"), max_h);
     GtkWidget *grid = NULL;
     Set *s = g_new0(Set, 1);
     s->w = w;
@@ -737,9 +744,9 @@ void dialog_settings(Win *w)
     int r = 0;
 
     new_column(left);
-    section(&grid, &r, "Column dividers");
-    s->auto_rb = gtk_radio_button_new_with_label(NULL, "Follow the theme (20 % lighter / darker)");
-    s->own_rb = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(s->auto_rb), "Own colour");
+    section(&grid, &r, _("Column dividers"));
+    s->auto_rb = gtk_radio_button_new_with_label(NULL, _("Follow the theme (20 % lighter / darker)"));
+    s->own_rb = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(s->auto_rb), _("Own colour"));
     s->colour = gtk_color_button_new();
     GdkRGBA rgba;
     if (strcmp(LOOK.divider_color, "auto") && gdk_rgba_parse(&rgba, LOOK.divider_color)) {
@@ -756,18 +763,18 @@ void dialog_settings(Win *w)
     GtkWidget *vb = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
     gtk_box_pack_start(GTK_BOX(vb), s->auto_rb, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vb), cbox, FALSE, FALSE, 0);
-    srow(grid, &r, "Colour", vb);
+    srow(grid, &r, _("Colour"), vb);
     s->width = gtk_spin_button_new_with_range(1, 12, 1);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(s->width), LOOK.divider_width);
-    srow(grid, &r, "Width (px)", s->width);
+    srow(grid, &r, _("Width (px)"), s->width);
     s->style = gtk_combo_box_text_new();
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->style), "solid", "Solid");
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->style), "fade", "Fading at the ends");
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->style), "solid", _("Solid"));
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->style), "fade", _("Fading at the ends"));
     gtk_combo_box_set_active_id(GTK_COMBO_BOX(s->style), LOOK.fade ? "fade" : "solid");
-    srow(grid, &r, "Style", s->style);
-    section(&grid, &r, "Highlight colour");
-    s->hl_auto = gtk_radio_button_new_with_label(NULL, "Follow the theme");
-    s->hl_own = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(s->hl_auto), "Own colour");
+    srow(grid, &r, _("Style"), s->style);
+    section(&grid, &r, _("Highlight colour"));
+    s->hl_auto = gtk_radio_button_new_with_label(NULL, _("Follow the theme"));
+    s->hl_own = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(s->hl_auto), _("Own colour"));
     s->hl_colour = gtk_color_button_new();
     GdkRGBA hrgba;
     gboolean hown = strcmp(LOOK.highlight, "auto") && gdk_rgba_parse(&hrgba, LOOK.highlight);
@@ -783,78 +790,86 @@ void dialog_settings(Win *w)
     gtk_box_pack_start(GTK_BOX(hvb), s->hl_auto, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hvb), hbox, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hvb), swatches(s), FALSE, FALSE, 0);
-    srow(grid, &r, "millerX", hvb);
-    s->hl_sys = gtk_button_new_with_label("Use for all GTK programs…");
-    s->hl_unsys = gtk_button_new_with_label("Remove from all");
+    srow(grid, &r, _("millerX"), hvb);
+    s->hl_sys = gtk_button_new_with_label(_("Use for all GTK programs…"));
+    s->hl_unsys = gtk_button_new_with_label(_("Remove from all"));
     gtk_widget_set_sensitive(s->hl_sys, hown);
     gtk_widget_set_sensitive(s->hl_unsys, highlight_system_has());
     GtkWidget *sysb = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
     gtk_box_pack_start(GTK_BOX(sysb), s->hl_sys, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(sysb), s->hl_unsys, FALSE, FALSE, 0);
-    srow(grid, &r, "System", sysb);
+    srow(grid, &r, _("System"), sysb);
     new_column(right);
-    section(&grid, &r, "Browsing");
+    section(&grid, &r, _("Browsing"));
     s->cw = gtk_spin_button_new_with_range(COL_MIN, 600, 10);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(s->cw), LOOK.column_width);
-    gtk_widget_set_tooltip_text(s->cw, "Where new columns start. A column you drag keeps its own width; "
-                                       "double-click its divider to bring it back to this one.");
-    srow(grid, &r, "Column width (px)", s->cw);
-    s->ff = gtk_check_button_new_with_label("Folders first");
+    gtk_widget_set_tooltip_text(s->cw, _("Where new columns start. A column you drag keeps its own width; "
+                                       "double-click its divider to bring it back to this one."));
+    srow(grid, &r, _("Column width (px)"), s->cw);
+    s->ff = gtk_check_button_new_with_label(_("Folders first"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(s->ff), LOOK.folders_first);
-    srow(grid, &r, "Sort by name", s->ff);
-    s->sh = gtk_check_button_new_with_label("Show hidden files when millerX starts");
+    srow(grid, &r, _("Sort by name"), s->ff);
+    s->sh = gtk_check_button_new_with_label(_("Show hidden files when millerX starts"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(s->sh), LOOK.show_hidden);
-    srow(grid, &r, "Hidden files", s->sh);
-    section(&grid, &r, "Preview");
+    srow(grid, &r, _("Hidden files"), s->sh);
+    s->lang = gtk_combo_box_text_new();
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->lang), "system", _("System"));
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->lang), "en", _("English"));
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->lang), "wizard", _("Wizard (English, of a sort)"));
+    gtk_combo_box_set_active_id(GTK_COMBO_BOX(s->lang), LOOK.language ? LOOK.language : "system");
+    gtk_widget_set_tooltip_text(s->lang, _("System: the language your computer is set to (English where there is "
+                                           "no translation). Takes effect the next time millerX starts."));
+    srow(grid, &r, _("Language"), s->lang);
+    section(&grid, &r, _("Preview"));
     s->pw = gtk_spin_button_new_with_range(200, 900, 10);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(s->pw), LOOK.preview_width);
-    srow(grid, &r, "Minimum width (px)", s->pw);   /* it takes the rest of the window */
-    s->names = gtk_check_button_new_with_label("Show names under thumbnails");
+    srow(grid, &r, _("Minimum width (px)"), s->pw);   /* it takes the rest of the window */
+    s->names = gtk_check_button_new_with_label(_("Show names under thumbnails"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(s->names), LOOK.gallery_names);
-    srow(grid, &r, "Gallery", s->names);
+    srow(grid, &r, _("Gallery"), s->names);
     new_column(thumbs_tab);
-    section(&grid, &r, "Thumbnails");
+    section(&grid, &r, _("Thumbnails"));
     s->thumbs = gtk_combo_box_text_new();
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->thumbs), "always", "Always");
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->thumbs), "local", "Not in network folders");
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->thumbs), "never", "Never (plain icons)");
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->thumbs), "always", _("Always"));
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->thumbs), "local", _("Not in network folders"));
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->thumbs), "never", _("Never (plain icons)"));
     gtk_combo_box_set_active_id(GTK_COMBO_BOX(s->thumbs), LOOK.thumbs == THUMBS_LOCAL ? "local"
                                                           : LOOK.thumbs == THUMBS_NEVER ? "never" : "always");
-    gtk_widget_set_tooltip_text(s->thumbs, "Pictures in the gallery under a folder. A file you click is always "
-                                           "shown big. Network folders (NFS, Samba, sshfs) can be slow with them.");
-    srow(grid, &r, "Show", s->thumbs);
+    gtk_widget_set_tooltip_text(s->thumbs, _("Pictures in the gallery under a folder. A file you click is always "
+                                           "shown big. Network folders (NFS, Samba, sshfs) can be slow with them."));
+    srow(grid, &r, _("Show"), s->thumbs);
     s->tsize = gtk_combo_box_text_new();
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->tsize), "small", "Small (about 100 px)");
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->tsize), "medium", "Medium (about 200 px)");
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->tsize), "large", "Large (about 400 px)");
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->tsize), "small", _("Small (about 100 px)"));
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->tsize), "medium", _("Medium (about 200 px)"));
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->tsize), "large", _("Large (about 400 px)"));
     gtk_combo_box_set_active_id(GTK_COMBO_BOX(s->tsize), LOOK.thumb_size == TSIZE_SMALL ? "small"
                                                          : LOOK.thumb_size == TSIZE_LARGE ? "large" : "medium");
-    gtk_widget_set_tooltip_text(s->tsize, "How big the gallery's pictures are. Large ones are made again the "
+    gtk_widget_set_tooltip_text(s->tsize, _("How big the gallery's pictures are. Large ones are made again the "
                                           "first time (bigger thumbnails, a bigger cache); a wide pane gets "
-                                          "more of them per row, not bigger ones.");
-    srow(grid, &r, "Size", s->tsize);
-    section(&grid, &r, "Cache (shared with Thunar)");
-    s->cache_size = gtk_label_new("measuring…");
+                                          "more of them per row, not bigger ones."));
+    srow(grid, &r, _("Size"), s->tsize);
+    section(&grid, &r, _("Cache (shared with Thunar)"));
+    s->cache_size = gtk_label_new(_("measuring…"));
     gtk_label_set_xalign(GTK_LABEL(s->cache_size), 0);
-    s->cache_clear = gtk_button_new_with_label("Clear…");
+    s->cache_clear = gtk_button_new_with_label(_("Clear…"));
     GtkWidget *sbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
     gtk_box_pack_start(GTK_BOX(sbox), s->cache_size, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(sbox), s->cache_clear, FALSE, FALSE, 0);
-    srow(grid, &r, "Now", sbox);
+    srow(grid, &r, _("Now"), sbox);
     s->cache_mb = gtk_spin_button_new_with_range(50, 100000, 50);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(s->cache_mb), LOOK.cache_max_mb);
-    srow(grid, &r, "Keep at most (MB)", s->cache_mb);
+    srow(grid, &r, _("Keep at most (MB)"), s->cache_mb);
     s->cache_days = gtk_spin_button_new_with_range(7, 3650, 1);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(s->cache_days), LOOK.cache_days);
-    srow(grid, &r, "Forget unused after (days)", s->cache_days);
-    s->cache_auto = gtk_check_button_new_with_label("Once a day when millerX starts");
+    srow(grid, &r, _("Forget unused after (days)"), s->cache_days);
+    s->cache_auto = gtk_check_button_new_with_label(_("Once a day when millerX starts"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(s->cache_auto), LOOK.cache_auto);
-    srow(grid, &r, "Clean up", s->cache_auto);
+    srow(grid, &r, _("Clean up"), s->cache_auto);
     thumbcache_measure(cache_measured, g_object_ref(s->cache_size));
-    section(&grid, &r, "Optional helpers (millerX works without them; untick to not use one)");
+    section(&grid, &r, _("Optional helpers (millerX works without them; untick to not use one)"));
     helper_rows(grid, &r, s);
     new_column(folders_tab);
-    section(&grid, &r, "Folders sorted their own way (all others: by name)");
+    section(&grid, &r, _("Folders sorted their own way (all others: by name)"));
     s->sort_list = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
     GtkWidget *sl_scroll = gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sl_scroll), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
@@ -875,6 +890,7 @@ void dialog_settings(Win *w)
     g_signal_connect(s->names, "toggled", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->thumbs, "changed", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->tsize, "changed", G_CALLBACK(settings_changed), s);
+    g_signal_connect(s->lang, "changed", G_CALLBACK(settings_changed), s);
     for (int i = 0; i < 4; i++)
         if (s->use[i])
             g_signal_connect(s->use[i], "toggled", G_CALLBACK(settings_changed), s);
@@ -897,7 +913,7 @@ void dialog_settings(Win *w)
 void dialog_about(Win *w)
 {
     gtk_show_about_dialog(GTK_WINDOW(w->window), "program-name", "millerX", "version", MILLERX_VERSION,
-                          "comments", "Files in Miller columns, from / to where you are.",
+                          "comments", _("Files in Miller columns, from / to where you are."),
                           "logo-icon-name", "millerx", "modal", TRUE, NULL);
 }
 
@@ -984,14 +1000,14 @@ static void ck_compare(GtkEditable *e, Ck *k)
     const char *say = "";
     char *own = NULL;
     if (*t && k->ready) {
-        say = "✗ matches none of them";
+        say = _("✗ matches none of them");
         for (guint i = 0; i < N_SUMS; i++)
             if (!strcmp(t, k->hex[i])) {
-                own = g_strdup_printf("✓ matches %s", SUMS[i].name);
+                own = g_strdup_printf(_("✓ matches %s"), SUMS[i].name);
                 break;
             }
     } else if (*t)
-        say = "…when the file is read";
+        say = _("…when the file is read");
     gtk_label_set_text(GTK_LABEL(k->verdict), own ? own : say);
     g_free(own);
     g_free(t);
@@ -1014,7 +1030,7 @@ static void ck_done(GObject *src, GAsyncResult *res, gpointer data)
         }
         k->ready = ok;
         if (!ok) {
-            char *m = g_strdup_printf("✗ couldn't read the file: %s", err->message);
+            char *m = g_strdup_printf(_("✗ couldn't read the file: %s"), err->message);
             gtk_label_set_text(GTK_LABEL(k->verdict), m);
             g_free(m);
         } else
@@ -1057,10 +1073,10 @@ void dialog_checksums(Win *w, GFile *f)
     k->file = g_object_ref(f);
     k->size = fi ? (guint64) g_file_info_get_size(fi) : 0;
     k->cancel = g_cancellable_new();
-    char *title = g_strdup_printf("Checksums: %s", fi ? g_file_info_get_display_name(fi) : "");
+    char *title = g_strdup_printf(_("Checksums: %s"), fi ? g_file_info_get_display_name(fi) : "");
     g_clear_object(&fi);
     k->dialog = gtk_dialog_new_with_buttons(title, GTK_WINDOW(w->window), GTK_DIALOG_DESTROY_WITH_PARENT,
-                                            "_Close", GTK_RESPONSE_CLOSE, NULL);
+                                            _("_Close"), GTK_RESPONSE_CLOSE, NULL);
     g_free(title);
     GtkWidget *grid = gtk_grid_new();
     gtk_grid_set_column_spacing(GTK_GRID(grid), 12);
@@ -1072,7 +1088,7 @@ void dialog_checksums(Win *w, GFile *f)
     for (guint i = 0; i < N_SUMS; i++) {
         GtkWidget *l = gtk_label_new(SUMS[i].name);
         gtk_label_set_xalign(GTK_LABEL(l), 1);
-        k->value[i] = gtk_label_new("reading…");
+        k->value[i] = gtk_label_new(_("reading…"));
         gtk_label_set_xalign(GTK_LABEL(k->value[i]), 0);
         gtk_label_set_selectable(GTK_LABEL(k->value[i]), TRUE);
         gtk_label_set_width_chars(GTK_LABEL(k->value[i]), 64);       /* a SHA-256 fits on one line */
@@ -1080,17 +1096,17 @@ void dialog_checksums(Win *w, GFile *f)
         pango_attr_list_insert(at, pango_attr_family_new("monospace"));
         gtk_label_set_attributes(GTK_LABEL(k->value[i]), at);
         pango_attr_list_unref(at);
-        k->copy[i] = gtk_button_new_with_label("Copy");
+        k->copy[i] = gtk_button_new_with_label(_("Copy"));
         gtk_widget_set_sensitive(k->copy[i], FALSE);
         g_signal_connect(k->copy[i], "clicked", G_CALLBACK(ck_copy), k);
         gtk_grid_attach(GTK_GRID(grid), l, 0, r, 1, 1);
         gtk_grid_attach(GTK_GRID(grid), k->value[i], 1, r, 1, 1);
         gtk_grid_attach(GTK_GRID(grid), k->copy[i], 2, r++, 1, 1);
     }
-    GtkWidget *cl = gtk_label_new("Compare");
+    GtkWidget *cl = gtk_label_new(_("Compare"));
     gtk_label_set_xalign(GTK_LABEL(cl), 1);
     k->entry = gtk_entry_new();
-    gtk_entry_set_placeholder_text(GTK_ENTRY(k->entry), "paste the checksum you were given");
+    gtk_entry_set_placeholder_text(GTK_ENTRY(k->entry), _("paste the checksum you were given"));
     gtk_grid_attach(GTK_GRID(grid), cl, 0, r, 1, 1);
     gtk_grid_attach(GTK_GRID(grid), k->entry, 1, r++, 2, 1);
     k->verdict = gtk_label_new("");

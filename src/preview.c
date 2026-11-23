@@ -1387,10 +1387,12 @@ static gpointer archive_thread(gpointer data)
         if (total) {
             char *body = g_utf8_make_valid(s->str, s->len);
             if (total > shown)
-                b->text = g_strdup_printf("%" G_GUINT64_FORMAT " entries:\n%s… and %" G_GUINT64_FORMAT " more",
-                                          total, body, total - shown);
+                b->text = g_strdup_printf(ngettext("%llu entry:\n%s… and %llu more",
+                                                   "%llu entries:\n%s… and %llu more",
+                                                   total), (unsigned long long) total, body, (unsigned long long) (total - shown));
             else
-                b->text = g_strdup_printf("%" G_GUINT64_FORMAT " entries:\n%s", total, body);
+                b->text = g_strdup_printf(ngettext("%llu entry:\n%s", "%llu entries:\n%s",
+                                                   total), (unsigned long long) total, body);
             /* drop the trailing newline before "… and" looks fine; keep it simple */
             g_free(body);
         }
@@ -1411,9 +1413,11 @@ static gboolean set_sizes(gpointer data)
         g_free(txt);
         g_free(size);
         char *cnt = b->single_dir
-            ? g_strdup_printf("%" G_GUINT64_FORMAT " here, %" G_GUINT64_FORMAT " files in total%s",
-                              b->items, b->files, b->running ? " …" : "")
-            : g_strdup_printf("%" G_GUINT64_FORMAT " files in total%s", b->files, b->running ? " …" : "");
+            ? g_strdup_printf(ngettext("%llu here, %llu file in total%s",
+                                       "%llu here, %llu files in total%s", b->files),
+                              (unsigned long long) b->items, (unsigned long long) b->files, b->running ? " …" : "")
+            : g_strdup_printf(ngettext("%llu file in total%s", "%llu files in total%s",
+                                       b->files), (unsigned long long) b->files, b->running ? " …" : "");
         gtk_label_set_text(GTK_LABEL(b->count_label), cnt);
         g_free(cnt);
     }
@@ -1541,11 +1545,12 @@ void preview_show_many(Preview *p, GList *files)
     GIcon *ic = g_themed_icon_new("edit-copy");
     show_icon(p, ic);
     g_object_unref(ic);
-    char *m = g_strdup_printf("<b>%u items selected</b>", g_list_length(files));
+    char *m = g_strdup_printf(ngettext("<b>%u item selected</b>", "<b>%u items selected</b>", g_list_length(files)),
+                              g_list_length(files));
     gtk_label_set_markup(GTK_LABEL(p->title), m);
     g_free(m);
-    GtkWidget *size_l = row(p, 0, "Size", "…");
-    GtkWidget *count_l = row(p, 1, "Files", "…");
+    GtkWidget *size_l = row(p, 0, _("Size"), "…");
+    GtkWidget *count_l = row(p, 1, _("Files"), "…");
     gtk_widget_show_all(p->details);
     GPtrArray *paths = g_ptr_array_new_with_free_func(g_free);
     for (GList *l = files; l; l = l->next) {
@@ -1596,11 +1601,11 @@ void preview_show_disk(Preview *p, const char *name, GIcon *icon, GFile *root, c
     if (note)
         row(p, r++, "", note);
     if (where && *where)
-        row(p, r++, "Where", where);
+        row(p, r++, _("Where"), where);
     if (device && *device)
-        row(p, r++, "Device", device);
+        row(p, r++, _("Device"), device);
     if (fs && *fs)
-        row(p, r++, "File system", fs);
+        row(p, r++, _("File system"), fs);
     char *path = root ? g_file_get_path(root) : NULL;
     if (path && !path_on_network(path)) {
         GFileInfo *fi = g_file_query_filesystem_info(root, G_FILE_ATTRIBUTE_FILESYSTEM_FREE ","
@@ -1609,11 +1614,11 @@ void preview_show_disk(Preview *p, const char *name, GIcon *icon, GFile *root, c
             guint64 size = g_file_info_get_attribute_uint64(fi, G_FILE_ATTRIBUTE_FILESYSTEM_SIZE);
             guint64 free_ = g_file_info_get_attribute_uint64(fi, G_FILE_ATTRIBUTE_FILESYSTEM_FREE);
             char *fr = g_format_size(free_), *sz = g_format_size(size);
-            char *t = g_strdup_printf("%s free of %s", fr, sz);
-            row(p, r++, "Space", t);
+            char *t = g_strdup_printf(_("%s free of %s"), fr, sz);
+            row(p, r++, _("Space"), t);
             if (size) {
                 double used = 1.0 - (double) free_ / (double) size;
-                GtkWidget *k = gtk_label_new("Used");
+                GtkWidget *k = gtk_label_new(_("Used"));
                 gtk_label_set_xalign(GTK_LABEL(k), 1);
                 gtk_style_context_add_class(gtk_widget_get_style_context(k), "dim-label");
                 GtkWidget *bar = disk_bar(used);
@@ -1676,17 +1681,17 @@ void preview_show_file(Preview *p, GFile *f)
     g_free(m);
     int r = 0;
     char *desc = *ct ? g_content_type_get_description(ct) : g_strdup("?");
-    row(p, r++, "Type", desc);
+    row(p, r++, _("Type"), desc);
     g_free(desc);
     char *sz = isdir ? g_strdup("…") : format_size_full(g_file_info_get_size(info));
-    GtkWidget *size_l = row(p, r++, "Size", sz);
+    GtkWidget *size_l = row(p, r++, _("Size"), sz);
     g_free(sz);
-    GtkWidget *count_l = isdir ? row(p, r++, "Items", "…") : NULL;
+    GtkWidget *count_l = isdir ? row(p, r++, _("Items"), "…") : NULL;
     GDateTime *mt = g_file_info_get_modification_date_time(info);
     if (mt) {
         GDateTime *loc = g_date_time_to_local(mt);
         char *s = g_date_time_format(loc, "%Y-%m-%d %H:%M");
-        row(p, r++, "Modified", s);
+        row(p, r++, _("Modified"), s);
         g_free(s);
         g_date_time_unref(loc);
         g_date_time_unref(mt);
@@ -1703,7 +1708,7 @@ void preview_show_file(Preview *p, GFile *f)
         if (mode & S_ISGID) s[6] = (mode & S_IXGRP) ? 's' : 'S';
         if (mode & S_ISVTX) s[9] = (mode & S_IXOTH) ? 't' : 'T';
         s[10] = 0;
-        row(p, r++, "Permissions", s);
+        row(p, r++, _("Permissions"), s);
     }
     char *path = g_file_get_path(f);
     GFileInfo *ti = file_in_trash(f) ? g_file_query_info(f, "trash::orig-path,trash::deletion-date,standard::target-uri",
@@ -1711,19 +1716,19 @@ void preview_show_file(Preview *p, GFile *f)
     const char *orig = ti ? g_file_info_get_attribute_byte_string(ti, "trash::orig-path") : NULL;
     if (orig) {                          /* in the trash: where it was, and since when */
         char *from = g_path_get_dirname(orig);
-        row(p, r++, "Deleted from", from);
+        row(p, r++, _("Deleted from"), from);
         g_free(from);
         GDateTime *dd = g_file_info_get_deletion_date(ti);
         if (dd) {
             char *s = g_date_time_format(dd, "%Y-%m-%d %H:%M");
-            row(p, r++, "Deleted", s);
+            row(p, r++, _("Deleted"), s);
             g_free(s);
             g_date_time_unref(dd);
         }
     } else {
         GFile *parent = g_file_get_parent(f);
         char *where = parent ? file_path(parent) : g_strdup("/");
-        row(p, r++, "Where", where);
+        row(p, r++, _("Where"), where);
         g_free(where);
         g_clear_object(&parent);
     }

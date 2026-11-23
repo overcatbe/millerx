@@ -11,6 +11,16 @@
 
 #include <gtk/gtk.h>
 
+/* translations: _() for a text, N_() where it is only listed (translated where it is shown),
+ * ngettext() for "1 item" / "3 items". Without them (no msgfmt at build time) English only. */
+#ifdef ENABLE_NLS
+#include <glib/gi18n.h>
+#else
+#define _(s) (s)
+#define N_(s) (s)
+#define ngettext(one, many, n) ((n) == 1 ? (one) : (many))
+#endif
+
 #ifndef MILLERX_VERSION
 #define MILLERX_VERSION "0.7"
 #endif
@@ -51,11 +61,13 @@ typedef struct {
     gboolean use_pkexec;    /* off: no "Open as root" anywhere */
     gboolean use_blender;   /* blender-thumbnailer: the picture saved inside .blend files */
     int thumb_size;         /* TSIZE_SMALL, _MEDIUM, _LARGE */
+    char *language;         /* "system", "en" or "wizard": read once at start (look_language) */
 } Look;
 
 extern Look LOOK;
 
 void look_load(void);
+char *look_language(void);             /* the [look] language setting, before GTK starts */
 gboolean look_save(GError **err);
 
 /* where the last closed window was ([window] in millerx.conf); x/y only on X11 */

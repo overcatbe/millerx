@@ -74,20 +74,22 @@ static void root_finished(GObject *src, GAsyncResult *res, gpointer data)
     int code = g_subprocess_get_if_exited(p) ? g_subprocess_get_exit_status(p) : -1;
     if (!w->dead) {
         if (err_out && strstr(err_out, "authentication agent")) {
-            win_error(w, "Can't open as root",
-                      "No polkit authentication agent is running, so nothing can ask for the "
+            win_error(w, _("Can't open as root"),
+                      _("No polkit authentication agent is running, so nothing can ask for the "
                       "root password.\n\nStart one in your session, for example polkit-gnome "
                       "(/usr/libexec/polkit-gnome-authentication-agent-1), lxpolkit, mate-polkit "
-                      "or polkit-kde-agent, and try again.");
+                      "or polkit-kde-agent, and try again."));
         } else if (code == 126) {
-            win_status(w, "Open as root: cancelled");
+            win_status(w, _("Open as root: cancelled"));
         } else if (code == 127) {
-            win_error(w, "Can't open as root", err_out && *err_out ? err_out : "Not authorized.");
+            win_error(w, _("Can't open as root"), err_out && *err_out ? err_out : _("Not authorized."));
         } else if (code != 0 && err_out && strstr(err_out, "cannot open display")) {
-            win_error(w, "Can't open as root", "The root window couldn't reach the display. "
-                      "Is millerX's polkit policy installed (" ROOT_POLICY ")?");
+            char *m = g_strdup_printf(_("The root window couldn't reach the display. "
+                                        "Is millerX's polkit policy installed (%s)?"), ROOT_POLICY);
+            win_error(w, _("Can't open as root"), m);
+            g_free(m);
         } else {
-            win_status(w, "Root window closed");
+            win_status(w, _("Root window closed"));
         }
     }
     g_clear_error(&err);
@@ -101,24 +103,25 @@ void win_open_as_root(Win *w, GFile *folder)
     char *pkexec = g_find_program_in_path("pkexec");
     char *exe = g_build_filename(MILLERX_BINDIR, "millerx", NULL);
     if (!pkexec) {
-        win_error(w, "Can't open as root",
-                  "This needs polkit (the pkexec program), which isn't installed. "
-                  "Install polkit and a polkit authentication agent, then try again.");
+        win_error(w, _("Can't open as root"),
+                  _("This needs polkit (the pkexec program), which isn't installed. "
+                  "Install polkit and a polkit authentication agent, then try again."));
     } else if (!g_file_test(ROOT_POLICY, G_FILE_TEST_EXISTS)) {
-        win_error(w, "Can't open as root",
-                  "millerX's polkit policy isn't installed (" ROOT_POLICY "). "
-                  "Install millerX as a package or with “ninja install”.");
+        char *m = g_strdup_printf(_("millerX's polkit policy isn't installed (%s). "
+                                    "Install millerX as a package or with “ninja install”."), ROOT_POLICY);
+        win_error(w, _("Can't open as root"), m);
+        g_free(m);
     } else if (!path) {
-        win_error(w, "Can't open as root", "Only local folders can be opened as root.");
+        win_error(w, _("Can't open as root"), _("Only local folders can be opened as root."));
     } else {
         GError *err = NULL;
         GSubprocess *p = g_subprocess_new(G_SUBPROCESS_FLAGS_STDOUT_SILENCE | G_SUBPROCESS_FLAGS_STDERR_PIPE,
                                           &err, pkexec, exe, path, NULL);
         if (!p) {
-            win_error(w, "Can't open as root", err->message);
+            win_error(w, _("Can't open as root"), err->message);
             g_error_free(err);
         } else {
-            win_status(w, "Asking for the root password …");
+            win_status(w, _("Asking for the root password …"));
             /* reads stderr until the root window closes, then tells us how it went */
             g_subprocess_communicate_utf8_async(p, NULL, NULL, root_finished, win_ref(w));
             g_object_unref(p);
@@ -138,9 +141,9 @@ void win_error_root(Win *w, const char *title, const char *text, GFile *folder)
     }
     GtkWidget *d = gtk_message_dialog_new(GTK_WINDOW(w->window), GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR,
                                           GTK_BUTTONS_NONE, "%s", title);
-    gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(d), "%s\n\nThis needs root rights.", text);
-    gtk_dialog_add_button(GTK_DIALOG(d), "Close", GTK_RESPONSE_CLOSE);
-    gtk_dialog_add_button(GTK_DIALOG(d), "Open as root…", GTK_RESPONSE_ACCEPT);
+    gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(d), _("%s\n\nThis needs root rights."), text);
+    gtk_dialog_add_button(GTK_DIALOG(d), _("Close"), GTK_RESPONSE_CLOSE);
+    gtk_dialog_add_button(GTK_DIALOG(d), _("Open as root…"), GTK_RESPONSE_ACCEPT);
     gtk_dialog_set_default_response(GTK_DIALOG(d), GTK_RESPONSE_CLOSE);
     int r = gtk_dialog_run(GTK_DIALOG(d));
     gtk_widget_destroy(d);
@@ -153,7 +156,7 @@ gboolean win_confirm(Win *w, const char *title, const char *text, const char *ok
     GtkWidget *d = gtk_message_dialog_new(GTK_WINDOW(w->window), GTK_DIALOG_MODAL, GTK_MESSAGE_WARNING,
                                           GTK_BUTTONS_NONE, "%s", title);
     gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(d), "%s", text);
-    gtk_dialog_add_button(GTK_DIALOG(d), "Cancel", GTK_RESPONSE_CANCEL);
+    gtk_dialog_add_button(GTK_DIALOG(d), _("Cancel"), GTK_RESPONSE_CANCEL);
     gtk_dialog_add_button(GTK_DIALOG(d), ok, GTK_RESPONSE_OK);
     gtk_dialog_set_default_response(GTK_DIALOG(d), GTK_RESPONSE_CANCEL);
     int r = gtk_dialog_run(GTK_DIALOG(d));
@@ -164,7 +167,7 @@ gboolean win_confirm(Win *w, const char *title, const char *text, const char *ok
 char *win_ask_name(Win *w, const char *title, const char *initial, gboolean select_stem)
 {
     GtkWidget *d = gtk_dialog_new_with_buttons(title, GTK_WINDOW(w->window), GTK_DIALOG_MODAL,
-                                               "Cancel", GTK_RESPONSE_CANCEL, "OK", GTK_RESPONSE_OK, NULL);
+                                               _("Cancel"), GTK_RESPONSE_CANCEL, _("OK"), GTK_RESPONSE_OK, NULL);
     gtk_dialog_set_default_response(GTK_DIALOG(d), GTK_RESPONSE_OK);
     GtkWidget *e = gtk_entry_new();
     gtk_entry_set_text(GTK_ENTRY(e), initial);
@@ -204,12 +207,12 @@ static void update_location(Win *w, GFile *f)
 {
     if (file_is_computer(f)) {
         gtk_entry_set_text(GTK_ENTRY(w->location), "computer:///");
-        gtk_window_set_title(GTK_WINDOW(w->window), is_root() ? "ROOT: Computer" : "Computer");
+        gtk_window_set_title(GTK_WINDOW(w->window), is_root() ? _("ROOT: Computer") : _("Computer"));
         return;
     }
     char *p = file_path(f);
     gtk_entry_set_text(GTK_ENTRY(w->location), p);
-    char *t = is_root() ? g_strconcat("ROOT: ", p, NULL) : g_strdup(p);
+    char *t = is_root() ? g_strdup_printf(_("ROOT: %s"), p) : g_strdup(p);
     gtk_window_set_title(GTK_WINDOW(w->window), t);   /* the yellow M icon says millerX */
     g_free(t);
     g_free(p);
@@ -326,7 +329,7 @@ void win_open_computer(Win *w)
     g_object_unref(f);
     update_location(w, c->gfile);
     gtk_widget_grab_focus(c->view);
-    win_status(w, "Computer: click a disk to open it, right-click to eject");
+    win_status(w, _("Computer: click a disk to open it, right-click to eject"));
 }
 
 void win_chain_finished(Win *w)
@@ -374,7 +377,7 @@ void win_column_selected(Win *w, Column *c)
         GList *files = column_selected_files(c);
         update_location(w, c->gfile);
         preview_show_many(w->preview, files);
-        win_status(w, "%d items selected", n);
+        win_status(w, ngettext("%d item selected", "%d items selected", n), n);
         g_list_free_full(files, g_object_unref);
         return;
     }
@@ -456,7 +459,7 @@ static void on_location(GtkEntry *e, Win *w)
     if (file_is_computer(f) || g_file_query_exists(f, NULL))
         win_open_path(w, f);
     else
-        win_status(w, "Not found: %s", t);
+        win_status(w, _("Not found: %s"), t);
     g_object_unref(f);
     g_free(exp);
     g_free(t);
@@ -482,7 +485,7 @@ void win_toggle_hidden(Win *w)
 {
     w->show_hidden = !w->show_hidden;
     win_reload_all(w);
-    win_status(w, w->show_hidden ? "Hidden files shown" : "Hidden files hidden");
+    win_status(w, w->show_hidden ? _("Hidden files shown") : _("Hidden files hidden"));
 }
 
 GdkModifierType win_pointer_mask(Win *w)
@@ -606,13 +609,13 @@ static void ask_script(Win *w, const char *path)
 {
     char *base = g_path_get_basename(path);
     GtkWidget *d = gtk_message_dialog_new(GTK_WINDOW(w->window), GTK_DIALOG_MODAL, GTK_MESSAGE_QUESTION,
-                                          GTK_BUTTONS_NONE, "“%s” is a script", base);
+                                          GTK_BUTTONS_NONE, _("“%s” is a script"), base);
     gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(d),
-                                             "Run it, or open it to read what it does?");
-    gtk_dialog_add_button(GTK_DIALOG(d), "Cancel", 0);
-    gtk_dialog_add_button(GTK_DIALOG(d), "Open", 1);
-    gtk_dialog_add_button(GTK_DIALOG(d), "Run in terminal", 2);
-    gtk_dialog_add_button(GTK_DIALOG(d), "Run", 3);
+                                             _("Run it, or open it to read what it does?"));
+    gtk_dialog_add_button(GTK_DIALOG(d), _("Cancel"), 0);
+    gtk_dialog_add_button(GTK_DIALOG(d), _("Open"), 1);
+    gtk_dialog_add_button(GTK_DIALOG(d), _("Run in terminal"), 2);
+    gtk_dialog_add_button(GTK_DIALOG(d), _("Run"), 3);
     gtk_dialog_set_default_response(GTK_DIALOG(d), 1);
     int r = gtk_dialog_run(GTK_DIALOG(d));
     gtk_widget_destroy(d);
@@ -693,7 +696,7 @@ static void run_program(Win *w, const char *path)
     char *argv[] = { (char *) path, NULL };
     GError *err = NULL;
     if (!g_spawn_async(dir, argv, NULL, G_SPAWN_DEFAULT, NULL, NULL, NULL, &err)) {
-        win_error(w, "Couldn't run it", err->message);
+        win_error(w, _("Couldn't run it"), err->message);
         g_error_free(err);
     }
     g_free(dir);
@@ -747,9 +750,9 @@ static void run_in_terminal(Win *w, const char *path)
         g_ptr_array_free(a, TRUE);
     }
     if (!ok)
-        win_error(w, "No terminal found",
-                  "Install a terminal (xterm, xfce4-terminal, konsole, …) or set the TERMINAL "
-                  "environment variable to the one you use.");
+        win_error(w, _("No terminal found"),
+                  _("Install a terminal (xterm, xfce4-terminal, konsole, …) or set the TERMINAL "
+                  "environment variable to the one you use."));
     g_free(dir);
 }
 
@@ -786,24 +789,24 @@ static void terminal_here(Win *w, GFile *folder)
         g_free(exe);
     }
     if (!ok)
-        win_error(w, "No terminal found",
-                  "Install a terminal (xterm, xfce4-terminal, konsole, …) or set the TERMINAL "
-                  "environment variable to the one you use.");
+        win_error(w, _("No terminal found"),
+                  _("Install a terminal (xterm, xfce4-terminal, konsole, …) or set the TERMINAL "
+                  "environment variable to the one you use."));
     g_free(path);
 }
 
 void win_new_folder(Win *w, Column *c)
 {
-    char *name = win_ask_name(w, "New folder", "New Folder", FALSE);
+    char *name = win_ask_name(w, _("New folder"), _("New Folder"), FALSE);
     if (!name)
         return;
     GFile *f = g_file_get_child(c->gfile, name);
     GError *err = NULL;
     if (!g_file_make_directory(f, NULL, &err)) {
         if (g_error_matches(err, G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED))
-            win_error_root(w, "Couldn't create the folder", err->message, c->gfile);
+            win_error_root(w, _("Couldn't create the folder"), err->message, c->gfile);
         else
-            win_error(w, "Couldn't create the folder", err->message);
+            win_error(w, _("Couldn't create the folder"), err->message);
         g_error_free(err);
     } else {
         g_free(c->pending_select);
@@ -821,18 +824,18 @@ static GFile *rename_file(Win *w, GFile *f)
     GFileInfo *info = g_file_query_info(f, "standard::display-name", G_FILE_QUERY_INFO_NONE, NULL, NULL);
     char *old = info ? g_strdup(g_file_info_get_display_name(info)) : g_file_get_basename(f);
     g_clear_object(&info);
-    char *name = win_ask_name(w, "Rename", old, TRUE);
+    char *name = win_ask_name(w, _("Rename"), old, TRUE);
     if (name && strcmp(name, old)) {
         GFile *parent = g_file_get_parent(f), *exist = g_file_get_child(parent, name);
         if (g_file_query_exists(exist, NULL)) {
-            char *msg = g_strdup_printf("“%s” already exists.", name);
-            win_error(w, "Couldn't rename", msg);
+            char *msg = g_strdup_printf(_("“%s” already exists."), name);
+            win_error(w, _("Couldn't rename"), msg);
             g_free(msg);
         } else {
             GError *err = NULL;
             GFile *nf = g_file_set_display_name(f, name, NULL, &err);
             if (!nf) {
-                win_error_root(w, "Couldn't rename", err->message,
+                win_error_root(w, _("Couldn't rename"), err->message,
                                g_error_matches(err, G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED) ? parent : NULL);
                 g_error_free(err);
             } else {
@@ -888,10 +891,11 @@ static gboolean delete_report(gpointer data)
         for (guint i = 0; i < d->errs->len && i < 20; i++)
             g_string_append_printf(s, "%s%s", i ? "\n" : "", (char *) g_ptr_array_index(d->errs, i));
         if (!d->w->dead)
-            win_error_root(d->w, "Some items couldn't be deleted", s->str, d->denied_in);
+            win_error_root(d->w, _("Some items couldn't be deleted"), s->str, d->denied_in);
         g_string_free(s, TRUE);
     } else {
-        win_status(d->w, "%u item(s) deleted", g_list_length(d->files));
+        guint n = g_list_length(d->files);
+        win_status(d->w, ngettext("%u item deleted", "%u items deleted", n), n);
     }
     g_ptr_array_unref(d->errs);
     g_clear_object(&d->denied_in);
@@ -965,21 +969,22 @@ void win_trash(Win *w, GList *files)
         char *names = some_names(failed, 5);
         char *msg = g_strdup_printf("%s: %s", names, first_err);
         GFile *parent = g_file_get_parent(failed->data);
-        win_error_root(w, "Can't move to trash", msg, parent);
+        win_error_root(w, _("Can't move to trash"), msg, parent);
         g_clear_object(&parent);
         g_free(msg);
         g_free(names);
         g_list_free_full(failed, g_object_unref);
     } else if (failed) {
         char *names = some_names(failed, 5);
-        char *msg = g_strdup_printf("%s: %s\n\nDelete permanently instead?", names, first_err);
-        if (win_confirm(w, "Can't move to trash", msg, "Delete permanently"))
+        char *msg = g_strdup_printf(_("%s: %s\n\nDelete permanently instead?"), names, first_err);
+        if (win_confirm(w, _("Can't move to trash"), msg, _("Delete permanently")))
             delete_files(w, failed);
         g_free(msg);
         g_free(names);
         g_list_free_full(failed, g_object_unref);
     } else {
-        win_status(w, "%u item(s) moved to trash", g_list_length(files));
+        guint n = g_list_length(files);
+        win_status(w, ngettext("%u item moved to the trash", "%u items moved to the trash", n), n);
     }
     g_free(first_err);
 }
@@ -989,9 +994,10 @@ void win_delete_forever(Win *w, GList *files)
     if (!files)
         return;
     char *names = some_names(files, 5);
-    char *title = g_strdup_printf("Delete %u item(s) permanently?", g_list_length(files));
-    char *msg = g_strdup_printf("%s\n\nThis can't be undone.", names);
-    if (win_confirm(w, title, msg, "Delete"))
+    guint n = g_list_length(files);
+    char *title = g_strdup_printf(ngettext("Delete %u item permanently?", "Delete %u items permanently?", n), n);
+    char *msg = g_strdup_printf(_("%s\n\nThis can't be undone."), names);
+    if (win_confirm(w, title, msg, _("Delete")))
         delete_files(w, files);
     g_free(msg);
     g_free(title);
@@ -1056,7 +1062,11 @@ void win_clip_set(Win *w, GList *files, gboolean cut)
         g_list_free_full(w->clip, g_object_unref);
         w->clip = files;
         w->clip_cut = cut;
-        win_status(w, "%u item(s) %s", g_list_length(files), cut ? "cut" : "copied");
+        guint n = g_list_length(files);
+        if (cut)
+            win_status(w, ngettext("%u item cut", "%u items cut", n), n);
+        else
+            win_status(w, ngettext("%u item copied", "%u items copied", n), n);
     } else {
         win_unref(w);
         g_list_free_full(files, g_object_unref);
@@ -1102,7 +1112,7 @@ void win_paste_into(Win *w, GFile *folder)
     gboolean cut;
     GList *files = clip_get(w, &cut);
     if (!files) {
-        win_status(w, "Nothing to paste");
+        win_status(w, _("Nothing to paste"));
         return;
     }
     job_run(w, cut, files, folder);
@@ -1137,15 +1147,15 @@ static void compress_dialog(Win *w, GList *files)
         if (dot && dot != initial)
             initial[dot - initial] = 0;
     }
-    GtkWidget *d = gtk_dialog_new_with_buttons("Compress", GTK_WINDOW(w->window), GTK_DIALOG_MODAL,
-                                               "Cancel", GTK_RESPONSE_CANCEL, "Compress", GTK_RESPONSE_OK, NULL);
+    GtkWidget *d = gtk_dialog_new_with_buttons(_("Compress"), GTK_WINDOW(w->window), GTK_DIALOG_MODAL,
+                                               _("Cancel"), GTK_RESPONSE_CANCEL, _("Compress"), GTK_RESPONSE_OK, NULL);
     gtk_dialog_set_default_response(GTK_DIALOG(d), GTK_RESPONSE_OK);
     GtkWidget *grid = gtk_grid_new();
     gtk_grid_set_row_spacing(GTK_GRID(grid), 8);
     gtk_grid_set_column_spacing(GTK_GRID(grid), 8);
     g_object_set(grid, "margin", 12, NULL);
-    char *what = files->next ? g_strdup_printf("%u items", g_list_length(files)) : g_file_get_basename(files->data);
-    char *head = g_strdup_printf("Pack “%s” into an archive in the same folder:", what);
+    char *what = files->next ? g_strdup_printf(ngettext("%u item", "%u items", g_list_length(files)), g_list_length(files)) : g_file_get_basename(files->data);
+    char *head = g_strdup_printf(_("Pack “%s” into an archive in the same folder:"), what);
     GtkWidget *l = gtk_label_new(head);
     gtk_label_set_xalign(GTK_LABEL(l), 0);
     gtk_grid_attach(GTK_GRID(grid), l, 0, 0, 2, 1);
@@ -1172,8 +1182,8 @@ static void compress_dialog(Win *w, GList *files)
         char *full = g_strconcat(name, ARC_FORMATS[f].ext, NULL);
         GFile *out = g_file_get_child(folder, full);
         if (g_file_query_exists(out, NULL)) {
-            char *msg = g_strdup_printf("“%s” already exists. Pick another name.", full);
-            win_error(w, "Couldn't compress", msg);
+            char *msg = g_strdup_printf(_("“%s” already exists. Pick another name."), full);
+            win_error(w, _("Couldn't compress"), msg);
             g_free(msg);
         } else {
             job_compress(w, files, out, f);
@@ -1223,13 +1233,13 @@ static void set_default_app(Win *w, GAppInfo *app, GFile *f)
     const char *ct = fi ? g_file_info_get_content_type(fi) : NULL;
     GError *err = NULL;
     if (!ct)
-        win_status(w, "Couldn't tell what kind of file this is");
+        win_status(w, _("Couldn't tell what kind of file this is"));
     else if (!g_app_info_set_as_default_for_type(app, ct, &err)) {
-        win_error(w, "Couldn't set the default program", err->message);
+        win_error(w, _("Couldn't set the default program"), err->message);
         g_error_free(err);
     } else {
         char *desc = g_content_type_get_description(ct);
-        win_status(w, "%s opens with %s now", desc, g_app_info_get_display_name(app));
+        win_status(w, _("%s opens with %s now"), desc, g_app_info_get_display_name(app));
         g_free(desc);
     }
     g_clear_object(&fi);
@@ -1399,10 +1409,11 @@ static void sort_menu(GtkWidget *menu, Win *w, GFile *folder)
     FolderSort cur;
     gboolean custom = sorting_get(path, &cur);
     GtkWidget *sub = gtk_menu_new();
-    static const char *labels[] = { "Name", "Date modified (newest first)", "Size (largest first)", "Type" };
+    static const char *labels[] = { N_("Name"), N_("Date modified (newest first)"), N_("Size (largest first)"),
+                                    N_("Type") };
     GSList *group = NULL;
     for (int b = 0; b < 4; b++) {
-        GtkWidget *mi = gtk_radio_menu_item_new_with_label(group, labels[b]);
+        GtkWidget *mi = gtk_radio_menu_item_new_with_label(group, _(labels[b]));
         group = gtk_radio_menu_item_get_group(GTK_RADIO_MENU_ITEM(mi));
         gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mi), (int) cur.by == b);
         g_object_set_data_full(G_OBJECT(mi), "path", g_strdup(path), g_free);
@@ -1411,19 +1422,19 @@ static void sort_menu(GtkWidget *menu, Win *w, GFile *folder)
         gtk_menu_shell_append(GTK_MENU_SHELL(sub), mi);
     }
     sep(sub);
-    GtkWidget *rev = gtk_check_menu_item_new_with_label("Reversed");
+    GtkWidget *rev = gtk_check_menu_item_new_with_label(_("Reversed"));
     gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(rev), cur.reverse);
     g_object_set_data_full(G_OBJECT(rev), "path", g_strdup(path), g_free);
     g_signal_connect(rev, "toggled", G_CALLBACK(sort_reverse), w);
     gtk_menu_shell_append(GTK_MENU_SHELL(sub), rev);
     sep(sub);
-    GtkWidget *back = gtk_menu_item_new_with_label("Back to name");
+    GtkWidget *back = gtk_menu_item_new_with_label(_("Back to name"));
     gtk_widget_set_sensitive(back, custom);
     g_object_set_data_full(G_OBJECT(back), "path", g_strdup(path), g_free);
     g_signal_connect(back, "activate", G_CALLBACK(sort_reset), w);
     gtk_menu_shell_append(GTK_MENU_SHELL(sub), back);
     char *base = g_file_get_basename(folder);
-    char *l = g_strdup_printf("Sort “%s”", base);
+    char *l = g_strdup_printf(_("Sort “%s”"), base);
     GtkWidget *top = gtk_menu_item_new_with_label(l);
     gtk_menu_item_set_submenu(GTK_MENU_ITEM(top), sub);
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), top);
@@ -1465,11 +1476,11 @@ static void open_with_menu(GtkWidget *menu, Win *w, Column *c, GList *files, con
         }
         g_clear_object(&def);
         sep(sub);
-        GtkWidget *sd = gtk_menu_item_new_with_label("Set default");
+        GtkWidget *sd = gtk_menu_item_new_with_label(_("Set default"));
         gtk_menu_item_set_submenu(GTK_MENU_ITEM(sd), dsub);
         gtk_menu_shell_append(GTK_MENU_SHELL(sub), sd);
     }
-    GtkWidget *ow = gtk_menu_item_new_with_label("Open with");
+    GtkWidget *ow = gtk_menu_item_new_with_label(_("Open with"));
     gtk_menu_item_set_submenu(GTK_MENU_ITEM(ow), sub);
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), ow);
     g_list_free_full(apps, g_object_unref);
@@ -1498,10 +1509,10 @@ void win_context_menu(Win *w, Column *c, GdkEventButton *ev)
 
     if (files) {
         if (single_dir) {
-            item(menu, w, c, files, NULL, A_OPEN_DIR, "Open", NULL, TRUE);
-            item(menu, w, c, NULL, files->data, A_NEW_WINDOW, "Open in new window", NULL, TRUE);
+            item(menu, w, c, files, NULL, A_OPEN_DIR, _("Open"), NULL, TRUE);
+            item(menu, w, c, NULL, files->data, A_NEW_WINDOW, _("Open in new window"), NULL, TRUE);
         } else if (n == 1)
-            item(menu, w, c, files, NULL, A_OPEN, "Open", "Return", TRUE);
+            item(menu, w, c, files, NULL, A_OPEN, _("Open"), "Return", TRUE);
         GFileInfo *info = g_file_query_info(files->data, "standard::content-type", G_FILE_QUERY_INFO_NONE,
                                             NULL, NULL);
         const char *ct = info ? g_file_info_get_content_type(info) : NULL;
@@ -1509,54 +1520,54 @@ void win_context_menu(Win *w, Column *c, GdkEventButton *ev)
         g_clear_object(&info);
         sep(menu);
         if (all_archives(files)) {
-            item(menu, w, c, files, NULL, A_EXTRACT_HERE, "Extract here", NULL, TRUE);
+            item(menu, w, c, files, NULL, A_EXTRACT_HERE, _("Extract here"), NULL, TRUE);
             if (n == 1) {
                 char *b = g_file_get_basename(files->data), *stem = arc_stem(b);
-                char *l = g_strdup_printf("Extract to “%s/”", stem);
+                char *l = g_strdup_printf(_("Extract to “%s/”"), stem);
                 item(menu, w, c, files, NULL, A_EXTRACT_FOLDER, l, NULL, TRUE);
                 g_free(l);
                 g_free(stem);
                 g_free(b);
             } else {
-                item(menu, w, c, files, NULL, A_EXTRACT_FOLDER, "Extract each to its own folder", NULL, TRUE);
+                item(menu, w, c, files, NULL, A_EXTRACT_FOLDER, _("Extract each to its own folder"), NULL, TRUE);
             }
         }
-        item(menu, w, c, files, NULL, A_COMPRESS, "Compress…", NULL, TRUE);
+        item(menu, w, c, files, NULL, A_COMPRESS, _("Compress…"), NULL, TRUE);
         sep(menu);
-        item(menu, w, c, files, NULL, A_CUT, "Cut", "<Control>x", TRUE);
-        item(menu, w, c, files, NULL, A_COPY, "Copy", "<Control>c", TRUE);
+        item(menu, w, c, files, NULL, A_CUT, _("Cut"), "<Control>x", TRUE);
+        item(menu, w, c, files, NULL, A_COPY, _("Copy"), "<Control>c", TRUE);
         if (single_dir) {   /* a highlighted folder gets the paste (Ctrl+V does the same) */
             char *b = g_file_get_basename(files->data);
-            char *l = g_strdup_printf("Paste into “%s”", b);
+            char *l = g_strdup_printf(_("Paste into “%s”"), b);
             item(menu, w, c, files, NULL, A_PASTE_INTO, l, "<Control>v", TRUE);
             g_free(l);
             g_free(b);
         } else {
-            item(menu, w, c, files, NULL, A_PASTE, "Paste", "<Control>v", TRUE);
+            item(menu, w, c, files, NULL, A_PASTE, _("Paste"), "<Control>v", TRUE);
         }
         sep(menu);
-        item(menu, w, c, files, NULL, A_RENAME, "Rename…", "F2", n == 1);
-        item(menu, w, c, files, NULL, A_TRASH, "Move to trash", "Delete", TRUE);
-        item(menu, w, c, files, NULL, A_DELETE, "Delete permanently…", "<Shift>Delete", TRUE);
+        item(menu, w, c, files, NULL, A_RENAME, _("Rename…"), "F2", n == 1);
+        item(menu, w, c, files, NULL, A_TRASH, _("Move to trash"), "Delete", TRUE);
+        item(menu, w, c, files, NULL, A_DELETE, _("Delete permanently…"), "<Shift>Delete", TRUE);
         sep(menu);
     } else {
-        item(menu, w, c, NULL, NULL, A_PASTE, "Paste", "<Control>v", TRUE);
+        item(menu, w, c, NULL, NULL, A_PASTE, _("Paste"), "<Control>v", TRUE);
         sep(menu);
     }
-    item(menu, w, c, NULL, NULL, A_NEW_FOLDER, "New folder…", "<Control><Shift>n", TRUE);
+    item(menu, w, c, NULL, NULL, A_NEW_FOLDER, _("New folder…"), "<Control><Shift>n", TRUE);
     sort_menu(menu, w, folder);       /* the highlighted folder, else this column's own */
-    item(menu, w, c, NULL, folder, A_TERMINAL, "Open terminal here", NULL, TRUE);
+    item(menu, w, c, NULL, folder, A_TERMINAL, _("Open terminal here"), NULL, TRUE);
     if (files)
-        item(menu, w, c, files, NULL, A_COPY_PATH, "Copy path", NULL, TRUE);
+        item(menu, w, c, files, NULL, A_COPY_PATH, _("Copy path"), NULL, TRUE);
     if (n == 1 && !single_dir && !is_dir(files->data, TRUE))
-        item(menu, w, c, files, NULL, A_CHECKSUMS, "Checksums…", NULL, TRUE);
-    item(menu, w, c, NULL, folder, A_BOOKMARK, "Add to bookmarks", "<Control>d", TRUE);
+        item(menu, w, c, files, NULL, A_CHECKSUMS, _("Checksums…"), NULL, TRUE);
+    item(menu, w, c, NULL, folder, A_BOOKMARK, _("Add to bookmarks"), "<Control>d", TRUE);
     if (!is_root() && LOOK.use_pkexec)
-        item(menu, w, c, NULL, folder, A_ROOT, "Open as root…", NULL, TRUE);
+        item(menu, w, c, NULL, folder, A_ROOT, _("Open as root…"), NULL, TRUE);
     sep(menu);
-    item(menu, w, c, files, NULL, A_PROPERTIES, "Properties…", "<Alt>Return", TRUE);
+    item(menu, w, c, files, NULL, A_PROPERTIES, _("Properties…"), "<Alt>Return", TRUE);
     sep(menu);
-    GtkWidget *hid = gtk_check_menu_item_new_with_label("Show hidden files");
+    GtkWidget *hid = gtk_check_menu_item_new_with_label(_("Show hidden files"));
     gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(hid), w->show_hidden);
     g_signal_connect(hid, "toggled", G_CALLBACK(on_hidden_toggled), w);
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), hid);
@@ -1584,42 +1595,42 @@ void win_file_menu(Win *w, GList *files, GdkEventButton *ev, GtkWidget *attach)
     GtkWidget *menu = gtk_menu_new();
     if (one) {
         if (isdir)
-            item(menu, w, NULL, files, NULL, A_SHOW, "Open", NULL, TRUE);
+            item(menu, w, NULL, files, NULL, A_SHOW, _("Open"), NULL, TRUE);
         else
-            item(menu, w, NULL, files, NULL, A_OPEN, "Open", NULL, TRUE);
+            item(menu, w, NULL, files, NULL, A_OPEN, _("Open"), NULL, TRUE);
         const char *ct = info ? g_file_info_get_content_type(info) : NULL;
         open_with_menu(menu, w, NULL, files, isdir ? NULL : ct, TRUE);
         if (!isdir)
-            item(menu, w, NULL, files, NULL, A_SHOW, "Show in column", NULL, TRUE);
+            item(menu, w, NULL, files, NULL, A_SHOW, _("Show in column"), NULL, TRUE);
         sep(menu);
     }
     g_clear_object(&info);
     if (all_archives(files)) {
-        item(menu, w, NULL, files, NULL, A_EXTRACT_HERE, "Extract here", NULL, TRUE);
+        item(menu, w, NULL, files, NULL, A_EXTRACT_HERE, _("Extract here"), NULL, TRUE);
         if (one) {
             char *b = g_file_get_basename(f), *stem = arc_stem(b);
-            char *l = g_strdup_printf("Extract to “%s/”", stem);
+            char *l = g_strdup_printf(_("Extract to “%s/”"), stem);
             item(menu, w, NULL, files, NULL, A_EXTRACT_FOLDER, l, NULL, TRUE);
             g_free(l);
             g_free(stem);
             g_free(b);
         } else {
-            item(menu, w, NULL, files, NULL, A_EXTRACT_FOLDER, "Extract each to its own folder", NULL, TRUE);
+            item(menu, w, NULL, files, NULL, A_EXTRACT_FOLDER, _("Extract each to its own folder"), NULL, TRUE);
         }
     }
-    item(menu, w, NULL, files, NULL, A_COMPRESS, "Compress…", NULL, TRUE);
+    item(menu, w, NULL, files, NULL, A_COMPRESS, _("Compress…"), NULL, TRUE);
     sep(menu);
-    item(menu, w, NULL, files, NULL, A_CUT, "Cut", "<Control>x", TRUE);
-    item(menu, w, NULL, files, NULL, A_COPY, "Copy", "<Control>c", TRUE);
+    item(menu, w, NULL, files, NULL, A_CUT, _("Cut"), "<Control>x", TRUE);
+    item(menu, w, NULL, files, NULL, A_COPY, _("Copy"), "<Control>c", TRUE);
     sep(menu);
-    item(menu, w, NULL, files, NULL, A_RENAME, "Rename…", "F2", one);
-    item(menu, w, NULL, files, NULL, A_TRASH, "Move to trash", "Delete", TRUE);
-    item(menu, w, NULL, files, NULL, A_DELETE, "Delete permanently…", "<Shift>Delete", TRUE);
+    item(menu, w, NULL, files, NULL, A_RENAME, _("Rename…"), "F2", one);
+    item(menu, w, NULL, files, NULL, A_TRASH, _("Move to trash"), "Delete", TRUE);
+    item(menu, w, NULL, files, NULL, A_DELETE, _("Delete permanently…"), "<Shift>Delete", TRUE);
     sep(menu);
-    item(menu, w, NULL, files, NULL, A_COPY_PATH, one ? "Copy path" : "Copy paths", NULL, TRUE);
+    item(menu, w, NULL, files, NULL, A_COPY_PATH, one ? _("Copy path") : _("Copy paths"), NULL, TRUE);
     if (one && !isdir)
-        item(menu, w, NULL, files, NULL, A_CHECKSUMS, "Checksums…", NULL, TRUE);
-    item(menu, w, NULL, files, NULL, A_PROPERTIES, "Properties…", "<Alt>Return", one);
+        item(menu, w, NULL, files, NULL, A_CHECKSUMS, _("Checksums…"), NULL, TRUE);
+    item(menu, w, NULL, files, NULL, A_PROPERTIES, _("Properties…"), "<Alt>Return", one);
     gtk_widget_show_all(menu);
     gtk_menu_attach_to_widget(GTK_MENU(menu), attach, NULL);
     g_signal_connect(menu, "deactivate", G_CALLBACK(menu_done), NULL);
@@ -1886,7 +1897,7 @@ Win *win_new(GtkApplication *app, GFile *start)
     gboolean first = gtk_application_get_windows(app) == NULL;
     w->window = gtk_application_window_new(app);
     g_object_set_data(G_OBJECT(w->window), "millerx-win", w);
-    gtk_window_set_title(GTK_WINDOW(w->window), "millerX");
+    gtk_window_set_title(GTK_WINDOW(w->window), _("millerX"));
     gtk_window_set_icon_name(GTK_WINDOW(w->window), "millerx");
     place_window(w, first);
     g_signal_connect(w->window, "configure-event", G_CALLBACK(on_configure), w);
@@ -1895,38 +1906,38 @@ Win *win_new(GtkApplication *app, GFile *start)
     w->location = gtk_entry_new();
     gtk_widget_set_hexpand(w->location, TRUE);
     g_signal_connect(w->location, "activate", G_CALLBACK(on_location), w);
-    GtkWidget *up = tool_button("go-up", "Parent folder (Backspace, Alt+Up)");
+    GtkWidget *up = tool_button("go-up", _("Parent folder (Backspace, Alt+Up)"));
     g_signal_connect(up, "clicked", G_CALLBACK(on_up), w);
-    GtkWidget *home = tool_button("go-home", "Home (Alt+Home)");
+    GtkWidget *home = tool_button("go-home", _("Home (Alt+Home)"));
     g_signal_connect(home, "clicked", G_CALLBACK(on_home), w);
-    GtkWidget *root = tool_button("computer", "Computer: disks, USB sticks, network (Alt+/)");
+    GtkWidget *root = tool_button("computer", _("Computer: disks, USB sticks, network (Alt+/)"));
     g_signal_connect(root, "clicked", G_CALLBACK(on_root), w);
     w->bm_menu = gtk_menu_new();
     gtk_menu_attach_to_widget(GTK_MENU(w->bm_menu), w->window, NULL);
-    GtkWidget *bm = tool_button("user-bookmarks", "Bookmarks (Ctrl+D adds this folder)");
+    GtkWidget *bm = tool_button("user-bookmarks", _("Bookmarks (Ctrl+D adds this folder)"));
     g_object_set_data(G_OBJECT(bm), "bm", GINT_TO_POINTER(1));
     g_signal_connect(bm, "clicked", G_CALLBACK(places_clicked), w);
     GtkWidget *main_menu = gtk_menu_new();
-    GtkWidget *mi = gtk_menu_item_new_with_label("New window");
+    GtkWidget *mi = gtk_menu_item_new_with_label(_("New window"));
     gtk_accel_label_set_accel(GTK_ACCEL_LABEL(gtk_bin_get_child(GTK_BIN(mi))), GDK_KEY_n, GDK_CONTROL_MASK);
     g_signal_connect(mi, "activate", G_CALLBACK(on_new_window), w);
     gtk_menu_shell_append(GTK_MENU_SHELL(main_menu), mi);
     gtk_menu_shell_append(GTK_MENU_SHELL(main_menu), gtk_separator_menu_item_new());
     if (!is_root()) {
-        w->root_mi = mi = gtk_menu_item_new_with_label("Open this folder as root…");
+        w->root_mi = mi = gtk_menu_item_new_with_label(_("Open this folder as root…"));
         g_signal_connect(mi, "activate", G_CALLBACK(on_root_here), w);
         gtk_menu_shell_append(GTK_MENU_SHELL(main_menu), mi);
         w->root_sep = gtk_separator_menu_item_new();
         gtk_menu_shell_append(GTK_MENU_SHELL(main_menu), w->root_sep);
     }
-    mi = gtk_menu_item_new_with_label("Search here…");
+    mi = gtk_menu_item_new_with_label(_("Search here…"));
     gtk_accel_label_set_accel(GTK_ACCEL_LABEL(gtk_bin_get_child(GTK_BIN(mi))), GDK_KEY_f, GDK_CONTROL_MASK);
     g_signal_connect_swapped(mi, "activate", G_CALLBACK(search_open), w);
     gtk_menu_shell_append(GTK_MENU_SHELL(main_menu), mi);
-    mi = gtk_menu_item_new_with_label("Settings…");
+    mi = gtk_menu_item_new_with_label(_("Settings…"));
     g_signal_connect(mi, "activate", G_CALLBACK(on_settings), w);
     gtk_menu_shell_append(GTK_MENU_SHELL(main_menu), mi);
-    mi = gtk_menu_item_new_with_label("About millerX");
+    mi = gtk_menu_item_new_with_label(_("About millerX"));
     g_signal_connect(mi, "activate", G_CALLBACK(on_about), w);
     gtk_menu_shell_append(GTK_MENU_SHELL(main_menu), mi);
     gtk_widget_show_all(main_menu);
@@ -1963,7 +1974,7 @@ Win *win_new(GtkApplication *app, GFile *start)
     w->progress = gtk_progress_bar_new();
     gtk_widget_set_valign(w->progress, GTK_ALIGN_CENTER);
     gtk_widget_set_size_request(w->progress, 160, -1);
-    w->cancel_btn = gtk_button_new_with_label("Cancel");
+    w->cancel_btn = gtk_button_new_with_label(_("Cancel"));
     g_signal_connect(w->cancel_btn, "clicked", G_CALLBACK(on_cancel_jobs), w);
     GtkWidget *sbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
     g_object_set(sbox, "margin", 4, NULL);
@@ -1976,8 +1987,8 @@ Win *win_new(GtkApplication *app, GFile *start)
         GtkWidget *ib = gtk_info_bar_new();
         gtk_info_bar_set_message_type(GTK_INFO_BAR(ib), GTK_MESSAGE_ERROR);
         GtkWidget *l = gtk_label_new(NULL);
-        gtk_label_set_markup(GTK_LABEL(l), "<b>You are root:</b> every change here is made as administrator. "
-                                           "Be careful.");
+        gtk_label_set_markup(GTK_LABEL(l), _("<b>You are root:</b> every change here is made as administrator. "
+                                             "Be careful."));
         gtk_container_add(GTK_CONTAINER(gtk_info_bar_get_content_area(GTK_INFO_BAR(ib))), l);
         gtk_box_pack_start(GTK_BOX(box), ib, FALSE, FALSE, 0);
     }
@@ -2007,12 +2018,15 @@ void app_apply_look(GtkApplication *app, const Look *nl)
                      nl->use_ffmpeg != LOOK.use_ffmpeg || nl->use_pdftoppm != LOOK.use_pdftoppm ||
                      nl->use_blender != LOOK.use_blender || nl->thumb_size != LOOK.thumb_size;
     char *col = g_strdup(nl->divider_color), *hl = g_strdup(nl->highlight);
+    char *lang = g_strdup(nl->language ? nl->language : "system");
     gboolean hl_changed = g_strcmp0(nl->highlight, LOOK.highlight);
     g_free(LOOK.divider_color);
     g_free(LOOK.highlight);
+    g_free(LOOK.language);
     LOOK = *nl;
     LOOK.divider_color = col;
     LOOK.highlight = hl;
+    LOOK.language = lang;
     if (hl_changed)
         highlight_apply();           /* live: the open windows change at once */
     for (GList *l = gtk_application_get_windows(app); l; l = l->next) {

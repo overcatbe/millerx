@@ -67,7 +67,7 @@ void win_restore(Win *w, GList *files)
         if (err) {
             char *p = file_path(dest);
             char *m = g_strdup_printf("%s: %s", p, err->message);
-            win_error(w, "Couldn't put it back", m);
+            win_error(w, _("Couldn't put it back"), m);
             g_free(m);
             g_free(p);
             g_error_free(err);
@@ -77,7 +77,7 @@ void win_restore(Win *w, GList *files)
         g_object_unref(fi);
     }
     if (done)
-        win_status(w, "%u item(s) put back where they were", done);
+        win_status(w, ngettext("%u item put back where it was", "%u items put back where they were", done), done);
 }
 
 /* ---- emptying: on a worker, every item in the trash (of every disk) ------------------------------ */
@@ -112,9 +112,12 @@ static void empty_done(GObject *src, GAsyncResult *res, gpointer data)
     Empty *e = data;
     if (!e->w->dead) {
         if (e->failed)
-            win_status(e->w, "Trash emptied: %u item(s) deleted, %u couldn't be", e->removed, e->failed);
+            win_status(e->w, ngettext("Trash emptied: %u item deleted, %u couldn't be",
+                                      "Trash emptied: %u items deleted, %u couldn't be", e->removed),
+                       e->removed, e->failed);
         else
-            win_status(e->w, "Trash emptied: %u item(s) deleted", e->removed);
+            win_status(e->w, ngettext("Trash emptied: %u item deleted", "Trash emptied: %u items deleted", e->removed),
+                       e->removed);
     }
     win_unref(e->w);
     g_free(e);
@@ -128,18 +131,20 @@ void win_empty_trash(Win *w)
     g_clear_object(&fi);
     g_object_unref(trash);
     if (!n) {
-        win_status(w, "The trash is empty");
+        win_status(w, _("The trash is empty"));
         return;
     }
-    char *msg = g_strdup_printf("All %u item(s) in the trash are deleted for good, on every disk. "
-                                "This can't be undone.", n);
-    gboolean ok = win_confirm(w, "Empty the trash?", msg, "Empty trash");
+    char *msg = g_strdup_printf(ngettext("The %u item in the trash is deleted for good, on every disk. "
+                                         "This can't be undone.",
+                                         "All %u items in the trash are deleted for good, on every disk. "
+                                         "This can't be undone.", n), n);
+    gboolean ok = win_confirm(w, _("Empty the trash?"), msg, _("Empty trash"));
     g_free(msg);
     if (!ok)
         return;
     Empty *e = g_new0(Empty, 1);
     e->w = win_ref(w);
-    win_status(w, "Emptying the trash…");
+    win_status(w, _("Emptying the trash…"));
     GTask *t = g_task_new(NULL, NULL, empty_done, e);
     g_task_set_task_data(t, e, NULL);
     g_task_run_in_thread(t, empty_work);
@@ -215,11 +220,11 @@ void trash_menu(Win *w, Column *c, GdkEventButton *ev)
         top = top && trash_top(l->data);
     GtkWidget *menu = gtk_menu_new();
     if (files) {
-        titem(menu, w, files, "Put back", NULL, G_CALLBACK(on_restore), top);
-        titem(menu, w, files, "Delete permanently…", "Delete", G_CALLBACK(on_delete), top);
+        titem(menu, w, files, _("Put back"), NULL, G_CALLBACK(on_restore), top);
+        titem(menu, w, files, _("Delete permanently…"), "Delete", G_CALLBACK(on_delete), top);
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), gtk_separator_menu_item_new());
     }
-    titem(menu, w, NULL, "Empty trash…", NULL, G_CALLBACK(on_empty), TRUE);
+    titem(menu, w, NULL, _("Empty trash…"), NULL, G_CALLBACK(on_empty), TRUE);
     gtk_widget_show_all(menu);
     gtk_menu_attach_to_widget(GTK_MENU(menu), c->view, NULL);
     g_signal_connect(menu, "deactivate", G_CALLBACK(on_deactivate), NULL);

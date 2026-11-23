@@ -2,6 +2,8 @@
  * Copyright (C) 2026 overcatbe */
 /* millerX entry point. */
 #include "millerx.h"
+#include <locale.h>
+#include <stdlib.h>
 #include <string.h>
 
 /* ---- org.freedesktop.FileManager1: what browsers call for "Show in folder" ----------------------
@@ -113,6 +115,26 @@ int main(int argc, char **argv)
         g_print("millerX %s\n", MILLERX_VERSION);
         return 0;
     }
+    /* Settings → Language: English anyway, or the wizard's English; "system" = the system's.
+     * LANGUAGE also turns GTK's own words (buttons, the colour picker) the same way. */
+    char *lang = look_language();
+    if (!strcmp(lang, "en"))
+        setenv("LANGUAGE", "en", 1);
+    else if (!strcmp(lang, "wizard"))
+        setenv("LANGUAGE", "en@wizard:en", 1);
+    setlocale(LC_ALL, "");
+    if (strcmp(lang, "system")) {
+        /* with messages in the C locale LANGUAGE is ignored: the wizard needs a real English one */
+        const char *m = setlocale(LC_MESSAGES, NULL);
+        if (m && (!strcmp(m, "C") || !strcmp(m, "POSIX")))
+            setlocale(LC_MESSAGES, "C.UTF-8");
+    }
+    g_free(lang);
+#ifdef ENABLE_NLS
+    bindtextdomain(GETTEXT_PACKAGE, LOCALEDIR);
+    bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8");
+    textdomain(GETTEXT_PACKAGE);
+#endif
     if (argc > 1 && !strcmp(argv[1], "--dbus")) {   /* not a file to open: ours */
         DBUS_ONLY = TRUE;
         argv[1] = argv[0];

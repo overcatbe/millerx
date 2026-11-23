@@ -33,14 +33,14 @@ char *arc_stem(const char *name)
             return g_strndup(name, n - e);
     }
     const char *dot = strrchr(name, '.');
-    return dot && dot != name ? g_strndup(name, dot - name) : g_strconcat(name, " (extracted)", NULL);
+    return dot && dot != name ? g_strndup(name, dot - name) : g_strconcat(name, _(" (extracted)"), NULL);
 }
 
 static void set_err(GError **err, struct archive *a, const char *what)
 {
     if (err && !*err)
         g_set_error(err, G_IO_ERROR, G_IO_ERROR_FAILED, "%s: %s", what,
-                    a && archive_error_string(a) ? archive_error_string(a) : "unknown error");
+                    a && archive_error_string(a) ? archive_error_string(a) : _("unknown error"));
 }
 
 /* An entry name is only accepted relative and without "..": nothing may land outside the folder. */
@@ -79,7 +79,7 @@ gboolean arc_extract(const char *archive_path, const char *dir, GCancellable *ca
     GStatBuf st;
     double total = g_stat(archive_path, &st) == 0 && st.st_size > 0 ? (double) st.st_size : 1;
     if (archive_read_open_filename(a, archive_path, 65536) != ARCHIVE_OK) {
-        set_err(err, a, "Can't open the archive");
+        set_err(err, a, _("Can't open the archive"));
         ok = FALSE;
     }
     struct archive_entry *e;
@@ -87,7 +87,7 @@ gboolean arc_extract(const char *archive_path, const char *dir, GCancellable *ca
     gint64 last = 0;
     while (ok && (r = archive_read_next_header(a, &e)) != ARCHIVE_EOF) {
         if (r < ARCHIVE_WARN) {
-            set_err(err, a, "Broken archive");
+            set_err(err, a, _("Broken archive"));
             ok = FALSE;
             break;
         }
@@ -150,7 +150,8 @@ gboolean arc_extract(const char *archive_path, const char *dir, GCancellable *ca
     free(real);
     if (ok && skipped && err && !*err)
         g_set_error(err, G_IO_ERROR, G_IO_ERROR_PARTIAL_INPUT,
-                    "%d item(s) with unsafe names (absolute or with “..”) were left out", skipped);
+                    ngettext("%d item with an unsafe name (absolute or with “..”) was left out",
+                             "%d items with unsafe names (absolute or with “..”) were left out", skipped), skipped);
     return ok;
 }
 
@@ -193,7 +194,7 @@ gboolean arc_create(const char *out, int fmt, char **paths, const char *base, GC
     if (r == ARCHIVE_OK && fmt > 0 && fmt < 4)
         r = FILTERS[fmt](a);
     if (r != ARCHIVE_OK || archive_write_open_filename(a, out) != ARCHIVE_OK) {
-        set_err(err, a, "Can't write this format");
+        set_err(err, a, _("Can't write this format"));
         archive_write_free(a);
         return FALSE;
     }
@@ -265,7 +266,7 @@ gboolean arc_create(const char *out, int fmt, char **paths, const char *base, GC
     archive_read_free(d);
     g_free(buf);
     if (archive_write_close(a) != ARCHIVE_OK && ok) {
-        set_err(err, a, "Finishing the archive");
+        set_err(err, a, _("Finishing the archive"));
         ok = FALSE;
     }
     archive_write_free(a);

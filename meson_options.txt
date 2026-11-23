@@ -1,0 +1,2 @@
+option('nls', type : 'feature', value : 'auto',
+       description : 'Translations (needs msgfmt to build; without it millerX is English only)')

@@ -84,23 +84,28 @@ static gboolean ui_done(gpointer data)
             gtk_widget_hide(w->cancel_btn);
         }
         if (j->errors->len) {
-            win_status(w, "Done with %u error(s)", j->errors->len);
+            win_status(w, _("Done with %u error(s)"), j->errors->len);
             GString *s = g_string_new(NULL);
             for (guint i = 0; i < j->errors->len && i < 20; i++)
                 g_string_append_printf(s, "%s%s", i ? "\n" : "", (char *) g_ptr_array_index(j->errors, i));
-            win_error_root(w, "Some items failed", s->str, j->denied ? j->dest : NULL);
+            win_error_root(w, _("Some items failed"), s->str, j->denied ? j->dest : NULL);
             g_string_free(s, TRUE);
         } else if (g_cancellable_is_cancelled(j->cancel)) {
-            win_status(w, "Cancelled");
+            win_status(w, _("Cancelled"));
         } else if (j->kind == K_COMPRESS) {
             char *to = g_file_get_basename(j->out);
-            win_status(w, "Packed %u item(s) into %s", g_list_length(j->sources), to);
+            guint n = g_list_length(j->sources);
+            win_status(w, ngettext("Packed %u item into %s", "Packed %u items into %s", n), n, to);
             g_free(to);
         } else if (j->kind != K_COPY) {
-            win_status(w, "Extracted %u archive(s)", j->done_n);
+            win_status(w, ngettext("Extracted %u archive", "Extracted %u archives", j->done_n), j->done_n);
         } else {
             char *to = g_file_get_basename(j->dest);
-            win_status(w, "%s %u item(s) to %s", j->move ? "Moved" : "Copied", g_list_length(j->sources), to);
+            guint n = g_list_length(j->sources);
+            if (j->move)
+                win_status(w, ngettext("Moved %u item to %s", "Moved %u items to %s", n), n, to);
+            else
+                win_status(w, ngettext("Copied %u item to %s", "Copied %u items to %s", n), n, to);
             g_free(to);
         }
     }
@@ -214,7 +219,7 @@ static gboolean one(Job *j, GFile *src, GError **err)
         goto out;
     }
     if (g_file_equal(dest, src) || g_file_has_prefix(dest, src)) {
-        g_set_error_literal(err, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT, "can't put a folder into itself");
+        g_set_error_literal(err, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT, _("can't put a folder into itself"));
         ok = FALSE;
         goto out;
     }
@@ -309,7 +314,7 @@ static gboolean extract_one(Job *j, GFile *archive, double base, double span, GE
     GFile *dest = g_file_get_parent(archive);
     char *dpath = dest ? g_file_get_path(dest) : NULL;
     if (!path || !dpath) {
-        g_set_error_literal(err, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED, "only local files can be extracted");
+        g_set_error_literal(err, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED, _("only local files can be extracted"));
         g_free(path);
         g_free(dpath);
         g_clear_object(&dest);
@@ -341,7 +346,7 @@ static gboolean extract_one(Job *j, GFile *archive, double base, double span, GE
         char *kid_name = single ? g_file_get_basename(kids->data) : NULL;
         if (n == 0) {
             if (err && !*err)
-                g_set_error_literal(err, G_IO_ERROR, G_IO_ERROR_FAILED, "the archive is empty");
+                g_set_error_literal(err, G_IO_ERROR, G_IO_ERROR_FAILED, _("the archive is empty"));
             ok = FALSE;
         } else if (single && (j->kind == K_EXTRACT_HERE
                               || (is_dir(kids->data, FALSE) && !strcmp(kid_name, stem)))) {
@@ -389,7 +394,7 @@ static gpointer compress_thread(gpointer data)
     char *name = g_file_get_basename(j->out);
     GError *err = NULL;
     if (!outp || !dpath || paths->len < 2) {
-        g_set_error_literal(&err, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED, "only local files can be packed");
+        g_set_error_literal(&err, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED, _("only local files can be packed"));
     } else {
         /* written under a hidden name first, renamed when complete */
         char *dir = g_path_get_dirname(outp);
