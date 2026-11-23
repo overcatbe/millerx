@@ -939,7 +939,7 @@ msgstr "Gelöscht am"
 
 #: src/search.c:153
 msgid "in "
-msgstr "in"
+msgstr "in "
 
 #: src/search.c:153
 msgid "here"
