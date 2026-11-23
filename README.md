@@ -36,7 +36,7 @@ The technique is credited to **Mark S. Miller**, who came up with it in 1980 at
 Yale University; it was later used at Project Xanadu, Datapoint and NeXT.
 millerX carries his name.
 
-![millerX](docs/screenshot.png?v=074)
+![millerX: from the home folder through the columns into a gallery of holiday photos and an album](docs/tour.gif?v=082)
 
 ## What it does
 
@@ -101,9 +101,23 @@ millerX carries his name.
 - Columns follow changes on disk. Names sort case-insensitive and naturally (file2 before
   file10), folders first (optional).
 
-![The preview fits a picture into the rest of the window](docs/preview.png?v=074)
+![The preview fits a picture into the rest of the window](docs/preview.png?v=082)
 
-![The Computer column: disks, USB sticks and network, each with its free space](docs/computer.png?v=074)
+![The gallery: a folder's pictures under its details; the picked one lights up in the column too](docs/gallery.png?v=082)
+
+![Search (Ctrl+F): every name with "morning" in it, here and below](docs/search.png?v=082)
+
+![The Trash in its own window: sorted by newest, with where each item came from](docs/trash.png?v=082)
+
+![The Computer column: disks, USB sticks and network, each with its free space](docs/computer.png?v=082)
+
+The languages: Wizard, German and Greek.
+
+<p>
+<img src="docs/wizard.png?v=082" width="32%" alt="Wizard: Banish to the Void, Read the runes, Add to sacred texts">
+<img src="docs/german.png?v=082" width="32%" alt="German: the right-click menu of an archive">
+<img src="docs/greek.png?v=082" width="32%" alt="Greek: the settings">
+</p>
 
 What changed in each version: [CHANGELOG](CHANGELOG.md).
 
@@ -255,7 +269,7 @@ Folders with their own sorting are kept in `~/.config/millerx/sorting.conf`, one
 (`date`, `size`, `type` or `name`, a tab, `1` if reversed, a tab, the folder). The settings
 list them too, to change or remove.
 
-![Settings](docs/settings.png?v=074)
+![Settings](docs/settings.png?v=082)
 
 ## Bugs and wishes
 
