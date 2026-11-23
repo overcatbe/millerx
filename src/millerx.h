@@ -148,6 +148,7 @@ struct Column {
 
 struct Preview {
     Win *win;
+    GtkWidget *outer;                /* scrolls the whole pane when the window is shorter than it */
     GtkWidget *box, *image, *icon, *text, *text_scroll, *title, *details;
     GtkWidget *grid_scroll, *grid;   /* a folder's contents as thumbnails, under its details */
     GtkWidget *header, *sep;         /* icon left + name and details right; a line under it */

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.7.9 (2026-11-23)
+
+- **Resizing fixed:** the window couldn't be made lower than a certain height, and pulling its
+  width made the height jump: the details in the preview wrapped at the narrowest width and set
+  the window's minimum height (up to 1400 px in a full folder). The preview now scrolls on its
+  own when the window is lower than its contents; the window can be any size.
+
+- **Window titles show the folder's name** ("Downloads", "Trash"), like Thunar, so windows can be
+  told apart in the panel; the full path is in the location bar.
+
 ## 0.7.8 (2026-11-23)
 
 - **Restart now** (Settings → Language) brings the window back at the same size and place;

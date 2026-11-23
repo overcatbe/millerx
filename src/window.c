@@ -212,9 +212,22 @@ static void update_location(Win *w, GFile *f)
     }
     char *p = file_path(f);
     gtk_entry_set_text(GTK_ENTRY(w->location), p);
-    char *t = is_root() ? g_strdup_printf(_("ROOT: %s"), p) : g_strdup(p);
-    gtk_window_set_title(GTK_WINDOW(w->window), t);   /* the yellow M icon says millerX */
+    /* the title is just the folder's name, like Thunar's: in the panel the full paths were all
+     * cut to the same "/home/…" (the location bar has the whole path, the yellow M says millerX) */
+    char *name;
+    char *uri = g_file_get_uri(f);
+    if (!strcmp(uri, "trash:///") || !strcmp(uri, "trash:"))
+        name = g_strdup(_("Trash"));
+    else {
+        char *b = g_file_get_basename(f);
+        name = b && strcmp(b, "/") ? g_filename_display_name(b) : g_strdup(p);
+        g_free(b);
+    }
+    char *t = is_root() ? g_strdup_printf(_("ROOT: %s"), name) : g_strdup(name);
+    gtk_window_set_title(GTK_WINDOW(w->window), t);
     g_free(t);
+    g_free(name);
+    g_free(uri);
     g_free(p);
 }
 
@@ -1980,7 +1993,7 @@ Win *win_new(GtkApplication *app, GFile *start)
     GtkWidget *pane = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
     gtk_box_pack_start(GTK_BOX(pane), w->hscroll, FALSE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(pane), w->pane_divider, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(pane), w->preview->box, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(pane), w->preview->outer, TRUE, TRUE, 0);
 
     w->statusbar = gtk_label_new(NULL);
     gtk_label_set_xalign(GTK_LABEL(w->statusbar), 0);

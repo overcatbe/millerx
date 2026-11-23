@@ -4,9 +4,10 @@ A small, native file browser with **Miller columns**: every folder from `/` down
 where you are sits in its own column, and the selected file is previewed on the right.
 Like a mind map of your disk. Written in C with GTK 3 and GIO.
 
-> **New in 0.7.8:** "Restart now" keeps the window's size and place.
+> **New in 0.7.9:** the window resizes freely again (the height no longer jumps) · window titles
+> show the folder's name, so windows can be told apart in the panel.
 >
-> **0.7.7:** languages: German and Greek, plus two joke languages, **Wizard** and
+> **0.7.7–0.7.8:** languages: German and Greek, plus two joke languages, **Wizard** and
 > **Wienerisch** (Settings → Language, with "Restart now") · a clicked thumbnail lights up in its
 > column · `man millerx`.
 >

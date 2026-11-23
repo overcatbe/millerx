@@ -1,3 +1,10 @@
+millerx (0.7.9) unstable; urgency=medium
+
+  * Resizing fixed: the preview no longer sets the window's minimum height.
+  * Window titles show the folder's name, like Thunar.
+
+ -- overcatbe <1771834+overcatbe@users.noreply.github.com>  Mon, 23 Nov 2026 10:24:50 +0200
+
 millerx (0.7.8) unstable; urgency=medium
 
   * Restart now keeps the window's size and place.

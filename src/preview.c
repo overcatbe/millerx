@@ -1879,6 +1879,16 @@ Preview *preview_new(Win *w)
     gtk_box_pack_start(GTK_BOX(p->box), p->image_scroll, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(p->box), p->text_scroll, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(p->box), p->grid_scroll, TRUE, TRUE, 0);
+    /* GTK asks the window for the height of everything at its narrowest width, where the
+     * details wrap line by line: without this the window couldn't be made lower than that,
+     * however wide it is. Normally it is never scrolled: the picture and gallery areas inside
+     * take the room there is. */
+    p->outer = gtk_scrolled_window_new(NULL, NULL);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(p->outer), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(p->outer), GTK_SHADOW_NONE);
+    gtk_widget_set_hexpand(p->outer, TRUE);
+    gtk_container_add(GTK_CONTAINER(p->outer), p->box);
+    gtk_viewport_set_shadow_type(GTK_VIEWPORT(gtk_bin_get_child(GTK_BIN(p->outer))), GTK_SHADOW_NONE);
     return p;
 }
 
