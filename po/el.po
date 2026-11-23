@@ -8,7 +8,7 @@ msgstr ""
 "POT-Creation-Date: 2026-11-23 09:19+0200\n"
 "PO-Revision-Date: 2026-11-23 10:15+0200\n"
 "Last-Translator: rizitis <elahistos@yahoo.gr>\n"
-"Language-Team: Greek <kde-i18n-doc@kde.org>\n"
+"Language-Team: Greek\n"
 "Language: el\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -1489,7 +1489,7 @@ msgstr "Εμφάνιση κρυφών αρχείων"
 
 #: src/window.c:1619
 msgid "Show in column"
-msgstr "Εμφάνιση στη στήλες"
+msgstr "Εμφάνιση σε στήλη "
 
 #: src/window.c:1645
 msgid "Copy paths"
