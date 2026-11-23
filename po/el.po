@@ -946,7 +946,7 @@ msgstr "Διαγράφηκε"
 
 #: src/search.c:153
 msgid "in "
-msgstr "μέσα - στο"
+msgstr "στο "
 
 #: src/search.c:153
 msgid "here"
@@ -1489,7 +1489,7 @@ msgstr "Εμφάνιση κρυφών αρχείων"
 
 #: src/window.c:1619
 msgid "Show in column"
-msgstr "Εμφάνιση σε στήλη "
+msgstr "Εμφάνιση σε στήλη"
 
 #: src/window.c:1645
 msgid "Copy paths"
