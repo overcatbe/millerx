@@ -107,7 +107,7 @@ millerX carries his name.
 
 ![Search (Ctrl+F): every name with "morning" in it, here and below](docs/search.png?v=082)
 
-![The Trash in its own window: sorted by newest, with where each item came from](docs/trash.png?v=082)
+![The Trash in its own window: sorted by newest, with where each item came from](docs/trash.png?v=083)
 
 ![The Computer column: disks, USB sticks and network, each with its free space](docs/computer.png?v=082)
 
