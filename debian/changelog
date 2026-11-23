@@ -1,3 +1,18 @@
+millerx (0.7.6) unstable; urgency=medium
+
+  * Search (Ctrl+F): names in this folder and every folder below it.
+  * Trash: last line of the bookmarks menu, opens in its own window; put
+    back, delete permanently, empty; sort by name, size, newest, oldest.
+  * Answers browsers' "Show in folder" (D-Bus org.freedesktop.FileManager1)
+    while it runs and no other file manager does.
+  * Checksums (MD5, SHA-1, SHA-256) with copy and compare.
+  * Pictures of Blender .blend files through blender-thumbnailer.
+  * Thumbnail size: small, medium, large.
+  * Open with -> Set default.
+  * Names under thumbnails on by default.
+
+ -- overcatbe <1771834+overcatbe@users.noreply.github.com>  Mon, 23 Nov 2026 07:21:45 +0200
+
 millerx (0.7.5) unstable; urgency=medium
 
   * Double-click runs programs: a real program with the x bit starts in its
@@ -15,8 +30,6 @@ millerx (0.7.4) unstable; urgency=medium
   * Settings: thumbnails not in network folders (default) / always / never.
   * Settings in three tabs: Look, Thumbnails, Folders.
   * Installed optional helpers (ffmpeg, pdftoppm, pkexec) can be switched off.
-  * Comments after values in millerx.conf are ignored.
-  * NOTICE: forks welcome, the name and logo stay with the original.
 
  -- overcatbe <1771834+overcatbe@users.noreply.github.com>  Sun, 22 Nov 2026 07:29:38 +0200
 

@@ -1,6 +1,6 @@
 # Changelog
 
-## Next (not released yet)
+## 0.7.6 (not released yet)
 
 - **Names under thumbnails on by default** (Settings → Look → Gallery). Your own choice, once saved,
   stays.
@@ -15,9 +15,9 @@
   name; its buttons on top sort by size, newest or oldest deleted, and name again. It opens in a
   window of its own (close it and you are back where you were) and shows the trash of every
   disk; the preview says where an item was deleted from and when (and still shows pictures and
-  text). Right-click: Put back (the folder is made again if it
-  is gone; something new in its place asks skip / keep both / replace), Delete permanently (also the
-  Delete key), Empty trash… Dropping files on it moves them to the trash.
+  text). Right-click: Put back (the folder is made again if it is gone; something new in its place
+  asks skip / keep both / replace), Delete permanently (also the Delete key), Empty trash…
+  Dropping files on it moves them to the trash.
 
 - **"Show in folder":** while millerX runs it answers browsers' "Show in folder" (D-Bus
   org.freedesktop.FileManager1) when no other file manager does. It never pushes another one away;
