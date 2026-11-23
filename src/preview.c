@@ -110,6 +110,10 @@ static GtkWidget *wrap_label(const char *text)
     gtk_label_set_line_wrap(GTK_LABEL(l), TRUE);
     gtk_label_set_line_wrap_mode(GTK_LABEL(l), PANGO_WRAP_WORD_CHAR);
     gtk_label_set_max_width_chars(GTK_LABEL(l), 1);
+    /* at least 16 characters wide: GtkGrid asks for the height at the narrowest width, and with
+     * one letter per line a path made the details 800 px "high" (the header stretched, the window
+     * couldn't be made lower) */
+    gtk_label_set_width_chars(GTK_LABEL(l), 16);
     gtk_label_set_selectable(GTK_LABEL(l), TRUE);
     return l;
 }

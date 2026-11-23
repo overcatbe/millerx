@@ -1,3 +1,11 @@
+millerx (0.8.1) unstable; urgency=medium
+
+  * Greek translation revised by rizitis.
+  * Preview: details no longer stretch when millerX starts in a folder.
+  * Wizard: bookmarks are "sacred texts"; German: space after "in" in search.
+
+ -- overcatbe <1771834+overcatbe@users.noreply.github.com>  Mon, 23 Nov 2026 11:11:24 +0200
+
 millerx (0.8.0) unstable; urgency=medium
 
   * Preview: the name is a title across the top, over the icon and details.

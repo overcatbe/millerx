@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.8.1 (2026-11-23)
+
+- **Greek translation revised by rizitis**, a native speaker. Thank you!
+- **Preview fixed when millerX starts in a folder:** the details slid down to the middle and the
+  gallery was missing (the details were measured as if each line were one letter wide).
+- **Wizard:** bookmarks are "sacred texts" now ("Mark for return" sounded like getting something
+  back from the trash).
+- **German:** the space after "in" in search results was missing.
+
 ## 0.8.0 (2026-11-23)
 
 - **The preview's name is a title across the top**, over the icon and the details: it lines up

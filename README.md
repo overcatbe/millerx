@@ -4,7 +4,10 @@ A small, native file browser with **Miller columns**: every folder from `/` down
 where you are sits in its own column, and the selected file is previewed on the right.
 Like a mind map of your disk. Written in C with GTK 3 and GIO.
 
-> **New in 0.8.0:** the preview's name is a title across the top.
+> **New in 0.8.1:** Greek revised by a native speaker (thanks, rizitis!) · the preview no longer
+> stretches when millerX starts in a folder.
+>
+> **0.8.0:** the preview's name is a title across the top.
 >
 > **0.7.9:** the window resizes freely again (the height no longer jumps) · window titles
 > show the folder's name, so windows can be told apart in the panel.
