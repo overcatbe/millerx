@@ -102,8 +102,6 @@ fast and clear, it leaves some things out on purpose:
 - **Nothing running in the background.** No daemon, no service, no indexer. When you close
   millerX, it's gone.
 - **No custom actions** (your own commands in the right-click menu), perhaps later.
-- **No look settings per folder.** Only the sort order can be set per folder; everything else is
-  the same everywhere, so you always know what you're looking at.
 - **No feature just because another file manager has it.** Ideas are welcome, but millerX goes
   its own way instead of copying Dolphin or Nautilus.
 - **No new dependency without a good reason.** Optional helpers (ffmpeg, pdftoppm, Blender)
