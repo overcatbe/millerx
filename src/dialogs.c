@@ -364,8 +364,8 @@ typedef struct {
     Win *w;
     GtkWidget *auto_rb, *own_rb, *colour, *width, *style, *pw, *cw, *ff, *sh;
     GtkWidget *cache_size, *cache_clear, *cache_mb, *cache_days, *cache_auto;
-    GtkWidget *sort_list, *names, *thumbs;
-    GtkWidget *use[3];         /* the optional helpers, when installed; NULL when not */
+    GtkWidget *sort_list, *names, *thumbs, *tsize;
+    GtkWidget *use[4];         /* the optional helpers, when installed; NULL when not */
     GtkWidget *hl_auto, *hl_own, *hl_colour, *hl_sys, *hl_unsys;
 } Set;
 
@@ -403,12 +403,14 @@ static void settings_changed(GtkWidget *any, Set *s)
     nl.folders_first = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->ff));
     nl.show_hidden = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->sh));
     nl.gallery_names = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->names));
-    gboolean *uses[] = { &nl.use_ffmpeg, &nl.use_pdftoppm, &nl.use_pkexec };
-    for (int i = 0; i < 3; i++)
+    gboolean *uses[] = { &nl.use_ffmpeg, &nl.use_pdftoppm, &nl.use_pkexec, &nl.use_blender };
+    for (int i = 0; i < 4; i++)
         if (s->use[i])
             *uses[i] = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->use[i]));
     const char *tid = gtk_combo_box_get_active_id(GTK_COMBO_BOX(s->thumbs));
     nl.thumbs = !g_strcmp0(tid, "local") ? THUMBS_LOCAL : !g_strcmp0(tid, "never") ? THUMBS_NEVER : THUMBS_ALWAYS;
+    const char *zid = gtk_combo_box_get_active_id(GTK_COMBO_BOX(s->tsize));
+    nl.thumb_size = !g_strcmp0(zid, "small") ? TSIZE_SMALL : !g_strcmp0(zid, "large") ? TSIZE_LARGE : TSIZE_MEDIUM;
     nl.cache_max_mb = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(s->cache_mb));
     nl.cache_days = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(s->cache_days));
     nl.cache_auto = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->cache_auto));
@@ -503,17 +505,23 @@ static const struct { const char *prog, *gives, *without, *package; } HELPERS[] 
       "PDFs show their icon", "poppler (Debian/Ubuntu: poppler-utils)" },
     { "pkexec", "“Open as root”",
       "no root window", "polkit, plus an authentication agent" },
+    { "blender-thumbnailer", "the pictures saved in Blender (.blend) files",
+      ".blend files show their icon", "Blender (it comes with it; also found in /opt/blender*)" },
 };
 
 /* found: a tick box to use it or not; missing: what it would give and where to get it */
 static void helper_rows(GtkWidget *grid, int *r, Set *s)
 {
-    const gboolean on[] = { LOOK.use_ffmpeg, LOOK.use_pdftoppm, LOOK.use_pkexec };
+    const gboolean on[] = { LOOK.use_ffmpeg, LOOK.use_pdftoppm, LOOK.use_pkexec, LOOK.use_blender };
+    G_STATIC_ASSERT(G_N_ELEMENTS(on) == G_N_ELEMENTS(HELPERS));
     for (guint i = 0; i < G_N_ELEMENTS(HELPERS); i++) {
-        char *found = g_find_program_in_path(HELPERS[i].prog);
+        char *found = !strcmp(HELPERS[i].prog, "blender-thumbnailer") ? blender_thumbnailer()
+                                                                       : g_find_program_in_path(HELPERS[i].prog);
         if (found) {
             s->use[i] = gtk_check_button_new_with_label(HELPERS[i].gives);
             gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(s->use[i]), on[i]);
+            if (strncmp(found, "/usr/", 5))          /* /opt/blender-4.2/…: say which one */
+                gtk_widget_set_tooltip_text(s->use[i], found);
             srow(grid, r, HELPERS[i].prog, s->use[i]);
             g_free(found);
             continue;
@@ -815,6 +823,16 @@ void dialog_settings(Win *w)
     gtk_widget_set_tooltip_text(s->thumbs, "Pictures in the gallery under a folder. A file you click is always "
                                            "shown big. Network folders (NFS, Samba, sshfs) can be slow with them.");
     srow(grid, &r, "Show", s->thumbs);
+    s->tsize = gtk_combo_box_text_new();
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->tsize), "small", "Small (about 100 px)");
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->tsize), "medium", "Medium (about 200 px)");
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->tsize), "large", "Large (about 400 px)");
+    gtk_combo_box_set_active_id(GTK_COMBO_BOX(s->tsize), LOOK.thumb_size == TSIZE_SMALL ? "small"
+                                                         : LOOK.thumb_size == TSIZE_LARGE ? "large" : "medium");
+    gtk_widget_set_tooltip_text(s->tsize, "How big the gallery's pictures are. Large ones are made again the "
+                                          "first time (bigger thumbnails, a bigger cache); a wide pane gets "
+                                          "more of them per row, not bigger ones.");
+    srow(grid, &r, "Size", s->tsize);
     section(&grid, &r, "Cache (shared with Thunar)");
     s->cache_size = gtk_label_new("measuring…");
     gtk_label_set_xalign(GTK_LABEL(s->cache_size), 0);
@@ -856,7 +874,8 @@ void dialog_settings(Win *w)
     g_signal_connect(s->sh, "toggled", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->names, "toggled", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->thumbs, "changed", G_CALLBACK(settings_changed), s);
-    for (int i = 0; i < 3; i++)
+    g_signal_connect(s->tsize, "changed", G_CALLBACK(settings_changed), s);
+    for (int i = 0; i < 4; i++)
         if (s->use[i])
             g_signal_connect(s->use[i], "toggled", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->hl_auto, "toggled", G_CALLBACK(settings_changed), s);
@@ -880,4 +899,211 @@ void dialog_about(Win *w)
     gtk_show_about_dialog(GTK_WINDOW(w->window), "program-name", "millerX", "version", MILLERX_VERSION,
                           "comments", "Files in Miller columns, from / to where you are.",
                           "logo-icon-name", "millerx", "modal", TRUE, NULL);
+}
+
+/* ---- checksums of one file: MD5, SHA-1, SHA-256 in one read, on a worker thread ------------------ */
+static const struct { GChecksumType type; const char *name; } SUMS[] = {
+    { G_CHECKSUM_MD5, "MD5" }, { G_CHECKSUM_SHA1, "SHA-1" }, { G_CHECKSUM_SHA256, "SHA-256" },
+};
+#define N_SUMS G_N_ELEMENTS(SUMS)
+
+typedef struct {
+    int ref;
+    gboolean dead;                 /* the window was closed */
+    GFile *file;
+    guint64 size;
+    gint permille;                 /* read so far, 0-1000 (written by the worker) */
+    gboolean ready;                /* hex[] is filled (set on the main thread, after the worker) */
+    GCancellable *cancel;
+    char *hex[N_SUMS];
+    GtkWidget *dialog, *bar, *value[N_SUMS], *copy[N_SUMS], *entry, *verdict;
+    guint tick;
+} Ck;
+
+static Ck *ck_ref(Ck *k)
+{
+    k->ref++;
+    return k;
+}
+
+static void ck_unref(gpointer data)
+{
+    Ck *k = data;
+    if (--k->ref)
+        return;
+    g_object_unref(k->file);
+    g_object_unref(k->cancel);
+    for (guint i = 0; i < N_SUMS; i++)
+        g_free(k->hex[i]);
+    g_free(k);
+}
+
+static void ck_work(GTask *task, gpointer src, gpointer data, GCancellable *cancel)
+{
+    Ck *k = data;
+    GError *err = NULL;
+    GFileInputStream *in = g_file_read(k->file, cancel, &err);
+    if (!in) {
+        g_task_return_error(task, err);
+        return;
+    }
+    GChecksum *cs[N_SUMS];
+    for (guint i = 0; i < N_SUMS; i++)
+        cs[i] = g_checksum_new(SUMS[i].type);
+    guchar *buf = g_malloc(1 << 20);
+    guint64 done = 0;
+    gssize n;
+    while ((n = g_input_stream_read(G_INPUT_STREAM(in), buf, 1 << 20, cancel, &err)) > 0) {
+        for (guint i = 0; i < N_SUMS; i++)
+            g_checksum_update(cs[i], buf, n);
+        done += n;
+        if (k->size)
+            g_atomic_int_set(&k->permille, (gint) MIN(1000, done * 1000 / k->size));
+    }
+    g_free(buf);
+    g_object_unref(in);
+    if (n == 0)                    /* the worker owns hex[] until it returns; the window reads it after */
+        for (guint i = 0; i < N_SUMS; i++)
+            k->hex[i] = g_strdup(g_checksum_get_string(cs[i]));
+    for (guint i = 0; i < N_SUMS; i++)
+        g_checksum_free(cs[i]);
+    if (n < 0)
+        g_task_return_error(task, err);
+    else
+        g_task_return_boolean(task, TRUE);
+}
+
+/* a pasted checksum: spaces, a trailing file name ("sha256sum" output) and case don't matter */
+static void ck_compare(GtkEditable *e, Ck *k)
+{
+    char *t = g_ascii_strdown(gtk_entry_get_text(GTK_ENTRY(k->entry)), -1);
+    g_strstrip(t);
+    char *sp = strpbrk(t, " \t");
+    if (sp)
+        *sp = 0;
+    const char *say = "";
+    char *own = NULL;
+    if (*t && k->ready) {
+        say = "✗ matches none of them";
+        for (guint i = 0; i < N_SUMS; i++)
+            if (!strcmp(t, k->hex[i])) {
+                own = g_strdup_printf("✓ matches %s", SUMS[i].name);
+                break;
+            }
+    } else if (*t)
+        say = "…when the file is read";
+    gtk_label_set_text(GTK_LABEL(k->verdict), own ? own : say);
+    g_free(own);
+    g_free(t);
+}
+
+static void ck_done(GObject *src, GAsyncResult *res, gpointer data)
+{
+    Ck *k = data;
+    GError *err = NULL;
+    gboolean ok = g_task_propagate_boolean(G_TASK(res), &err);
+    if (!k->dead) {
+        if (k->tick) {
+            g_source_remove(k->tick);
+            k->tick = 0;
+        }
+        gtk_widget_hide(k->bar);
+        for (guint i = 0; i < N_SUMS; i++) {
+            gtk_label_set_text(GTK_LABEL(k->value[i]), ok ? k->hex[i] : "—");
+            gtk_widget_set_sensitive(k->copy[i], ok);
+        }
+        k->ready = ok;
+        if (!ok) {
+            char *m = g_strdup_printf("✗ couldn't read the file: %s", err->message);
+            gtk_label_set_text(GTK_LABEL(k->verdict), m);
+            g_free(m);
+        } else
+            ck_compare(NULL, k);
+    }
+    g_clear_error(&err);
+    ck_unref(k);
+}
+
+static gboolean ck_progress(gpointer data)
+{
+    Ck *k = data;
+    gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(k->bar), g_atomic_int_get(&k->permille) / 1000.0);
+    return G_SOURCE_CONTINUE;
+}
+
+static void ck_copy(GtkButton *b, Ck *k)
+{
+    for (guint i = 0; i < N_SUMS; i++)
+        if (GTK_WIDGET(b) == k->copy[i] && k->ready)
+            gtk_clipboard_set_text(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD), k->hex[i], -1);
+}
+
+static void ck_closed(GtkWidget *d, Ck *k)
+{
+    k->dead = TRUE;
+    if (k->tick)
+        g_source_remove(k->tick);
+    k->tick = 0;
+    g_cancellable_cancel(k->cancel);   /* a big ISO stops being read */
+    ck_unref(k);
+}
+
+void dialog_checksums(Win *w, GFile *f)
+{
+    GFileInfo *fi = g_file_query_info(f, "standard::display-name,standard::size", G_FILE_QUERY_INFO_NONE,
+                                      NULL, NULL);
+    Ck *k = g_new0(Ck, 1);
+    k->ref = 1;
+    k->file = g_object_ref(f);
+    k->size = fi ? (guint64) g_file_info_get_size(fi) : 0;
+    k->cancel = g_cancellable_new();
+    char *title = g_strdup_printf("Checksums: %s", fi ? g_file_info_get_display_name(fi) : "");
+    g_clear_object(&fi);
+    k->dialog = gtk_dialog_new_with_buttons(title, GTK_WINDOW(w->window), GTK_DIALOG_DESTROY_WITH_PARENT,
+                                            "_Close", GTK_RESPONSE_CLOSE, NULL);
+    g_free(title);
+    GtkWidget *grid = gtk_grid_new();
+    gtk_grid_set_column_spacing(GTK_GRID(grid), 12);
+    gtk_grid_set_row_spacing(GTK_GRID(grid), 8);
+    g_object_set(grid, "margin", 14, NULL);
+    int r = 0;
+    k->bar = gtk_progress_bar_new();
+    gtk_grid_attach(GTK_GRID(grid), k->bar, 0, r++, 3, 1);
+    for (guint i = 0; i < N_SUMS; i++) {
+        GtkWidget *l = gtk_label_new(SUMS[i].name);
+        gtk_label_set_xalign(GTK_LABEL(l), 1);
+        k->value[i] = gtk_label_new("reading…");
+        gtk_label_set_xalign(GTK_LABEL(k->value[i]), 0);
+        gtk_label_set_selectable(GTK_LABEL(k->value[i]), TRUE);
+        gtk_label_set_width_chars(GTK_LABEL(k->value[i]), 64);       /* a SHA-256 fits on one line */
+        PangoAttrList *at = pango_attr_list_new();
+        pango_attr_list_insert(at, pango_attr_family_new("monospace"));
+        gtk_label_set_attributes(GTK_LABEL(k->value[i]), at);
+        pango_attr_list_unref(at);
+        k->copy[i] = gtk_button_new_with_label("Copy");
+        gtk_widget_set_sensitive(k->copy[i], FALSE);
+        g_signal_connect(k->copy[i], "clicked", G_CALLBACK(ck_copy), k);
+        gtk_grid_attach(GTK_GRID(grid), l, 0, r, 1, 1);
+        gtk_grid_attach(GTK_GRID(grid), k->value[i], 1, r, 1, 1);
+        gtk_grid_attach(GTK_GRID(grid), k->copy[i], 2, r++, 1, 1);
+    }
+    GtkWidget *cl = gtk_label_new("Compare");
+    gtk_label_set_xalign(GTK_LABEL(cl), 1);
+    k->entry = gtk_entry_new();
+    gtk_entry_set_placeholder_text(GTK_ENTRY(k->entry), "paste the checksum you were given");
+    gtk_grid_attach(GTK_GRID(grid), cl, 0, r, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), k->entry, 1, r++, 2, 1);
+    k->verdict = gtk_label_new("");
+    gtk_label_set_xalign(GTK_LABEL(k->verdict), 0);
+    gtk_grid_attach(GTK_GRID(grid), k->verdict, 1, r++, 2, 1);
+    gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area(GTK_DIALOG(k->dialog))), grid);
+    g_signal_connect(k->entry, "changed", G_CALLBACK(ck_compare), k);
+    g_signal_connect(k->dialog, "response", G_CALLBACK(gtk_widget_destroy), NULL);
+    g_signal_connect(k->dialog, "destroy", G_CALLBACK(ck_closed), k);
+    gtk_widget_show_all(k->dialog);
+    k->tick = g_timeout_add(200, ck_progress, k);
+    GTask *t = g_task_new(NULL, k->cancel, ck_done, ck_ref(k));
+    g_task_set_task_data(t, k, NULL);
+    g_task_run_in_thread(t, ck_work);
+    g_object_unref(t);
 }

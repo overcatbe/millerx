@@ -38,7 +38,8 @@ millerX carries his name.
   even with thousands of files, loads only what is on screen, and right-click gives each
   thumbnail its own menu (open, show in column, rename, trash, …). Select several with
   Ctrl/Shift+click, drag them out or copy them like rows. Videos show a frame, music its cover. Names under the
-  thumbnails if you like (one line, cut in the middle so the extension stays).
+  thumbnails if you like (one line, cut in the middle so the extension stays). Three sizes: small,
+  medium, large. Blender files show the picture saved in them.
 - **Shared thumbnail cache** (`~/.cache/thumbnails`, like Thunar and the file dialogs),
   cleaned up automatically: files that are gone, unused for 180 days, above 1 GB.
 - **Sorting per folder**: everything is sorted by name, so your eye learns where things are.
@@ -51,11 +52,21 @@ millerX carries his name.
 - **More windows**: Ctrl+N, Menu → New window, or middle-click a folder. Copy, paste and
   drag & drop work between them, e.g. one window above the other to compare two folders.
 - **Open, Open with, Open terminal here** (your `$TERMINAL`, or the first of 17 known terminals).
+  Open with → Set default picks the program a click opens that kind of file with (saved in
+  `~/.config/mimeapps.list`, so Thunar and the file dialogs follow it too).
+- **Checksums** (right-click → Checksums…): MD5, SHA-1 and SHA-256 in one read, a Copy button each,
+  and a field to paste the checksum you were given: ✓ or ✗.
 - **Cut, copy, paste**, compatible with Thunar's clipboard. A highlighted folder receives the paste.
 - **Drag & drop**: same file system moves, otherwise copies; Ctrl copies, Shift moves.
 - **Rename, new folder, move to trash, delete permanently**, with a conflict dialog
   (skip, keep both, replace or merge, "do this for all").
-- **Bookmarks**, shared with Thunar and the GTK file dialogs.
+- **Bookmarks**, shared with Thunar and the GTK file dialogs. The **Trash** is always the last
+  line of the menu. It opens in a window of its own (close it and you are back) with the trash of
+  every disk, sorted by name or with its buttons by size, newest or oldest deleted; the preview says where each item came from and when it was deleted, right-click puts items
+  back, deletes them for good or empties the trash.
+- **Search** (Ctrl+F): names with the typed text in, in this folder and every folder below it,
+  upper/lower case alike, nearest first. Pick one to see it in the preview, Enter opens it in the
+  columns, Escape goes back. Hidden files only when they are shown.
 - **Computer column** (the computer button, Alt+/): all your disks with free space and a fill bar,
   USB sticks (one click mounts, right-click ejects), network shares and GVfs places (sftp://,
   smb://), and "Connect to server…". A disk opens to the right like any folder.
@@ -89,6 +100,7 @@ What changed in each version: [CHANGELOG](CHANGELOG.md).
 | Ctrl+D | bookmark this folder |
 | Ctrl+H | show hidden files |
 | Ctrl+L | location bar |
+| Ctrl+F | search here (Escape: back to the columns) |
 | Alt+Enter | properties |
 | Ctrl+N | new window at this folder |
 | Ctrl+, | settings |
@@ -121,6 +133,7 @@ helpers shows which ones it found):
 | PDF previews | `pdftoppm` (poppler) | the PDF's icon |
 | AVIF, HEIC and other pictures, video frames, music covers | `ffmpeg` | the file's icon |
 | Open as root | `pkexec` + a polkit agent | no root window |
+| Blender files' pictures | `blender-thumbnailer` (comes with Blender; also found in `/opt/blender`, else the newest `/opt/blender-*`) | the .blend icon |
 | USB sticks, Connect to server | gvfs / udisks2 | only disks already mounted |
 | Open terminal here | any terminal (`$TERMINAL` or one of 17 known) | a message saying none was found |
 
@@ -163,7 +176,7 @@ divider_color = auto     # auto = theme background 20 % lighter (dark) / darker 
 divider_width = 2        # 1-12
 divider_style = solid    # solid | fade
 preview_width = 340      # 200-900, the least the preview gets; it takes the rest
-gallery_names = false    # a line with the name under each thumbnail
+gallery_names = true     # a line with the name under each thumbnail
 highlight_color = auto   # auto = the theme's, or #rrggbb
 column_width = 230       # 120-600, where new folder columns start
 
@@ -173,6 +186,7 @@ show_hidden = false
 
 [thumbnails]
 show = local             # local (none in network folders) | always | never
+size = medium            # small | medium | large (about 100, 200, 400 px; at least 4, 3, 2 per row)
 max_mb = 1024            # cache size to shrink to, least used first
 max_days = 180           # forget thumbnails unused this long
 auto_clean = true        # once a day when millerX starts
@@ -181,8 +195,20 @@ auto_clean = true        # once a day when millerX starts
 ffmpeg = true            # video frames, music covers, AVIF/HEIC
 pdftoppm = true          # PDF pages
 pkexec = true            # "Open as root"
+blender = true           # pictures saved in .blend files
 
 [window]                 # written by millerX: where the last closed window was
+```
+
+**"Show in folder" from a browser:** while millerX runs, it answers it (D-Bus
+`org.freedesktop.FileManager1`), unless another file manager already does, such as Thunar's
+daemon. To have millerX started for it when none is running, put this into
+`~/.local/share/dbus-1/services/org.freedesktop.FileManager1.service`:
+
+```ini
+[D-BUS Service]
+Name=org.freedesktop.FileManager1
+Exec=/usr/bin/millerx --dbus
 ```
 
 Folders with their own sorting are kept in `~/.config/millerx/sorting.conf`, one per line

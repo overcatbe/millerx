@@ -52,7 +52,8 @@ static GtkTreeIter *append_info(Column *c, GFileInfo *info, GFile *child, GtkTre
     const char *name = g_file_info_get_display_name(info);
     char *key = sort_key(name, isdir);
     char *ext = isdir ? g_strdup("") : sorting_ext(name);
-    GDateTime *mt = g_file_info_get_modification_date_time(info);
+    /* in the trash itself: when it was deleted (what "newest" and "oldest" sort by) */
+    GDateTime *mt = c->trash_root ? g_file_info_get_deletion_date(info) : g_file_info_get_modification_date_time(info);
     gint64 mtime = mt ? g_date_time_to_unix(mt) : 0;
     if (mt)
         g_date_time_unref(mt);
@@ -232,7 +233,8 @@ static void on_changed(GFileMonitor *mon, GFile *f, GFile *other, GFileMonitorEv
         GFileInfo *fi = find_iter(c, f, &it) ? g_file_query_info(f, ATTRS, G_FILE_QUERY_INFO_NONE, NULL, NULL)
                                               : NULL;
         if (fi) {
-            GDateTime *mt = g_file_info_get_modification_date_time(fi);
+            GDateTime *mt = c->trash_root ? g_file_info_get_deletion_date(fi)
+                                          : g_file_info_get_modification_date_time(fi);
             gtk_list_store_set(c->store, &it, C_MTIME, mt ? g_date_time_to_unix(mt) : (gint64) 0,
                                C_SIZE, (guint64) g_file_info_get_size(fi), -1);
             if (mt)
@@ -540,6 +542,32 @@ static gboolean on_key(GtkWidget *view, GdkEventKey *ev, Column *c)
         }
         return ctrl || k == GDK_KEY_Delete || k == GDK_KEY_F2;
     }
+    if (c->trash) {                /* only putting back or deleting for good here */
+        if (k == GDK_KEY_Delete) {
+            GList *files = column_selected_files(c);
+            gboolean top = files != NULL;
+            for (GList *l = files; l; l = l->next)
+                top = top && trash_top(l->data);
+            if (top)
+                win_delete_forever(w, files);
+            else if (files)
+                win_status(w, "Inside a trashed folder: delete the whole folder, or put it back first");
+            g_list_free_full(files, g_object_unref);
+            return TRUE;
+        }
+        if (k == GDK_KEY_F5) {
+            win_reload_all(w);
+            return TRUE;
+        }
+        if (!ctrl && !alt) {
+            gunichar ch = gdk_keyval_to_unicode(k);
+            if (ch && g_unichar_isprint(ch) && ch != ' ') {
+                type_jump(c, ch);
+                return TRUE;
+            }
+        }
+        return (ctrl && k != GDK_KEY_a && k != GDK_KEY_A) || k == GDK_KEY_F2;
+    }
     if (ctrl && !shift && (k == GDK_KEY_c || k == GDK_KEY_C)) {
         win_clip_set(w, column_selected_files(c), FALSE);
         return TRUE;
@@ -639,7 +667,14 @@ static void on_drag_received(GtkWidget *view, GdkDragContext *ctx, int x, int y,
     }
     g_strfreev(uris);
     gtk_drag_finish(ctx, srcs != NULL, FALSE, t);
-    if (srcs) {
+    if (srcs && file_in_trash(target)) {    /* dropped on the trash: into the trash */
+        GList *outside = NULL;
+        for (GList *l = srcs; l; l = l->next)
+            if (!file_in_trash(l->data))
+                outside = g_list_append(outside, g_object_ref(l->data));
+        win_trash(c->win, outside);
+        g_list_free_full(outside, g_object_unref);
+    } else if (srcs) {
         GdkModifierType mask = win_pointer_mask(c->win);
         gboolean move;
         if (mask & GDK_CONTROL_MASK)
@@ -690,9 +725,66 @@ static int sort_func(GtkTreeModel *m, GtkTreeIter *a, GtkTreeIter *b, gpointer d
     return r;
 }
 
+/* The trash's own order, one of its four buttons (name at first). The same in every trash window
+ * of this run. */
+static FolderSort TRASH_SORT = { SORT_NAME, FALSE };
+static const struct { const char *label; SortBy by; gboolean reverse; } TRASH_SORTS[] = {
+    { "name", SORT_NAME, FALSE },
+    { "size", SORT_SIZE, FALSE },          /* largest first */
+    { "newest", SORT_DATE, FALSE },        /* deleted last first */
+    { "oldest", SORT_DATE, TRUE },
+};
+
+/* like radio buttons: the pressed one is the order; pressing it again keeps it */
+static void trash_sort_toggled(GtkToggleButton *b, Column *c)
+{
+    static gboolean busy;                  /* setting the others toggles them too */
+    if (busy)
+        return;
+    busy = TRUE;
+    gtk_toggle_button_set_active(b, TRUE);
+    GList *kids = gtk_container_get_children(GTK_CONTAINER(gtk_widget_get_parent(GTK_WIDGET(b))));
+    for (GList *l = kids; l; l = l->next)
+        if (GTK_IS_TOGGLE_BUTTON(l->data) && l->data != (gpointer) b)
+            gtk_toggle_button_set_active(l->data, FALSE);
+    g_list_free(kids);
+    busy = FALSE;
+    guint i = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(b), "i"));
+    TRASH_SORT.by = TRASH_SORTS[i].by;
+    TRASH_SORT.reverse = TRASH_SORTS[i].reverse;
+    column_apply_sort(c);
+}
+
+/* a bar on top of the trash: "Sort:" and its buttons */
+static GtkWidget *trash_sort_bar(Column *c)
+{
+    GtkWidget *bar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+    g_object_set(bar, "margin", 4, NULL);
+    GtkWidget *l = gtk_label_new("Sort:");
+    gtk_widget_set_opacity(l, 0.7);
+    gtk_box_pack_start(GTK_BOX(bar), l, FALSE, FALSE, 2);
+    for (guint i = 0; i < G_N_ELEMENTS(TRASH_SORTS); i++) {
+        GtkWidget *b = gtk_toggle_button_new_with_label(TRASH_SORTS[i].label);
+        gtk_button_set_relief(GTK_BUTTON(b), GTK_RELIEF_NONE);
+        g_object_set_data(G_OBJECT(b), "i", GUINT_TO_POINTER(i));
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), TRASH_SORTS[i].by == TRASH_SORT.by
+                                                           && TRASH_SORTS[i].reverse == TRASH_SORT.reverse);
+        g_signal_connect(b, "toggled", G_CALLBACK(trash_sort_toggled), c);
+        gtk_box_pack_start(GTK_BOX(bar), b, FALSE, FALSE, 0);
+    }
+    return bar;
+}
+
 /* this folder's order from sorting.conf, the bar on top showing it, and the rows in that order */
 void column_apply_sort(Column *c)
 {
+    if (c->trash_root) {               /* its own button instead of sorting.conf */
+        c->sort = TRASH_SORT;
+        c->custom = TRASH_SORT.by != SORT_NAME;
+        gtk_widget_hide(c->sortbar);
+        gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(c->store), C_SORT, sort_func, c, NULL);
+        return;
+    }
     char *path = g_file_get_path(c->gfile);
     c->custom = sorting_get(path, &c->sort);
     g_free(path);
@@ -773,6 +865,10 @@ Column *column_new(Win *w, GFile *gfile, GPtrArray *chain)
     gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(c->view), FALSE);
     gtk_tree_view_set_enable_search(GTK_TREE_VIEW(c->view), FALSE);
     c->computer = file_is_computer(gfile);
+    c->trash = file_in_trash(gfile);
+    char *turi = c->trash ? g_file_get_uri(gfile) : NULL;
+    c->trash_root = turi && (!strcmp(turi, "trash:///") || !strcmp(turi, "trash:"));
+    g_free(turi);
     gtk_tree_selection_set_mode(gtk_tree_view_get_selection(GTK_TREE_VIEW(c->view)),
                                 c->computer ? GTK_SELECTION_SINGLE : GTK_SELECTION_MULTIPLE);
     GtkTreeViewColumn *col = gtk_tree_view_column_new();
@@ -817,6 +913,8 @@ Column *column_new(Win *w, GFile *gfile, GPtrArray *chain)
     gtk_widget_set_no_show_all(c->sortbar, TRUE);
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     gtk_box_pack_start(GTK_BOX(vbox), c->sortbar, FALSE, FALSE, 0);
+    if (c->trash_root)
+        gtk_box_pack_start(GTK_BOX(vbox), trash_sort_bar(c), FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), c->scroller, TRUE, TRUE, 0);
     c->frame = gtk_frame_new(NULL);
     gtk_frame_set_shadow_type(GTK_FRAME(c->frame), GTK_SHADOW_NONE);

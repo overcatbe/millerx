@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later
  * Copyright (C) 2026 overcatbe */
 /* Right-hand pane: picture, big type icon, text or archive contents, plus details. */
+#define _GNU_SOURCE             /* strverscmp */
 #include "millerx.h"
 #include <glib/gstdio.h>
 #include <archive.h>
@@ -254,8 +255,16 @@ static gpointer image_thread(gpointer data)
 
 /* ---- folder contents as a thumbnail grid ----------------------------------------- */
 static GdkPixbuf *render_pdf(const char *path, int max_w, int max_h, int timeout_ms);
-#define THUMB_COLS 3            /* at least */
-#define THUMB_TARGET 200        /* wanted tile size: a wide pane gets more columns, not bigger tiles */
+/* at least this many per row, so a narrow pane still shows the sizes apart: small 4, medium 3, large 2 */
+static int thumb_min_cols(void)
+{
+    return LOOK.thumb_size == TSIZE_SMALL ? 4 : LOOK.thumb_size == TSIZE_LARGE ? 2 : 3;
+}
+/* wanted tile size (Settings → Thumbnails → Size): a wide pane gets more columns, not bigger tiles */
+static int thumb_target(void)
+{
+    return LOOK.thumb_size == TSIZE_SMALL ? 100 : LOOK.thumb_size == TSIZE_LARGE ? 400 : 200;
+}
 #define THUMB_GAP 2             /* between thumbnails */
 #define THUMB_PAD 2             /* around each one: room for the selection colour */
 #define THUMB_MAX 5000          /* a folder with more shows the first ones */
@@ -287,7 +296,54 @@ static int by_folder_sort(gconstpointer a, gconstpointer b, gpointer data)
                            x->size, y->size, x->ext, y->ext);
 }
 
-enum { MEDIA_NONE = -1, MEDIA_IMAGE, MEDIA_PDF, MEDIA_VIDEO, MEDIA_AUDIO };
+/* MEDIA_VIDEO and later may have no picture at all (handled alike: see make_thumb, the line above it) */
+enum { MEDIA_NONE = -1, MEDIA_IMAGE, MEDIA_PDF, MEDIA_VIDEO, MEDIA_AUDIO, MEDIA_BLEND };
+
+static gboolean is_exe(const char *path)
+{
+    return g_file_test(path, G_FILE_TEST_IS_REGULAR) && g_file_test(path, G_FILE_TEST_IS_EXECUTABLE);
+}
+
+/* Blender's own helper copies the picture saved inside a .blend file out as a PNG. Blender is often
+ * unpacked by hand into /opt, several versions side by side: PATH first, then /opt/blender (usually
+ * the newest), then the newest /opt/blender-* by version number (4.10 after 4.2, not before it). */
+char *blender_thumbnailer(void)
+{
+    char *f = g_find_program_in_path("blender-thumbnailer");
+    if (f)
+        return f;
+    if (is_exe("/opt/blender/blender-thumbnailer"))
+        return g_strdup("/opt/blender/blender-thumbnailer");
+    GDir *d = g_dir_open("/opt", 0, NULL);
+    char *best = NULL;
+    for (const char *n; d && (n = g_dir_read_name(d));) {
+        if (!g_str_has_prefix(n, "blender-") || (best && strverscmp(n, best) <= 0))
+            continue;
+        char *exe = g_build_filename("/opt", n, "blender-thumbnailer", NULL);
+        if (is_exe(exe)) {
+            g_free(best);
+            best = g_strdup(n);
+        }
+        g_free(exe);
+    }
+    if (d)
+        g_dir_close(d);
+    f = best ? g_build_filename("/opt", best, "blender-thumbnailer", NULL) : NULL;
+    g_free(best);
+    return f;
+}
+
+/* looked up once per run (the workers ask too) */
+static const char *blender_exe(void)
+{
+    static gsize once;
+    static char *exe;
+    if (g_once_init_enter(&once)) {
+        exe = blender_thumbnailer();
+        g_once_init_leave(&once, 1);
+    }
+    return exe;
+}
 
 static gboolean have_ffmpeg(void)
 {
@@ -314,6 +370,8 @@ static int media_kind(const char *ct)
         return MEDIA_VIDEO;
     if (g_str_has_prefix(ct, "audio/") && have_ffmpeg())
         return MEDIA_AUDIO;
+    if (!strcmp(ct, "application/x-blender") && LOOK.use_blender && blender_exe())
+        return MEDIA_BLEND;
     return MEDIA_NONE;
 }
 
@@ -411,7 +469,8 @@ static GdkPixbuf *render_kind(const char *path, int kind, int px)
     switch (kind) {
     case MEDIA_PDF: return render_pdf(path, px, px, 4000);
     case MEDIA_VIDEO:
-    case MEDIA_AUDIO: return render_media(path, kind, px, px, 8000);
+    case MEDIA_AUDIO:
+    case MEDIA_BLEND: return render_media(path, kind, px, px, 8000);
     default: return load_fitted(path, px, px);
     }
 }
@@ -703,7 +762,7 @@ static gboolean start_grid(gpointer data)
         avail = p->width - 24;
     p->grid_w = avail;
     p->grid_icons = LOOK.thumbs == THUMBS_NEVER || (LOOK.thumbs == THUMBS_LOCAL && path_on_network(dir));
-    p->cols = MAX(THUMB_COLS, (avail + THUMB_GAP) / (THUMB_TARGET + THUMB_GAP + 2 * THUMB_PAD));
+    p->cols = MAX(thumb_min_cols(), (avail + THUMB_GAP) / (thumb_target() + THUMB_GAP + 2 * THUMB_PAD));
     gtk_flow_box_set_min_children_per_line(GTK_FLOW_BOX(p->grid), p->cols);
     gtk_flow_box_set_max_children_per_line(GTK_FLOW_BOX(p->grid), p->cols);
     p->tile = (avail - (p->cols - 1) * THUMB_GAP) / p->cols - 2 * THUMB_PAD;
@@ -1204,8 +1263,12 @@ static GdkPixbuf *render_ffmpeg(const char *path, int max_w, int max_h, int time
 
 /* A video's frame a few seconds in (the very start is often black; short clips fall back to
  * the first frame), or a music file's embedded cover (ffmpeg shows it as the video stream). */
+static GdkPixbuf *render_blend(const char *path, int max_w, int max_h, int timeout_ms);
+
 static GdkPixbuf *render_media(const char *path, int kind, int max_w, int max_h, int timeout_ms)
 {
+    if (kind == MEDIA_BLEND)
+        return render_blend(path, max_w, max_h, timeout_ms);
     GdkPixbuf *pb = kind == MEDIA_VIDEO ? ffmpeg_frame(path, "3", max_w, max_h, timeout_ms) : NULL;
     return pb ? pb : ffmpeg_frame(path, NULL, max_w, max_h, timeout_ms);
 }
@@ -1239,6 +1302,22 @@ static GdkPixbuf *ffmpeg_frame(const char *path, const char *seek, int max_w, in
     g_rmdir(dir);
     g_free(vf);
     g_free(in);
+    g_free(png);
+    g_free(dir);
+    return pb;
+}
+
+/* A .blend file's saved picture (files saved without one have none: NULL). */
+static GdkPixbuf *render_blend(const char *path, int max_w, int max_h, int timeout_ms)
+{
+    const char *exe = blender_exe();
+    char *dir = exe ? g_dir_make_tmp("millerx-XXXXXX", NULL) : NULL;
+    if (!dir)
+        return NULL;
+    char *png = g_build_filename(dir, "b.png", NULL);
+    char *argv[] = { (char *) exe, (char *) path, png, NULL };
+    GdkPixbuf *pb = run_to_png(argv, png, max_w, max_h, timeout_ms);
+    g_rmdir(dir);
     g_free(png);
     g_free(dir);
     return pb;
@@ -1626,14 +1705,38 @@ void preview_show_file(Preview *p, GFile *f)
         s[10] = 0;
         row(p, r++, "Permissions", s);
     }
-    GFile *parent = g_file_get_parent(f);
-    char *where = parent ? file_path(parent) : g_strdup("/");
-    row(p, r++, "Where", where);
-    g_free(where);
-    g_clear_object(&parent);
+    char *path = g_file_get_path(f);
+    GFileInfo *ti = file_in_trash(f) ? g_file_query_info(f, "trash::orig-path,trash::deletion-date,standard::target-uri",
+                                                         G_FILE_QUERY_INFO_NONE, NULL, NULL) : NULL;
+    const char *orig = ti ? g_file_info_get_attribute_byte_string(ti, "trash::orig-path") : NULL;
+    if (orig) {                          /* in the trash: where it was, and since when */
+        char *from = g_path_get_dirname(orig);
+        row(p, r++, "Deleted from", from);
+        g_free(from);
+        GDateTime *dd = g_file_info_get_deletion_date(ti);
+        if (dd) {
+            char *s = g_date_time_format(dd, "%Y-%m-%d %H:%M");
+            row(p, r++, "Deleted", s);
+            g_free(s);
+            g_date_time_unref(dd);
+        }
+    } else {
+        GFile *parent = g_file_get_parent(f);
+        char *where = parent ? file_path(parent) : g_strdup("/");
+        row(p, r++, "Where", where);
+        g_free(where);
+        g_clear_object(&parent);
+    }
+    /* a trashed file is still a file on disk (…/Trash/files/…): its picture or text can show */
+    const char *target = ti ? g_file_info_get_attribute_string(ti, "standard::target-uri") : NULL;
+    if (!path && target) {
+        GFile *tf = g_file_new_for_uri(target);
+        path = g_file_get_path(tf);
+        g_object_unref(tf);
+    }
+    g_clear_object(&ti);
     gtk_widget_show_all(p->details);
 
-    char *path = g_file_get_path(f);
     /* big type icon, unless a real picture replaces it */
     show_icon(p, g_file_info_get_icon(info));
     if (path) {
@@ -1697,8 +1800,8 @@ Preview *preview_new(Win *w)
     gtk_container_add(GTK_CONTAINER(p->text_scroll), p->text);
     p->grid = gtk_flow_box_new();
     gtk_flow_box_set_homogeneous(GTK_FLOW_BOX(p->grid), TRUE);
-    gtk_flow_box_set_min_children_per_line(GTK_FLOW_BOX(p->grid), THUMB_COLS);
-    gtk_flow_box_set_max_children_per_line(GTK_FLOW_BOX(p->grid), THUMB_COLS);
+    gtk_flow_box_set_min_children_per_line(GTK_FLOW_BOX(p->grid), thumb_min_cols());
+    gtk_flow_box_set_max_children_per_line(GTK_FLOW_BOX(p->grid), thumb_min_cols());
     gtk_flow_box_set_column_spacing(GTK_FLOW_BOX(p->grid), THUMB_GAP);
     gtk_flow_box_set_row_spacing(GTK_FLOW_BOX(p->grid), THUMB_GAP);
     /* the theme's padding around flow box children ate a good part of the thumbnails' room */

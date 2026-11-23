@@ -1,5 +1,45 @@
 # Changelog
 
+## Next (not released yet)
+
+- **Names under thumbnails on by default** (Settings → Look → Gallery). Your own choice, once saved,
+  stays.
+
+- **Search:** Ctrl+F (or Menu → Search here…) searches the current folder and every folder below
+  it for names with the typed text in, upper/lower case alike. Results show up while it searches,
+  nearest first, each with the folder it is in; the preview shows the one you pick, Enter or a
+  double-click opens it in the columns, Escape goes back. Stops at 5000 (type more to narrow it
+  down); never walks into /proc, /sys, /dev or /run from above.
+
+- **Trash:** always the last line of the bookmarks menu (no ✕), its icon full or empty. Sorted by
+  name; its buttons on top sort by size, newest or oldest deleted, and name again. It opens in a
+  window of its own (close it and you are back where you were) and shows the trash of every
+  disk; the preview says where an item was deleted from and when (and still shows pictures and
+  text). Right-click: Put back (the folder is made again if it
+  is gone; something new in its place asks skip / keep both / replace), Delete permanently (also the
+  Delete key), Empty trash… Dropping files on it moves them to the trash.
+
+- **"Show in folder":** while millerX runs it answers browsers' "Show in folder" (D-Bus
+  org.freedesktop.FileManager1) when no other file manager does. It never pushes another one away;
+  the README says how to make it the one D-Bus starts.
+
+- **Thumbnail size:** Settings → Thumbnails → Size: small, medium (as before) or large, about 100,
+  200 or 400 px. A narrow preview still shows them apart (at least 4, 3 or 2 per row). Large ones
+  are made once at 512 px and kept in the shared cache. Asked for on LinuxQuestions.
+
+- **Set default program:** Open with → Set default lists the same programs with the current one
+  ticked; the one you pick opens that kind of file from then on. Saved in `~/.config/mimeapps.list`,
+  which Thunar and the file dialogs read too. Picking a program in Open with alone changes nothing.
+
+- **Checksums:** right-click a file → Checksums…: MD5, SHA-1 and SHA-256 in one read (with a bar for
+  big files, stops when you close it), a Copy button each, and a Compare field for the checksum you
+  were given (spaces, case and a file name after it don't matter). Asked for on LinuxQuestions.
+
+- **Blender files:** `.blend` files show the picture Blender saves in them, through Blender's own
+  `blender-thumbnailer`: from PATH, else `/opt/blender`, else the newest `/opt/blender-*` (by
+  version: 4.10 is newer than 4.2). An optional helper like ffmpeg; without Blender nothing changes.
+  Asked for on LinuxQuestions.
+
 ## 0.7.5 (2026-11-22)
 
 - **Double-click runs programs:** a program you may run (the x bit, and really a program) starts in

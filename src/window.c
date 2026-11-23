@@ -288,6 +288,7 @@ static Column *add_column(Win *w, GFile *f, GPtrArray *chain)
 /* show the whole chain of folders from / down to f, one column each */
 void win_open_path(Win *w, GFile *f)
 {
+    search_close(w);                 /* going somewhere else ends a search */
     if (file_is_computer(f)) {
         win_open_computer(w);
         return;
@@ -905,7 +906,9 @@ static gpointer delete_thread(gpointer data)
     Del *d = data;
     for (GList *l = d->files; l; l = l->next) {
         GError *err = NULL;
-        if (!delete_tree(l->data, NULL, &err)) {
+        /* the trash takes a trashed folder only as a whole (it refuses its contents one by one) */
+        gboolean ok = file_in_trash(l->data) ? g_file_delete(l->data, NULL, &err) : delete_tree(l->data, NULL, &err);
+        if (!ok) {
             char *b = g_file_get_basename(l->data);
             g_ptr_array_add(d->errs, g_strdup_printf("%s: %s", b, err ? err->message : "?"));
             if (!d->denied_in && g_error_matches(err, G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED))
@@ -1120,7 +1123,7 @@ typedef struct {
 
 enum { A_OPEN_DIR, A_OPEN, A_OPEN_WITH, A_CUT, A_COPY, A_PASTE_INTO, A_PASTE, A_RENAME, A_TRASH,
        A_DELETE, A_NEW_FOLDER, A_TERMINAL, A_COPY_PATH, A_BOOKMARK, A_PROPERTIES, A_ROOT, A_SHOW,
-       A_NEW_WINDOW, A_EXTRACT_HERE, A_EXTRACT_FOLDER, A_COMPRESS };
+       A_NEW_WINDOW, A_EXTRACT_HERE, A_EXTRACT_FOLDER, A_COMPRESS, A_SET_DEFAULT, A_CHECKSUMS };
 
 /* ---- archives ------------------------------------------------------------------------------ */
 /* Asks for the archive's name and format, then packs the files (which share one folder) there. */
@@ -1212,6 +1215,26 @@ static void act_free(gpointer data, GClosure *cl)
     g_free(a);
 }
 
+/* the program a click opens this kind of file with, from now on: ~/.config/mimeapps.list, which
+ * Thunar, file dialogs and the rest read too */
+static void set_default_app(Win *w, GAppInfo *app, GFile *f)
+{
+    GFileInfo *fi = g_file_query_info(f, "standard::content-type", G_FILE_QUERY_INFO_NONE, NULL, NULL);
+    const char *ct = fi ? g_file_info_get_content_type(fi) : NULL;
+    GError *err = NULL;
+    if (!ct)
+        win_status(w, "Couldn't tell what kind of file this is");
+    else if (!g_app_info_set_as_default_for_type(app, ct, &err)) {
+        win_error(w, "Couldn't set the default program", err->message);
+        g_error_free(err);
+    } else {
+        char *desc = g_content_type_get_description(ct);
+        win_status(w, "%s opens with %s now", desc, g_app_info_get_display_name(app));
+        g_free(desc);
+    }
+    g_clear_object(&fi);
+}
+
 static void act_run(GtkMenuItem *mi, Act *a)
 {
     (void) mi;
@@ -1257,6 +1280,8 @@ static void act_run(GtkMenuItem *mi, Act *a)
     case A_EXTRACT_HERE:
     case A_EXTRACT_FOLDER: job_extract(w, a->files, a->action == A_EXTRACT_FOLDER); break;
     case A_COMPRESS: compress_dialog(w, a->files); break;
+    case A_SET_DEFAULT: set_default_app(w, a->app, a->files->data); break;
+    case A_CHECKSUMS: dialog_checksums(w, a->files->data); break;
     case A_PROPERTIES:
         dialog_properties(w, a->files && (!a->files->next || !c) ? a->files->data : c->gfile);
         break;
@@ -1407,10 +1432,57 @@ static void sort_menu(GtkWidget *menu, Win *w, GFile *folder)
     g_free(path);
 }
 
+/* "Open with ▸" for files of type ct: each program, and for one file (can_default: not a folder,
+ * that would be the default file manager) "Set default ▸" with the same programs, the default ticked */
+static void open_with_menu(GtkWidget *menu, Win *w, Column *c, GList *files, const char *ct, gboolean can_default)
+{
+    GList *apps = ct ? g_app_info_get_all_for_type(ct) : NULL;
+    if (!apps)
+        return;
+    GtkWidget *sub = gtk_menu_new();
+    for (GList *l = apps; l; l = l->next) {
+        GtkWidget *mi = item(sub, w, c, files, NULL, A_OPEN_WITH, g_app_info_get_display_name(l->data), NULL, TRUE);
+        Act *a = g_object_get_data(G_OBJECT(mi), "act");
+        a->app = g_object_ref(l->data);
+    }
+    if (can_default && !files->next) {
+        GAppInfo *def = g_app_info_get_default_for_type(ct, FALSE);
+        GtkWidget *dsub = gtk_menu_new();
+        for (GList *l = apps; l; l = l->next) {
+            GtkWidget *mi = gtk_check_menu_item_new_with_label(g_app_info_get_display_name(l->data));
+            gtk_check_menu_item_set_draw_as_radio(GTK_CHECK_MENU_ITEM(mi), TRUE);
+            gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mi), def && g_app_info_equal(def, l->data));
+            Act *a = g_new0(Act, 1);       /* like item(), for a tick item; connected after the tick is set */
+            a->w = w;
+            a->c = c;
+            if (c)
+                column_ref(c);
+            a->files = g_list_copy_deep(files, obj_copy, NULL);
+            a->app = g_object_ref(l->data);
+            a->action = A_SET_DEFAULT;
+            g_signal_connect_data(mi, "activate", G_CALLBACK(act_run), a, act_free, 0);
+            gtk_menu_shell_append(GTK_MENU_SHELL(dsub), mi);
+        }
+        g_clear_object(&def);
+        sep(sub);
+        GtkWidget *sd = gtk_menu_item_new_with_label("Set default");
+        gtk_menu_item_set_submenu(GTK_MENU_ITEM(sd), dsub);
+        gtk_menu_shell_append(GTK_MENU_SHELL(sub), sd);
+    }
+    GtkWidget *ow = gtk_menu_item_new_with_label("Open with");
+    gtk_menu_item_set_submenu(GTK_MENU_ITEM(ow), sub);
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), ow);
+    g_list_free_full(apps, g_object_unref);
+}
+
 void win_context_menu(Win *w, Column *c, GdkEventButton *ev)
 {
     if (c->computer) {
         computer_menu(w, c, ev);
+        return;
+    }
+    if (c->trash) {
+        trash_menu(w, c, ev);
         return;
     }
     GList *files = column_selected_files(c);
@@ -1433,20 +1505,7 @@ void win_context_menu(Win *w, Column *c, GdkEventButton *ev)
         GFileInfo *info = g_file_query_info(files->data, "standard::content-type", G_FILE_QUERY_INFO_NONE,
                                             NULL, NULL);
         const char *ct = info ? g_file_info_get_content_type(info) : NULL;
-        GList *apps = ct ? g_app_info_get_all_for_type(ct) : NULL;
-        if (apps) {
-            GtkWidget *sub = gtk_menu_new();
-            for (GList *l = apps; l; l = l->next) {
-                GtkWidget *mi = item(sub, w, c, files, NULL, A_OPEN_WITH,
-                                     g_app_info_get_display_name(l->data), NULL, TRUE);
-                Act *a = g_object_get_data(G_OBJECT(mi), "act");
-                a->app = g_object_ref(l->data);
-            }
-            GtkWidget *ow = gtk_menu_item_new_with_label("Open with");
-            gtk_menu_item_set_submenu(GTK_MENU_ITEM(ow), sub);
-            gtk_menu_shell_append(GTK_MENU_SHELL(menu), ow);
-            g_list_free_full(apps, g_object_unref);
-        }
+        open_with_menu(menu, w, c, files, ct, !single_dir);
         g_clear_object(&info);
         sep(menu);
         if (all_archives(files)) {
@@ -1489,6 +1548,8 @@ void win_context_menu(Win *w, Column *c, GdkEventButton *ev)
     item(menu, w, c, NULL, folder, A_TERMINAL, "Open terminal here", NULL, TRUE);
     if (files)
         item(menu, w, c, files, NULL, A_COPY_PATH, "Copy path", NULL, TRUE);
+    if (n == 1 && !single_dir && !is_dir(files->data, TRUE))
+        item(menu, w, c, files, NULL, A_CHECKSUMS, "Checksums…", NULL, TRUE);
     item(menu, w, c, NULL, folder, A_BOOKMARK, "Add to bookmarks", "<Control>d", TRUE);
     if (!is_root() && LOOK.use_pkexec)
         item(menu, w, c, NULL, folder, A_ROOT, "Open as root…", NULL, TRUE);
@@ -1527,20 +1588,7 @@ void win_file_menu(Win *w, GList *files, GdkEventButton *ev, GtkWidget *attach)
         else
             item(menu, w, NULL, files, NULL, A_OPEN, "Open", NULL, TRUE);
         const char *ct = info ? g_file_info_get_content_type(info) : NULL;
-        GList *apps = ct && !isdir ? g_app_info_get_all_for_type(ct) : NULL;
-        if (apps) {
-            GtkWidget *sub = gtk_menu_new();
-            for (GList *l = apps; l; l = l->next) {
-                GtkWidget *mi = item(sub, w, NULL, files, NULL, A_OPEN_WITH,
-                                     g_app_info_get_display_name(l->data), NULL, TRUE);
-                Act *a = g_object_get_data(G_OBJECT(mi), "act");
-                a->app = g_object_ref(l->data);
-            }
-            GtkWidget *ow = gtk_menu_item_new_with_label("Open with");
-            gtk_menu_item_set_submenu(GTK_MENU_ITEM(ow), sub);
-            gtk_menu_shell_append(GTK_MENU_SHELL(menu), ow);
-            g_list_free_full(apps, g_object_unref);
-        }
+        open_with_menu(menu, w, NULL, files, isdir ? NULL : ct, TRUE);
         if (!isdir)
             item(menu, w, NULL, files, NULL, A_SHOW, "Show in column", NULL, TRUE);
         sep(menu);
@@ -1569,6 +1617,8 @@ void win_file_menu(Win *w, GList *files, GdkEventButton *ev, GtkWidget *attach)
     item(menu, w, NULL, files, NULL, A_DELETE, "Delete permanently…", "<Shift>Delete", TRUE);
     sep(menu);
     item(menu, w, NULL, files, NULL, A_COPY_PATH, one ? "Copy path" : "Copy paths", NULL, TRUE);
+    if (one && !isdir)
+        item(menu, w, NULL, files, NULL, A_CHECKSUMS, "Checksums…", NULL, TRUE);
     item(menu, w, NULL, files, NULL, A_PROPERTIES, "Properties…", "<Alt>Return", one);
     gtk_widget_show_all(menu);
     gtk_menu_attach_to_widget(GTK_MENU(menu), attach, NULL);
@@ -1647,7 +1697,11 @@ static gboolean on_key(GtkWidget *win, GdkEventKey *ev, Win *w)
         dialog_settings(w);
         return TRUE;
     }
-    if (k == GDK_KEY_BackSpace && !gtk_widget_has_focus(w->location)) {
+    if (ctrl && (k == GDK_KEY_f || k == GDK_KEY_F)) {
+        search_open(w);
+        return TRUE;
+    }
+    if (k == GDK_KEY_BackSpace && !GTK_IS_ENTRY(gtk_window_get_focus(GTK_WINDOW(w->window)))) {
         go_up(w);
         return TRUE;
     }
@@ -1665,6 +1719,7 @@ static void on_destroy(GtkWidget *win, Win *w)
     for (GList *l = w->jobs; l; l = l->next)
         job_cancel(l->data);
     w->dead = TRUE;
+    search_free(w);
     for (GList *l = w->columns; l; l = l->next) {
         column_close(l->data);
         column_unref(l->data);
@@ -1864,6 +1919,10 @@ Win *win_new(GtkApplication *app, GFile *start)
         w->root_sep = gtk_separator_menu_item_new();
         gtk_menu_shell_append(GTK_MENU_SHELL(main_menu), w->root_sep);
     }
+    mi = gtk_menu_item_new_with_label("Search here…");
+    gtk_accel_label_set_accel(GTK_ACCEL_LABEL(gtk_bin_get_child(GTK_BIN(mi))), GDK_KEY_f, GDK_CONTROL_MASK);
+    g_signal_connect_swapped(mi, "activate", G_CALLBACK(search_open), w);
+    gtk_menu_shell_append(GTK_MENU_SHELL(main_menu), mi);
     mi = gtk_menu_item_new_with_label("Settings…");
     g_signal_connect(mi, "activate", G_CALLBACK(on_settings), w);
     gtk_menu_shell_append(GTK_MENU_SHELL(main_menu), mi);
@@ -1923,6 +1982,7 @@ Win *win_new(GtkApplication *app, GFile *start)
         gtk_box_pack_start(GTK_BOX(box), ib, FALSE, FALSE, 0);
     }
     gtk_box_pack_start(GTK_BOX(box), bar, FALSE, FALSE, 0);
+    search_build(w, box, pane);          /* its bar right under the toolbar */
     gtk_box_pack_start(GTK_BOX(box), pane, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(box), sbox, FALSE, FALSE, 0);
     gtk_container_add(GTK_CONTAINER(w->window), box);
@@ -1944,7 +2004,8 @@ void app_apply_look(GtkApplication *app, const Look *nl)
 {
     gboolean resort = nl->folders_first != LOOK.folders_first;
     gboolean names = nl->gallery_names != LOOK.gallery_names || nl->thumbs != LOOK.thumbs ||
-                     nl->use_ffmpeg != LOOK.use_ffmpeg || nl->use_pdftoppm != LOOK.use_pdftoppm;
+                     nl->use_ffmpeg != LOOK.use_ffmpeg || nl->use_pdftoppm != LOOK.use_pdftoppm ||
+                     nl->use_blender != LOOK.use_blender || nl->thumb_size != LOOK.thumb_size;
     char *col = g_strdup(nl->divider_color), *hl = g_strdup(nl->highlight);
     gboolean hl_changed = g_strcmp0(nl->highlight, LOOK.highlight);
     g_free(LOOK.divider_color);

@@ -16,6 +16,7 @@
 #endif
 
 enum { THUMBS_ALWAYS, THUMBS_LOCAL, THUMBS_NEVER };
+enum { TSIZE_SMALL, TSIZE_MEDIUM, TSIZE_LARGE };    /* gallery tiles: about 100, 200, 400 px */
 #define COL_DEFAULT 230      /* the start width of a column, unless set in Settings */
 #define COL_MIN 120
 #define COL_MAX 1200
@@ -25,7 +26,7 @@ enum { THUMBS_ALWAYS, THUMBS_LOCAL, THUMBS_NEVER };
 
 #define ATTRS "standard::name,standard::display-name,standard::type,standard::icon," \
               "standard::is-hidden,standard::is-backup,standard::size," \
-              "standard::content-type,time::modified,unix::mode"
+              "standard::content-type,time::modified,unix::mode,trash::deletion-date"
 
 /* list store columns */
 enum { C_ICON, C_NAME, C_ISDIR, C_FILE, C_SORT, C_MTIME, C_SIZE, C_EXT, C_N };
@@ -48,6 +49,8 @@ typedef struct {
     gboolean use_ffmpeg;    /* optional helpers, when installed: switched off here */
     gboolean use_pdftoppm;
     gboolean use_pkexec;    /* off: no "Open as root" anywhere */
+    gboolean use_blender;   /* blender-thumbnailer: the picture saved inside .blend files */
+    int thumb_size;         /* TSIZE_SMALL, _MEDIUM, _LARGE */
 } Look;
 
 extern Look LOOK;
@@ -101,6 +104,7 @@ int sorting_compare(FolderSort s, gboolean da, gboolean db, const char *ka, cons
 typedef struct Win Win;
 typedef struct Column Column;
 typedef struct Preview Preview;
+typedef struct Search Search;
 
 struct Column {
     int ref;
@@ -121,6 +125,8 @@ struct Column {
     gboolean custom;
     GtkWidget *sortbar, *sortlabel;
     gboolean computer;         /* the Computer column: disks, removable media, network */
+    gboolean trash;            /* the trash or a folder in it: put back, delete for good */
+    gboolean trash_root;       /* trash:/// itself: its dates are deletion dates, its own sort button */
     GPtrArray *objs;           /* its GMounts / GVolumes, by row (C_SIZE) */
 };
 
@@ -182,6 +188,7 @@ struct Win {
     gboolean clip_cut;
     GList *jobs;
     GVolumeMonitor *volumes;
+    Search *search;            /* Ctrl+F: its bar and result list, hidden when not searching */
 };
 
 Win *win_new(GtkApplication *app, GFile *start);
@@ -242,6 +249,7 @@ void preview_clear(Preview *p);
 void preview_show_file(Preview *p, GFile *f);
 void preview_show_many(Preview *p, GList *files);
 GtkWidget *disk_bar(double used);
+char *blender_thumbnailer(void);   /* PATH, /opt/blender, newest /opt/blender-*; NULL if none */
 void preview_show_disk(Preview *p, const char *name, GIcon *icon, GFile *root, const char *where,
                        const char *device, const char *fs, const char *note);
 
@@ -278,6 +286,19 @@ void win_open_computer(Win *w);
 void places_bookmark_add(Win *w, GFile *folder);
 void places_watch_volumes(Win *w);
 
+/* ---- search (search.c) ---------------------------------------------------------------------------- */
+void search_build(Win *w, GtkWidget *bar_box, GtkWidget *pane);
+void search_open(Win *w);
+void search_close(Win *w);
+void search_free(Win *w);
+
+/* ---- the trash (trash.c) ------------------------------------------------------------------------ */
+gboolean file_in_trash(GFile *f);
+gboolean trash_top(GFile *f);
+void trash_menu(Win *w, Column *c, GdkEventButton *ev);
+void win_restore(Win *w, GList *files);
+void win_empty_trash(Win *w);
+
 /* ---- highlight colour (highlight.c) ------------------------------------------------ */
 void highlight_apply(void);
 gboolean highlight_system_has(void);
@@ -296,5 +317,6 @@ Choice dialog_conflict(Win *w, GFile *src, GFile *dst, gboolean merge, gboolean 
 void dialog_properties(Win *w, GFile *f);
 void dialog_settings(Win *w);
 void dialog_about(Win *w);
+void dialog_checksums(Win *w, GFile *f);
 
 #endif

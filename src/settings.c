@@ -5,7 +5,8 @@
 #include <string.h>
 
 Look LOOK = { NULL, 2, FALSE, PREVIEW_DEFAULT, TRUE, FALSE, .column_width = COL_DEFAULT,
-              .use_ffmpeg = TRUE, .use_pdftoppm = TRUE, .use_pkexec = TRUE,
+              .use_ffmpeg = TRUE, .use_pdftoppm = TRUE, .use_pkexec = TRUE, .use_blender = TRUE,
+              .thumb_size = TSIZE_MEDIUM,
               .thumbs = THUMBS_LOCAL };
 
 static char *config_file(void)
@@ -79,10 +80,14 @@ void look_load(void)
     LOOK.use_ffmpeg = get_bool(kf, "helpers", "ffmpeg", TRUE);
     LOOK.use_pdftoppm = get_bool(kf, "helpers", "pdftoppm", TRUE);
     LOOK.use_pkexec = get_bool(kf, "helpers", "pkexec", TRUE);
+    LOOK.use_blender = get_bool(kf, "helpers", "blender", TRUE);
     char *th = get_str(kf, "thumbnails", "show");
     LOOK.thumbs = !g_strcmp0(th, "always") ? THUMBS_ALWAYS : !g_strcmp0(th, "never") ? THUMBS_NEVER : THUMBS_LOCAL;
     g_free(th);
-    LOOK.gallery_names = get_bool(kf, "look", "gallery_names", FALSE);
+    char *ts = get_str(kf, "thumbnails", "size");
+    LOOK.thumb_size = !g_strcmp0(ts, "small") ? TSIZE_SMALL : !g_strcmp0(ts, "large") ? TSIZE_LARGE : TSIZE_MEDIUM;
+    g_free(ts);
+    LOOK.gallery_names = get_bool(kf, "look", "gallery_names", TRUE);
     char *hl = get_str(kf, "look", "highlight_color");
     GdkRGBA hc;
     g_free(LOOK.highlight);
@@ -119,8 +124,11 @@ gboolean look_save(GError **err)
     g_key_file_set_boolean(kf, "helpers", "ffmpeg", LOOK.use_ffmpeg);
     g_key_file_set_boolean(kf, "helpers", "pdftoppm", LOOK.use_pdftoppm);
     g_key_file_set_boolean(kf, "helpers", "pkexec", LOOK.use_pkexec);
+    g_key_file_set_boolean(kf, "helpers", "blender", LOOK.use_blender);
     g_key_file_set_string(kf, "thumbnails", "show",
                           LOOK.thumbs == THUMBS_LOCAL ? "local" : LOOK.thumbs == THUMBS_NEVER ? "never" : "always");
+    g_key_file_set_string(kf, "thumbnails", "size",
+                          LOOK.thumb_size == TSIZE_SMALL ? "small" : LOOK.thumb_size == TSIZE_LARGE ? "large" : "medium");
     g_key_file_set_integer(kf, "thumbnails", "max_mb", LOOK.cache_max_mb);
     g_key_file_set_integer(kf, "thumbnails", "max_days", LOOK.cache_days);
     g_key_file_set_boolean(kf, "thumbnails", "auto_clean", LOOK.cache_auto);

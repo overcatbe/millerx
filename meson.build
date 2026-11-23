@@ -27,7 +27,7 @@ add_project_arguments(
 
 executable('millerx',
   'src/main.c', 'src/settings.c', 'src/util.c', 'src/column.c', 'src/preview.c',
-  'src/job.c', 'src/window.c', 'src/places.c', 'src/dialogs.c', 'src/thumbcache.c', 'src/sorting.c', 'src/highlight.c',
+  'src/job.c', 'src/window.c', 'src/places.c', 'src/dialogs.c', 'src/thumbcache.c', 'src/sorting.c', 'src/highlight.c', 'src/trash.c', 'src/search.c',
   'src/archive.c',
   dependencies : deps,
   install : true)

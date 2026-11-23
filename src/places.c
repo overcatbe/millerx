@@ -104,6 +104,12 @@ static void bookmark_remove(Win *w, const char *uri)
 }
 
 /* menu items carry what they need as object data */
+/* the trash opens in a window of its own: close it and you are back where you were */
+static void on_open_trash(GtkMenuItem *mi, Win *w)
+{
+    win_new(w->app, g_object_get_data(G_OBJECT(mi), "file"));
+}
+
 static void on_open_bookmark(GtkMenuItem *mi, Win *w)
 {
     GFile *f = g_object_get_data(G_OBJECT(mi), "file");
@@ -144,7 +150,10 @@ static gboolean on_mark_release(GtkWidget *mi, GdkEventButton *ev, Win *w)
     gtk_widget_destroy(mi);
     /* the last bookmark gone: show the placeholder like a fresh fill would */
     GList *kids = gtk_container_get_children(GTK_CONTAINER(menu));
-    if (GTK_IS_SEPARATOR_MENU_ITEM(kids->data)) {
+    gboolean any = FALSE;
+    for (GList *l = kids; l; l = l->next)
+        any |= g_object_get_data(G_OBJECT(l->data), "uri") != NULL;
+    if (!any) {
         GtkWidget *none = menu_item_new("No bookmarks yet", NULL, NULL);
         gtk_widget_set_sensitive(none, FALSE);
         gtk_menu_shell_prepend(GTK_MENU_SHELL(menu), none);
@@ -208,14 +217,28 @@ void places_fill_bookmarks(Win *w)
         gtk_widget_set_sensitive(mi, FALSE);
         add(m, mi, NULL, NULL, w);
     }
+    if (!file_in_trash(cur)) {          /* the trash has its own line below */
+        gtk_menu_shell_append(GTK_MENU_SHELL(m), gtk_separator_menu_item_new());
+        char *base = g_file_get_basename(cur);
+        char *label = g_strdup_printf(cur_marked ? "Remove “%s”" : "Bookmark “%s”", base ? base : "/");
+        add(m, menu_item_new(label, NULL, cur_marked ? "list-remove" : "bookmark-new"), cur,
+            cur_marked ? G_CALLBACK(on_remove_here) : G_CALLBACK(on_add_here), w);
+        g_free(label);
+        g_free(base);
+    }
+    /* the trash last, always there (no ✕); its icon says whether there is anything in it */
     gtk_menu_shell_append(GTK_MENU_SHELL(m), gtk_separator_menu_item_new());
-    char *base = g_file_get_basename(cur);
-    char *label = g_strdup_printf(cur_marked ? "Remove “%s”" : "Bookmark “%s”", base ? base : "/");
-    add(m, menu_item_new(label, NULL, cur_marked ? "list-remove" : "bookmark-new"), cur,
-        cur_marked ? G_CALLBACK(on_remove_here) : G_CALLBACK(on_add_here), w);
+    GFile *trash = g_file_new_for_uri("trash:///");
+    GFileInfo *ti = g_file_query_info(trash, "trash::item-count", G_FILE_QUERY_INFO_NONE, NULL, NULL);
+    guint32 tn = ti ? g_file_info_get_attribute_uint32(ti, "trash::item-count") : 0;
+    g_clear_object(&ti);
+    GtkWidget *tmi = menu_item_new("Trash", NULL, tn ? "user-trash-full" : "user-trash");
+    char *ttip = tn ? g_strdup_printf("%u item(s)", tn) : g_strdup("empty");
+    gtk_widget_set_tooltip_text(tmi, ttip);
+    g_free(ttip);
+    add(m, tmi, trash, G_CALLBACK(on_open_trash), w);
+    g_object_unref(trash);
     gtk_widget_show_all(m);
-    g_free(label);
-    g_free(base);
     g_free(cur_uri);
     g_object_unref(cur);
     g_ptr_array_unref(a);
