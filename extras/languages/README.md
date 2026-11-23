@@ -1,10 +1,17 @@
-# Extra languages
+# More languages
 
-Fun languages for millerX that don't come with the package. millerX stays small: only the
-four languages it already had (German, Greek, Wizard, Wienerisch) are installed, and every new
-one, however funny, lives here for whoever wants it. Download one (don't open it, just
-save it), then in millerX: Settings → Language → "Your own…", pick the file and press
-"Restart now".
+Every language millerX gets from now on lives here, real ones and fun ones alike, and doesn't
+come with the package. millerX stays small: only the four languages it already had (German,
+Greek, Wizard, Wienerisch) are installed; everything else is a download for whoever wants it.
+
+Download one (don't open it, just save it), then in millerX: Settings → Language →
+"Your own…", pick the file and press "Restart now".
+
+### Languages
+
+None yet. French, Spanish, Polish, Slovak…? [Make one](#make-your-own) and send it in!
+
+### Just for fun
 
 | Language | What it is | Get it |
 |---|---|---|
@@ -27,5 +34,6 @@ Copy `/usr/share/millerx/millerx.pot` (or one of the files here) to `NAME.po` an
 exactly as they are: "Your own…" checks the file with `msgfmt` and tells you which line is
 wrong.
 
-Made a good one? Share it in [Discussions](https://github.com/overcatbe/millerx/discussions)
-or send a pull request to add it here.
+Send it as a pull request to add it here (or post it in
+[Discussions](https://github.com/overcatbe/millerx/discussions) if you don't use git). Name a real
+language by its code (`fr.po`, `pt_BR.po`), a fun one however you like.

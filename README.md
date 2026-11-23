@@ -90,16 +90,14 @@ millerX carries his name.
 - **Languages:** English, German and Greek, following your system; Settings → Language can
   also pick English anyway, or one of two joke languages: **Wizard** ("Banish to the Void",
   "Thou art not worthy") and **Wienerisch** (Viennese slang, root is "da Kaiser").
-  The Greek is looked after by rizitis, a native speaker. Translators welcome
-  too: copy `po/millerx.pot` to `po/xx.po`, translate, send a pull request. Only the language in
-  use is ever loaded; each one is about 30 KB on disk.
-- **Your own language:** write millerX's texts any way you like (pirate, Shakespeare, your
-  grandmother). Copy `/usr/share/millerx/millerx.pot` to `NAME.po` and fill in the `msgstr`
-  lines; lines you leave empty stay English. Settings → Language → "Your own…" picks the file,
-  checks it and adds it to the list as NAME. New languages don't go into the package, so
-  millerX doesn't grow with every joke: the four it has stay, the rest is a download. Made a good one?
-  Share it in [Discussions](https://github.com/overcatbe/millerx/discussions). Ready-made fun
-  ones, like pirate speak, are in [extras/languages](extras/languages/).
+  The Greek is looked after by rizitis, a native speaker. Only the language in use is ever
+  loaded; each one is about 30 KB on disk.
+- **More languages:** every new language, real or just for fun, is a download in
+  [extras/languages](extras/languages/) (pirate, LOLCAT, …), so millerX doesn't grow with each
+  one: the four it has stay. Settings → Language → "Your own…" picks the file, checks it and
+  adds it to the list. Or write your own: copy `/usr/share/millerx/millerx.pot` to `NAME.po` and
+  fill in the `msgstr` lines (empty ones stay English). Translators welcome: see
+  [CONTRIBUTING](CONTRIBUTING.md#translations).
 - Columns follow changes on disk. Names sort case-insensitive and naturally (file2 before
   file10), folders first (optional).
 

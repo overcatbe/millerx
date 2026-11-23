@@ -21,18 +21,19 @@ features in it started as a forum post.
 
 ## Translations
 
-Translations live in `po/`. To add a language (here `xx`, e.g. `fr` or `pt_BR`):
+New languages, real or just for fun, go into [extras/languages](extras/languages/), not into
+the package: millerX keeps the four it has (German, Greek, Wizard, Wienerisch) and stays small.
+Anyone can use one with Settings → Language → "Your own…". To add a language (here `xx`, e.g.
+`fr` or `pt_BR`):
 
-1. Copy `po/millerx.pot` to `po/xx.po` and fill in the `msgstr` lines (Poedit or any text editor).
+1. Copy `po/millerx.pot` to `extras/languages/xx.po` and fill in the `msgstr` lines (Poedit or
+   any text editor). Lines you leave empty stay English.
 2. Keep `%s`, `%u`, `%d`, `%llu` and `\n` exactly as they are: same number, same order.
-3. Check it: `msgfmt --check -c -o /dev/null po/xx.po` must print nothing.
-4. Add `xx` to `po/LINGUAS` and send a pull request.
+3. Check it: `msgfmt --check-format -o /dev/null extras/languages/xx.po` must print nothing.
+4. Try it with "Your own…", add a line to the table in `extras/languages/README.md` and send a
+   pull request.
 
-Corrections to an existing language are just as welcome.
-
-Just for fun? A joke language (pirate, LOLCAT, …) doesn't need to go into `po/`: anyone can add one
-with Settings → Language → "Your own…". Send it as a pull request to
-[extras/languages](extras/languages/) so others can download it.
+Corrections to the four built-in languages (`po/`) are just as welcome.
 
 ## Code
 
