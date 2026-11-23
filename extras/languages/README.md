@@ -1,6 +1,8 @@
 # Extra languages
 
-Fun languages for millerX that don't come with the package. Download one (don't open it, just
+Fun languages for millerX that don't come with the package. millerX stays small: only the
+four languages it already had (German, Greek, Wizard, Wienerisch) are installed, and every new
+one, however funny, lives here for whoever wants it. Download one (don't open it, just
 save it), then in millerX: Settings → Language → "Your own…", pick the file and press
 "Restart now".
 

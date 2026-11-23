@@ -96,7 +96,8 @@ millerX carries his name.
 - **Your own language:** write millerX's texts any way you like (pirate, Shakespeare, your
   grandmother). Copy `/usr/share/millerx/millerx.pot` to `NAME.po` and fill in the `msgstr`
   lines; lines you leave empty stay English. Settings → Language → "Your own…" picks the file,
-  checks it and adds it to the list as NAME. Made a good one?
+  checks it and adds it to the list as NAME. New languages don't go into the package, so
+  millerX doesn't grow with every joke: the four it has stay, the rest is a download. Made a good one?
   Share it in [Discussions](https://github.com/overcatbe/millerx/discussions). Ready-made fun
   ones, like pirate speak, are in [extras/languages](extras/languages/).
 - Columns follow changes on disk. Names sort case-insensitive and naturally (file2 before

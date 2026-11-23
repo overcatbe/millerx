@@ -9,7 +9,7 @@
   with the line that's wrong, so it can't crash millerX. The files live in
   `~/.local/share/millerx/languages/`.
 - **Extra languages to download** in [extras/languages](extras/languages/), not part of the
-  package: **pirate** (family-friendly: Davy Jones' Locker, walk the plank), **pirate-salty**
+  package, so millerX doesn't grow with every new one (the four it has stay): **pirate** (family-friendly: Davy Jones' Locker, walk the plank), **pirate-salty**
   (swears like a sailor, not for the kids) and **lolcat** (TEH LITTERBOX, NOM NOM NAO).
 - **No more endless counting:** a folder shown in the preview counted its size and items again
   after every change in it, so during `slackpkg upgrade-all` it ran du over and over. It now
