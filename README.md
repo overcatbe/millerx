@@ -92,6 +92,24 @@ millerX carries his name.
 
 What changed in each version: [CHANGELOG](CHANGELOG.md).
 
+## What millerX isn't
+
+millerX is a lightweight but fully functional file manager, built around Miller columns. To stay
+fast and clear, it leaves some things out on purpose:
+
+- **No tabs.** Open a second window instead (Ctrl+N or middle-click a folder); copy, paste and
+  drag & drop work between windows.
+- **Nothing running in the background.** No daemon, no service, no indexer. When you close
+  millerX, it's gone.
+- **No custom actions** (your own commands in the right-click menu), not yet anyway.
+- **No look settings per folder.** Only the sort order can be set per folder; everything else is
+  the same everywhere, so you always know what you're looking at.
+- **No default shortcuts on F-keys** that your window manager or laptop may already use.
+- **No feature just because another file manager has it.** Ideas are welcome, but millerX goes
+  its own way instead of copying Dolphin or Nautilus.
+- **No new dependency without a good reason.** Optional helpers (ffmpeg, pdftoppm, Blender)
+  stay optional: without them millerX shows an icon instead of a picture.
+
 ## Keys
 
 | Key | Action |
@@ -229,7 +247,8 @@ list them too, to change or remove.
 
 ## Bugs and wishes
 
-Please open an [issue](https://github.com/overcatbe/millerx/issues).
+Please open an [issue](https://github.com/overcatbe/millerx/issues). How to report a bug, suggest
+an idea or add a translation: [CONTRIBUTING](CONTRIBUTING.md).
 
 ## License
 
