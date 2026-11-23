@@ -3,7 +3,7 @@
 pkgname=millerx
 pkgver=0.8.2
 pkgrel=1
-pkgdesc="Small native file browser with Miller columns (GTK 3)"
+pkgdesc="Lightweight but fully functional file manager with Miller columns (GTK 3)"
 arch=('x86_64' 'aarch64')
 url="https://github.com/overcatbe/millerx"
 license=('GPL-2.0-or-later')
@@ -12,7 +12,8 @@ makedepends=('meson' 'ninja' 'gettext')
 options=('!debug')
 optdepends=('poppler: PDF preview (pdftoppm)'
             'ffmpeg: AVIF, HEIC and other pictures gdk-pixbuf cannot read'
-            'polkit: "Open as root" (needs a polkit authentication agent)')
+            'polkit: "Open as root" (needs a polkit authentication agent)'
+            'blender: the pictures saved in .blend files')
 source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
 sha256sums=('SKIP')
 
