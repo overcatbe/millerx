@@ -694,22 +694,22 @@ msgstr "only scrolls of this realm can be bound"
 #. writes a temp file, then renames
 #: src/places.c:59
 msgid "Couldn't save the bookmarks"
-msgstr "The marked places would not be inscribed"
+msgstr "The sacred texts would not be inscribed"
 
 #: src/places.c:75
 #, c-format
 msgid "Already bookmarked: %s"
-msgstr "Already marked: %s"
+msgstr "Already among the sacred texts: %s"
 
 #: src/places.c:82
 #, c-format
 msgid "Bookmarked: %s"
-msgstr "Marked for return: %s"
+msgstr "Added to the sacred texts: %s"
 
 #: src/places.c:101
 #, c-format
 msgid "Bookmark removed: %s"
-msgstr "Mark erased: %s"
+msgstr "Struck from the sacred texts: %s"
 
 #: src/places.c:118 src/window.c:462
 #, c-format
@@ -718,17 +718,17 @@ msgstr "Lost to the mists: %s"
 
 #: src/places.c:157 src/places.c:216
 msgid "No bookmarks yet"
-msgstr "No places marked yet"
+msgstr "The sacred texts are still blank"
 
 #: src/places.c:223
 #, c-format
 msgid "Remove “%s”"
-msgstr "Erase the mark of “%s”"
+msgstr "Strike “%s” from the sacred texts"
 
 #: src/places.c:223
 #, c-format
 msgid "Bookmark “%s”"
-msgstr "Mark “%s” for return"
+msgstr "Add “%s” to the sacred texts"
 
 #: src/places.c:235
 msgid "Trash"
@@ -1464,7 +1464,7 @@ msgstr "Read the runes…"
 
 #: src/window.c:1579
 msgid "Add to bookmarks"
-msgstr "Mark for return"
+msgstr "Add to sacred texts"
 
 #: src/window.c:1583 src/window.c:1648
 msgid "Properties…"
@@ -1496,7 +1496,7 @@ msgstr "The Realm: disks, USB sticks, network (Alt+/)"
 
 #: src/window.c:1932
 msgid "Bookmarks (Ctrl+D adds this folder)"
-msgstr "Marked places (Ctrl+D marks this shelf)"
+msgstr "Sacred texts (Ctrl+D adds this shelf)"
 
 #: src/window.c:1936
 msgid "New window"
