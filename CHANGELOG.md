@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.7.6 (not released yet)
+## 0.7.6 (2026-11-23)
 
 - **Names under thumbnails on by default** (Settings → Look → Gallery). Your own choice, once saved,
   stays.
