@@ -101,10 +101,9 @@ fast and clear, it leaves some things out on purpose:
   drag & drop work between windows.
 - **Nothing running in the background.** No daemon, no service, no indexer. When you close
   millerX, it's gone.
-- **No custom actions** (your own commands in the right-click menu), not yet anyway.
+- **No custom actions** (your own commands in the right-click menu), perhaps later.
 - **No look settings per folder.** Only the sort order can be set per folder; everything else is
   the same everywhere, so you always know what you're looking at.
-- **No default shortcuts on F-keys** that your window manager or laptop may already use.
 - **No feature just because another file manager has it.** Ideas are welcome, but millerX goes
   its own way instead of copying Dolphin or Nautilus.
 - **No new dependency without a good reason.** Optional helpers (ffmpeg, pdftoppm, Blender)
