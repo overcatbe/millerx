@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: CC0-1.0 -->
+<component type="desktop-application">
+  <id>org.mix.millerx</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-2.0-or-later</project_license>
+  <name>millerX</name>
+  <summary>Browse files in Miller columns</summary>
+  <developer id="io.github.overcatbe">
+    <name>overcatbe</name>
+  </developer>
+  <description>
+    <p>
+      A small, native file browser with Miller columns: every folder from / down to where
+      you are sits in its own column, and the selected file is previewed on the right.
+      Like a mind map of your disk.
+    </p>
+    <p>Features:</p>
+    <ul>
+      <li>Preview of pictures, video frames, music covers, PDF pages, text and archive contents</li>
+      <li>A gallery of a folder's pictures under its details, sharing the thumbnail cache with Thunar</li>
+      <li>Search through a folder and every folder below it</li>
+      <li>Trash: put back, delete permanently, empty</li>
+      <li>A Computer column with all disks, USB sticks and network shares</li>
+      <li>Archives: extract and compress</li>
+      <li>Checksums, sorting per folder, your own highlight colour</li>
+    </ul>
+    <p>
+      No service running in the background. Optional helpers (ffmpeg, pdftoppm, Blender)
+      add more previews when they are installed.
+    </p>
+  </description>
+  <launchable type="desktop-id">millerx.desktop</launchable>
+  <url type="homepage">https://github.com/overcatbe/millerx</url>
+  <url type="bugtracker">https://github.com/overcatbe/millerx/issues</url>
+  <url type="vcs-browser">https://github.com/overcatbe/millerx</url>
+  <screenshots>
+    <screenshot type="default">
+      <caption>A picture fitted into the preview</caption>
+      <image>https://raw.githubusercontent.com/overcatbe/millerx/main/docs/preview.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>The Computer column: disks, USB sticks and network</caption>
+      <image>https://raw.githubusercontent.com/overcatbe/millerx/main/docs/computer.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Settings</caption>
+      <image>https://raw.githubusercontent.com/overcatbe/millerx/main/docs/settings.png</image>
+    </screenshot>
+  </screenshots>
+  <provides>
+    <binary>millerx</binary>
+    <id>millerx.desktop</id>
+  </provides>
+  <categories>
+    <category>System</category>
+    <category>FileTools</category>
+    <category>FileManager</category>
+  </categories>
+  <keywords>
+    <keyword>files</keyword>
+    <keyword>folders</keyword>
+    <keyword>file manager</keyword>
+    <keyword>miller columns</keyword>
+  </keywords>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="0.7.6" date="2026-11-23">
+      <description>
+        <p>Search, a trash window, checksums, Blender previews, thumbnail sizes, Set default
+        program, and "Show in folder" over D-Bus.</p>
+      </description>
+    </release>
+    <release version="0.7.5" date="2026-11-22">
+      <description>
+        <p>A double-click starts programs, asks before running scripts and starts launchers.</p>
+      </description>
+    </release>
+    <release version="0.7.4" date="2026-11-22">
+      <description>
+        <p>The Computer column, settings in three tabs, thumbnails not in network folders.</p>
+      </description>
+    </release>
+  </releases>
+</component>

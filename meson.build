@@ -33,6 +33,8 @@ executable('millerx',
   install : true)
 
 install_data('data/millerx.desktop', install_dir : datadir / 'applications')
+install_data('data/org.mix.millerx.metainfo.xml', install_dir : datadir / 'metainfo')
+install_man('data/millerx.1')
 install_data('data/icons/millerx.svg', install_dir : datadir / 'icons/hicolor/scalable/apps')
 foreach s : ['16', '24', '32', '48', '64', '128', '256']
   install_data('data/icons/millerx-' + s + '.png',

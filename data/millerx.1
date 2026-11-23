@@ -1,0 +1,144 @@
+.\" SPDX-License-Identifier: GPL-2.0-or-later
+.\" Copyright (C) 2026 overcatbe
+.TH MILLERX 1 "2026-11-23" "millerX 0.7.6" "User Commands"
+.SH NAME
+millerx \- a small file browser with Miller columns
+.SH SYNOPSIS
+.B millerx
+.RI [ FOLDER | FILE ]...
+.br
+.B millerx
+.B \-\-version
+.br
+.B millerx
+.B \-\-dbus
+.SH DESCRIPTION
+.B millerX
+shows every folder from
+.I /
+down to where you are in its own column, and previews the selected file on the
+right: pictures, a video's frame, a song's cover, the first page of PDFs, text and
+the contents of archives. A folder's pictures show as thumbnails under its details.
+.PP
+Without arguments it opens your home folder. A
+.I FOLDER
+opens there; a
+.I FILE
+opens its folder with the file highlighted. Each argument gets its own window.
+.PP
+It needs no service running in the background. Optional programs add more
+previews when they are installed:
+.BR ffmpeg (1)
+(video frames, music covers, AVIF and HEIC),
+.BR pdftoppm (1)
+(PDF pages),
+.B blender\-thumbnailer
+(pictures saved in Blender files) and
+.BR pkexec (1)
+(Open as root).
+.SH OPTIONS
+.TP
+.BR \-V ", " \-\-version
+Print the version and exit.
+.TP
+.B \-\-dbus
+Start without a window and wait up to 30 seconds for a "Show in folder" request
+over D\-Bus (org.freedesktop.FileManager1), then open only the window asked for.
+Meant for a D\-Bus service file, see
+.BR FILES .
+.SH KEYS
+.TP 18
+.BR "Left" ", " "Right"
+previous / next column
+.TP
+.BR "Backspace" ", " "Alt+Up"
+up one level
+.TP
+.BR "Alt+Home" ", " "Alt+/"
+home folder, the Computer column (disks, USB sticks, network)
+.TP
+.B Enter
+open
+.TP
+.B F2
+rename
+.TP
+.BR "Delete" ", " "Shift+Delete"
+move to the trash, delete permanently
+.TP
+.B Ctrl+C, Ctrl+X, Ctrl+V
+copy, cut, paste (shared with Thunar's clipboard)
+.TP
+.B Ctrl+Shift+N
+new folder
+.TP
+.B Ctrl+F
+search names in this folder and every folder below it; Escape goes back
+.TP
+.B Ctrl+D
+bookmark this folder
+.TP
+.B Ctrl+H
+show hidden files
+.TP
+.B Ctrl+L
+location bar
+.TP
+.B Alt+Enter
+properties
+.TP
+.B Ctrl+N
+new window at this folder
+.TP
+.B Ctrl+,
+settings
+.TP
+.B F5
+reload
+.TP
+.B Ctrl+Q, Ctrl+W
+close the window
+.PP
+Typing letters jumps to the first name starting with them; the same letter again goes
+to the next one. Middle\-click a folder to open it in a new window. The trash is the
+last line of the bookmarks menu.
+.SH FILES
+.TP
+.I ~/.config/millerx/millerx.conf
+settings (also changed from Menu \(-> Settings)
+.TP
+.I ~/.config/millerx/sorting.conf
+folders sorted their own way, one per line
+.TP
+.I ~/.config/gtk\-3.0/bookmarks
+bookmarks, shared with Thunar and the GTK file dialogs
+.TP
+.I ~/.config/mimeapps.list
+default programs, written by Open with \(-> Set default
+.TP
+.I ~/.cache/thumbnails/
+thumbnails, shared with Thunar; cleaned up automatically
+.TP
+.I ~/.local/share/dbus\-1/services/org.freedesktop.FileManager1.service
+not made by millerX: create it with
+.RS
+.nf
+[D\-BUS Service]
+Name=org.freedesktop.FileManager1
+Exec=/usr/bin/millerx \-\-dbus
+.fi
+.RE
+to have millerX started for a browser's "Show in folder" when no file manager
+is running.
+.SH ENVIRONMENT
+.TP
+.B TERMINAL
+the terminal for "Open terminal here" (may include arguments); otherwise the first
+of 17 known terminals that is installed.
+.SH SEE ALSO
+.BR thunar (1),
+.BR xdg\-mime (1)
+.PP
+https://github.com/overcatbe/millerx
+.SH AUTHOR
+overcatbe

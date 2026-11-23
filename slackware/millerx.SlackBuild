@@ -85,6 +85,8 @@ meson setup \
 "${NINJA:=ninja}" -C build/
 DESTDIR=$PKG $NINJA -C build/ install
 
+find $PKG/usr/man -type f -exec gzip -9 {} \;
+
 mkdir -p $PKG/usr/doc/$PRGNAM-$VERSION
 cp -a README.md CHANGELOG.md COPYING NOTICE $PKG/usr/doc/$PRGNAM-$VERSION
 cat $CWD/$PRGNAM.SlackBuild > $PKG/usr/doc/$PRGNAM-$VERSION/$PRGNAM.SlackBuild
