@@ -569,11 +569,23 @@ void win_look_changed(Win *w, gboolean resort)
 }
 
 /* ---- actions ------------------------------------------------------------------------- */
+/* a program started by us, with the session's language (see child_envp) */
+static gboolean spawn_child(const char *dir, char **argv, GSpawnFlags flags, GError **err)
+{
+    char **env = child_envp();
+    gboolean ok = g_spawn_async(dir, argv, env, flags, NULL, NULL, NULL, err);
+    g_strfreev(env);
+    return ok;
+}
+
 static void open_by_type(Win *w, GFile *f)
 {
     char *uri = g_file_get_uri(f);
     GError *err = NULL;
-    if (!g_app_info_launch_default_for_uri(uri, NULL, &err)) {
+    GAppLaunchContext *ctx = child_launch_context();
+    gboolean ok = g_app_info_launch_default_for_uri(uri, ctx, &err);
+    g_object_unref(ctx);
+    if (!ok) {
         win_status(w, "%s", err->message);
         g_error_free(err);
     }
@@ -659,7 +671,10 @@ void win_open_default(Win *w, GFile *f)
 static void open_with(Win *w, GAppInfo *app, GList *files)
 {
     GError *err = NULL;
-    if (!g_app_info_launch(app, files, NULL, &err)) {
+    GAppLaunchContext *ctx = child_launch_context();
+    gboolean ok = g_app_info_launch(app, files, ctx, &err);
+    g_object_unref(ctx);
+    if (!ok) {
         win_status(w, "%s", err->message);
         g_error_free(err);
     }
@@ -695,7 +710,7 @@ static void run_program(Win *w, const char *path)
     char *dir = g_path_get_dirname(path);
     char *argv[] = { (char *) path, NULL };
     GError *err = NULL;
-    if (!g_spawn_async(dir, argv, NULL, G_SPAWN_DEFAULT, NULL, NULL, NULL, &err)) {
+    if (!spawn_child(dir, argv, G_SPAWN_DEFAULT, &err)) {
         win_error(w, _("Couldn't run it"), err->message);
         g_error_free(err);
     }
@@ -720,7 +735,7 @@ static void run_in_terminal(Win *w, const char *path)
             for (guint i = 0; i < G_N_ELEMENTS(rest); i++)
                 g_ptr_array_add(a, (char *) rest[i]);
             g_ptr_array_add(a, NULL);
-            ok = g_spawn_async(dir, (char **) a->pdata, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, NULL, NULL);
+            ok = spawn_child(dir, (char **) a->pdata, G_SPAWN_SEARCH_PATH, NULL);
             g_ptr_array_free(a, TRUE);
         }
         g_strfreev(tv);
@@ -746,7 +761,7 @@ static void run_in_terminal(Win *w, const char *path)
         for (guint k = 0; k < G_N_ELEMENTS(rest); k++)
             g_ptr_array_add(a, g_strdup(rest[k]));
         g_ptr_array_add(a, NULL);
-        ok = g_spawn_async(dir, (char **) a->pdata, NULL, G_SPAWN_DEFAULT, NULL, NULL, NULL, NULL);
+        ok = spawn_child(dir, (char **) a->pdata, G_SPAWN_DEFAULT, NULL);
         g_ptr_array_free(a, TRUE);
     }
     if (!ok)
@@ -767,7 +782,7 @@ static void terminal_here(Win *w, GFile *folder)
     if (env && *env) {
         char **argv = NULL;
         if (g_shell_parse_argv(env, NULL, &argv, NULL))
-            ok = g_spawn_async(path, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, NULL, NULL);
+            ok = spawn_child(path, argv, G_SPAWN_SEARCH_PATH, NULL);
         g_strfreev(argv);
     }
     for (guint i = 0; !ok && i < G_N_ELEMENTS(TERMINALS); i++) {
@@ -783,7 +798,7 @@ static void terminal_here(Win *w, GFile *folder)
             a2 = g_strdup(path);
         }
         char *argv[] = { exe, a1, a2, NULL };
-        ok = g_spawn_async(path, argv, NULL, G_SPAWN_DEFAULT, NULL, NULL, NULL, NULL);
+        ok = spawn_child(path, argv, G_SPAWN_DEFAULT, NULL);
         g_free(a1);
         g_free(a2);
         g_free(exe);
@@ -2051,4 +2066,46 @@ void app_apply_look(GtkApplication *app, const Look *nl)
             }
         }
     }
+}
+
+/* Settings → Language → Restart now: the same windows, at the same folders, in a new millerX that
+ * reads the new language at its start; this one quits. Not while files are being copied. */
+void app_restart(GtkApplication *app)
+{
+    GList *wins = g_list_reverse(g_list_copy(gtk_application_get_windows(app)));   /* oldest first */
+    for (GList *l = wins; l; l = l->next) {
+        Win *w = g_object_get_data(G_OBJECT(l->data), "millerx-win");
+        if (w && !w->dead && w->jobs) {
+            win_error(w, _("Not now"), _("Files are still being copied, moved or packed. Restart when that is done."));
+            g_list_free(wins);
+            return;
+        }
+    }
+    look_save(NULL);
+    char *exe = g_file_read_link("/proc/self/exe", NULL);
+    if (!exe)
+        exe = g_build_filename(MILLERX_BINDIR, "millerx", NULL);
+    GPtrArray *argv = g_ptr_array_new_with_free_func(g_free);
+    g_ptr_array_add(argv, exe);
+    for (GList *l = wins; l; l = l->next) {
+        Win *w = g_object_get_data(G_OBJECT(l->data), "millerx-win");
+        if (!w || w->dead)
+            continue;
+        GFile *f = win_current_folder(w);
+        char *p = g_file_get_path(f);
+        g_ptr_array_add(argv, p ? p : g_file_get_uri(f));
+        g_object_unref(f);
+    }
+    g_ptr_array_add(argv, NULL);
+    GError *err = NULL;
+    if (spawn_child(NULL, (char **) argv->pdata, G_SPAWN_DEFAULT, &err)) {
+        g_application_quit(G_APPLICATION(app));
+    } else {
+        Win *w = wins ? g_object_get_data(G_OBJECT(wins->data), "millerx-win") : NULL;
+        if (w)
+            win_error(w, _("Couldn't restart millerX"), err->message);
+        g_error_free(err);
+    }
+    g_ptr_array_unref(argv);
+    g_list_free(wins);
 }

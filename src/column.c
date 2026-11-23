@@ -358,6 +358,35 @@ static void on_selection(GtkTreeSelection *sel, Column *c)
     win_column_selected(c->win, c);
 }
 
+/* The gallery's picks shown in this column (the folder's own one): the same rows selected and the
+ * first scrolled into view, without the usual consequences (the preview keeps the gallery). */
+void column_mark_files(Column *c, GList *files)
+{
+    GtkTreeSelection *sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(c->view));
+    g_signal_handlers_block_by_func(sel, on_selection, c);
+    gtk_tree_selection_unselect_all(sel);
+    GtkTreeModel *m = GTK_TREE_MODEL(c->store);
+    GtkTreeIter it;
+    gboolean first = TRUE;
+    for (gboolean ok = gtk_tree_model_get_iter_first(m, &it); ok; ok = gtk_tree_model_iter_next(m, &it)) {
+        GFile *f;
+        gtk_tree_model_get(m, &it, C_FILE, &f, -1);
+        for (GList *l = files; l && f; l = l->next)
+            if (g_file_equal(f, l->data)) {
+                gtk_tree_selection_select_iter(sel, &it);
+                if (first) {
+                    GtkTreePath *p = gtk_tree_model_get_path(m, &it);
+                    gtk_tree_view_scroll_to_cell(GTK_TREE_VIEW(c->view), p, NULL, FALSE, 0, 0);
+                    gtk_tree_path_free(p);
+                    first = FALSE;
+                }
+                break;
+            }
+        g_clear_object(&f);
+    }
+    g_signal_handlers_unblock_by_func(sel, on_selection, c);
+}
+
 static void on_activated(GtkTreeView *v, GtkTreePath *path, GtkTreeViewColumn *col, Column *c)
 {
     (void) v; (void) col;

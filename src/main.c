@@ -21,6 +21,7 @@ static const char FM1_XML[] =
     "</interface></node>";
 
 /* started by D-Bus for "Show in folder" (millerx --dbus): no window of our own, only the asked one */
+char *LANGUAGE_AT_START;
 static gboolean DBUS_ONLY;
 static guint DBUS_WAIT;
 
@@ -115,16 +116,33 @@ int main(int argc, char **argv)
         g_print("millerX %s\n", MILLERX_VERSION);
         return 0;
     }
-    /* Settings → Language: English anyway, or the wizard's English; "system" = the system's.
+    /* Settings → Language: English anyway, the wizard's English or Viennese; "system" = the system's.
      * LANGUAGE also turns GTK's own words (buttons, the colour picker) the same way. */
+    /* LANGUAGE as the session had it, kept for the programs we start (and for a restart, which
+     * must not inherit the choice of this run) */
+    const char *orig = getenv("MILLERX_LANG0");
+    if (orig) {
+        if (!strncmp(orig, "set:", 4))
+            setenv("LANGUAGE", orig + 4, 1);
+        else
+            unsetenv("LANGUAGE");
+    } else {
+        const char *l = getenv("LANGUAGE");
+        char *v = l ? g_strconcat("set:", l, NULL) : g_strdup("unset");
+        setenv("MILLERX_LANG0", v, 1);
+        g_free(v);
+    }
     char *lang = look_language();
+    LANGUAGE_AT_START = g_strdup(lang);
     if (!strcmp(lang, "en"))
         setenv("LANGUAGE", "en", 1);
     else if (!strcmp(lang, "wizard"))
         setenv("LANGUAGE", "en@wizard:en", 1);
+    else if (!strcmp(lang, "wienerisch"))           /* Viennese; what it lacks (GTK's own words) in German */
+        setenv("LANGUAGE", "de@wienerisch:de", 1);
     setlocale(LC_ALL, "");
     if (strcmp(lang, "system")) {
-        /* with messages in the C locale LANGUAGE is ignored: the wizard needs a real English one */
+        /* with messages in the C locale LANGUAGE is ignored: the choices above need a real one */
         const char *m = setlocale(LC_MESSAGES, NULL);
         if (m && (!strcmp(m, "C") || !strcmp(m, "POSIX")))
             setlocale(LC_MESSAGES, "C.UTF-8");

@@ -1,3 +1,12 @@
+millerx (0.7.7) unstable; urgency=medium
+
+  * Translations: German and Greek; Settings -> Language: System, English,
+    Wizard or Wienerisch (joke languages). Built when msgfmt is there.
+  * Gallery: a picked thumbnail is highlighted in the folder's column too.
+  * Man page and AppStream metainfo.
+
+ -- overcatbe <1771834+overcatbe@users.noreply.github.com>  Mon, 23 Nov 2026 09:12:01 +0200
+
 millerx (0.7.6) unstable; urgency=medium
 
   * Search (Ctrl+F): names in this folder and every folder below it.

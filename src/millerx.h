@@ -61,13 +61,17 @@ typedef struct {
     gboolean use_pkexec;    /* off: no "Open as root" anywhere */
     gboolean use_blender;   /* blender-thumbnailer: the picture saved inside .blend files */
     int thumb_size;         /* TSIZE_SMALL, _MEDIUM, _LARGE */
-    char *language;         /* "system", "en" or "wizard": read once at start (look_language) */
+    char *language;         /* "system", "en", "wizard" or "wienerisch": read once at start */
 } Look;
 
 extern Look LOOK;
 
 void look_load(void);
 char *look_language(void);             /* the [look] language setting, before GTK starts */
+extern char *LANGUAGE_AT_START;        /* the language this run started with */
+char **child_envp(void);               /* our environment, LANGUAGE as the session had it */
+GAppLaunchContext *child_launch_context(void);
+void app_restart(GtkApplication *app); /* same windows again in a new process (new language) */
 gboolean look_save(GError **err);
 
 /* where the last closed window was ([window] in millerx.conf); x/y only on X11 */
@@ -253,6 +257,7 @@ gboolean column_select_name(Column *c, const char *name);
 void column_add_file(Column *c, GFile *f);
 void column_remove_file(Column *c, GFile *f);
 void column_set_width(Column *c, int w);
+void column_mark_files(Column *c, GList *files);   /* select rows quietly (the gallery's picks) */
 
 /* ---- preview (preview.c) --------------------------------------------------- */
 Preview *preview_new(Win *w);

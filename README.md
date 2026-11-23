@@ -76,6 +76,10 @@ millerX carries his name.
   millerX never sees it. A root window shows a red warning bar.
 - **Highlight colour** of your own, chosen live in the settings, for millerX or for every
   GTK 3 program (a marked block in `~/.config/gtk-3.0/gtk.css`, removable again).
+- **Languages:** English, German and Greek, following your system; Settings → Language can
+  also pick English anyway, or one of two joke languages: **Wizard** ("Banish to the Void",
+  "Thou art not worthy") and **Wienerisch** (Viennese slang, root is "da Kaiser").
+  Translators welcome: copy `po/millerx.pot` to `po/xx.po`, translate, send a pull request.
 - Columns follow changes on disk. Names sort case-insensitive and naturally (file2 before
   file10), folders first (optional).
 

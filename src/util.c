@@ -137,3 +137,28 @@ gpointer obj_copy(gconstpointer src, gpointer data)
     (void) data;
     return g_object_ref((gpointer) src);
 }
+
+/* Programs we start get the language the session had, not the one chosen in millerX's settings
+ * (main() keeps it in MILLERX_LANG0). */
+char **child_envp(void)
+{
+    char **env = g_get_environ();
+    const char *orig = g_environ_getenv(env, "MILLERX_LANG0");
+    if (orig && !strncmp(orig, "set:", 4))
+        env = g_environ_setenv(env, "LANGUAGE", orig + 4, TRUE);
+    else if (orig)
+        env = g_environ_unsetenv(env, "LANGUAGE");
+    return g_environ_unsetenv(env, "MILLERX_LANG0");
+}
+
+GAppLaunchContext *child_launch_context(void)
+{
+    GAppLaunchContext *ctx = g_app_launch_context_new();
+    const char *orig = g_getenv("MILLERX_LANG0");
+    if (orig && !strncmp(orig, "set:", 4))
+        g_app_launch_context_setenv(ctx, "LANGUAGE", orig + 4);
+    else if (orig)
+        g_app_launch_context_unsetenv(ctx, "LANGUAGE");
+    g_app_launch_context_unsetenv(ctx, "MILLERX_LANG0");
+    return ctx;
+}

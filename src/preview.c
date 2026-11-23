@@ -951,6 +951,23 @@ static GtkFlowBoxChild *thumb_by_path(Preview *p, const char *path)
     return c;
 }
 
+/* what is picked in the gallery is highlighted in the folder's column too, so you see where it is */
+static void on_thumbs_picked(GtkFlowBox *fb, Preview *p)
+{
+    if (!p->current)
+        return;
+    for (GList *l = p->win->columns; l; l = l->next) {
+        Column *c = l->data;
+        if (!c->closed && !c->computer && g_file_equal(c->gfile, p->current)) {
+            GList *sel = thumbs_selected(p), *files = thumbs_files(sel);
+            column_mark_files(c, files);
+            g_list_free_full(files, g_object_unref);
+            g_list_free(sel);
+            break;
+        }
+    }
+}
+
 /* an event's position in the grid's own coordinates (events may come from a child's window) */
 static void grid_pos(GtkWidget *grid, GdkWindow *win, double ex, double ey, int *x, int *y)
 {
@@ -1824,6 +1841,7 @@ Preview *preview_new(Win *w)
     gtk_flow_box_set_selection_mode(GTK_FLOW_BOX(p->grid), GTK_SELECTION_MULTIPLE);   /* Ctrl/Shift+click */
     gtk_widget_set_valign(p->grid, GTK_ALIGN_START);
     g_signal_connect(p->grid, "child-activated", G_CALLBACK(on_thumb_activated), p);
+    g_signal_connect(p->grid, "selected-children-changed", G_CALLBACK(on_thumbs_picked), p);
     g_signal_connect(p->grid, "button-press-event", G_CALLBACK(on_grid_button), p);
     gtk_widget_add_events(p->grid, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK);
     g_signal_connect(p->grid, "motion-notify-event", G_CALLBACK(on_grid_motion), p);

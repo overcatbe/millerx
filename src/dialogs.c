@@ -369,7 +369,7 @@ typedef struct {
     Win *w;
     GtkWidget *auto_rb, *own_rb, *colour, *width, *style, *pw, *cw, *ff, *sh;
     GtkWidget *cache_size, *cache_clear, *cache_mb, *cache_days, *cache_auto;
-    GtkWidget *sort_list, *names, *thumbs, *tsize, *lang;
+    GtkWidget *sort_list, *names, *thumbs, *tsize, *lang, *lang_note;
     GtkWidget *use[4];         /* the optional helpers, when installed; NULL when not */
     GtkWidget *hl_auto, *hl_own, *hl_colour, *hl_sys, *hl_unsys;
 } Set;
@@ -408,6 +408,7 @@ static void settings_changed(GtkWidget *any, Set *s)
     nl.folders_first = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->ff));
     nl.show_hidden = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->sh));
     nl.language = (char *) gtk_combo_box_get_active_id(GTK_COMBO_BOX(s->lang));   /* copied by app_apply_look */
+    gtk_widget_set_visible(s->lang_note, g_strcmp0(nl.language, LANGUAGE_AT_START ? LANGUAGE_AT_START : "system"));
     nl.gallery_names = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->names));
     gboolean *uses[] = { &nl.use_ffmpeg, &nl.use_pdftoppm, &nl.use_pkexec, &nl.use_blender };
     for (int i = 0; i < 4; i++)
@@ -816,10 +817,20 @@ void dialog_settings(Win *w)
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->lang), "system", _("System"));
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->lang), "en", _("English"));
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->lang), "wizard", _("Wizard (English, of a sort)"));
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->lang), "wienerisch", _("Wienerisch (Viennese slang)"));
     gtk_combo_box_set_active_id(GTK_COMBO_BOX(s->lang), LOOK.language ? LOOK.language : "system");
     gtk_widget_set_tooltip_text(s->lang, _("System: the language your computer is set to (English where there is "
                                            "no translation). Takes effect the next time millerX starts."));
     srow(grid, &r, _("Language"), s->lang);
+    /* a language other than the one millerX started with: how to get it now */
+    s->lang_note = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+    GtkWidget *ln = gtk_label_new(_("Takes effect after a restart."));
+    gtk_widget_set_opacity(ln, 0.8);
+    GtkWidget *rb = gtk_button_new_with_label(_("Restart now"));
+    g_signal_connect_swapped(rb, "clicked", G_CALLBACK(app_restart), s->w->app);
+    gtk_box_pack_start(GTK_BOX(s->lang_note), ln, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(s->lang_note), rb, FALSE, FALSE, 0);
+    srow(grid, &r, "", s->lang_note);
     section(&grid, &r, _("Preview"));
     s->pw = gtk_spin_button_new_with_range(200, 900, 10);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(s->pw), LOOK.preview_width);
@@ -906,6 +917,7 @@ void dialog_settings(Win *w)
     SECTIONS = NULL;
     g_clear_object(&LABELS);           /* the labels keep the group alive */
     gtk_widget_show_all(d);
+    gtk_widget_set_visible(s->lang_note, g_strcmp0(LOOK.language, LANGUAGE_AT_START ? LANGUAGE_AT_START : "system"));
     gtk_notebook_set_current_page(GTK_NOTEBOOK(nb), LAST_TAB);
     g_signal_connect(nb, "switch-page", G_CALLBACK(on_tab), NULL);
 }

@@ -65,6 +65,12 @@
   </keywords>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="0.7.7" date="2026-11-23">
+      <description>
+        <p>Translations (German, Greek, and two joke languages: Wizard and Wienerisch), a man page,
+        and gallery picks highlighted in the column.</p>
+      </description>
+    </release>
     <release version="0.7.6" date="2026-11-23">
       <description>
         <p>Search, a trash window, checksums, Blender previews, thumbnail sizes, Set default

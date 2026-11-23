@@ -90,7 +90,8 @@ void look_load(void)
     LOOK.gallery_names = get_bool(kf, "look", "gallery_names", TRUE);
     g_free(LOOK.language);
     LOOK.language = get_str(kf, "look", "language");
-    if (!LOOK.language || (strcmp(LOOK.language, "en") && strcmp(LOOK.language, "wizard"))) {
+    if (!LOOK.language || (strcmp(LOOK.language, "en") && strcmp(LOOK.language, "wizard")
+                              && strcmp(LOOK.language, "wienerisch"))) {
         g_free(LOOK.language);
         LOOK.language = g_strdup("system");
     }

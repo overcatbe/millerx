@@ -1,14 +1,14 @@
 # Maintainer: overcatbe <1771834+overcatbe@users.noreply.github.com>
 # Contributor: Claude (Anthropic)
 pkgname=millerx
-pkgver=0.7.6
+pkgver=0.7.7
 pkgrel=1
 pkgdesc="Small native file browser with Miller columns (GTK 3)"
 arch=('x86_64' 'aarch64')
 url="https://github.com/overcatbe/millerx"
 license=('GPL-2.0-or-later')
 depends=('gtk3' 'glib2' 'libarchive' 'libwebp' 'hicolor-icon-theme')
-makedepends=('meson' 'ninja')
+makedepends=('meson' 'ninja' 'gettext')
 options=('!debug')
 optdepends=('poppler: PDF preview (pdftoppm)'
             'ffmpeg: AVIF, HEIC and other pictures gdk-pixbuf cannot read'

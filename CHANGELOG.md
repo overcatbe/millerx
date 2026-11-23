@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.7.7 (not released yet)
+
+- **Gallery picks show in the column:** clicking a thumbnail highlights the same file in the
+  folder's column (and scrolls to it), so you see where you are; the gallery stays. Asked for
+  on GitHub.
+
+- **Languages:** millerX speaks your system's language where there is a translation: German and
+  Greek so far. Settings → Language: System, English, Wizard (English, as a pompous old sorcerer
+  would put it) or Wienerisch (Viennese slang). Changing it offers "Restart now": millerX comes
+  back at once with the same windows and folders in the new language (not while files are being
+  copied). Programs opened from millerX keep your system's language. Translators welcome: see po/.
+
+- **Man page** (`man millerx`) and AppStream metainfo for software centres.
+
 ## 0.7.6 (2026-11-23)
 
 - **Names under thumbnails on by default** (Settings → Look → Gallery). Your own choice, once saved,
