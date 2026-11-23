@@ -80,7 +80,9 @@ millerX carries his name.
 - **Languages:** English, German and Greek, following your system; Settings → Language can
   also pick English anyway, or one of two joke languages: **Wizard** ("Banish to the Void",
   "Thou art not worthy") and **Wienerisch** (Viennese slang, root is "da Kaiser").
-  Translators welcome: copy `po/millerx.pot` to `po/xx.po`, translate, send a pull request.
+  The Greek isn't from a native speaker, so corrections are very welcome. Translators welcome
+  too: copy `po/millerx.pot` to `po/xx.po`, translate, send a pull request. Only the language in
+  use is ever loaded; each one is about 30 KB on disk.
 - Columns follow changes on disk. Names sort case-insensitive and naturally (file2 before
   file10), folders first (optional).
 
@@ -170,6 +172,9 @@ meson setup build --prefix=/usr
 ninja -C build
 sudo ninja -C build install
 ```
+
+The translations are built when `msgfmt` (gettext) is there, otherwise millerX is simply English.
+To leave them out on purpose: `meson setup build --prefix=/usr -Dnls=disabled`.
 
 ## Settings
 

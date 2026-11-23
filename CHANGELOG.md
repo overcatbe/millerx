@@ -12,7 +12,7 @@
   on GitHub.
 
 - **Languages:** millerX speaks your system's language where there is a translation: German and
-  Greek so far. Settings → Language: System, English, Wizard (English, as a pompous old sorcerer
+  Greek so far (the Greek isn't from a native speaker: corrections are very welcome). Settings → Language: System, English, Wizard (English, as a pompous old sorcerer
   would put it) or Wienerisch (Viennese slang). Changing it offers "Restart now": millerX comes
   back at once with the same windows and folders in the new language (not while files are being
   copied). Programs opened from millerX keep your system's language. Translators welcome: see po/.
