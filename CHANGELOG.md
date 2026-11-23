@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.7.7 (not released yet)
+## 0.7.7 (2026-11-23)
 
 - **Gallery picks show in the column:** clicking a thumbnail highlights the same file in the
   folder's column (and scrolls to it), so you see where you are; the gallery stays. Asked for

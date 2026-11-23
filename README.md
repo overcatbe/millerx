@@ -4,13 +4,12 @@ A small, native file browser with **Miller columns**: every folder from `/` down
 where you are sits in its own column, and the selected file is previewed on the right.
 Like a mind map of your disk. Written in C with GTK 3 and GIO.
 
-> **New in 0.7.6:** search (Ctrl+F) through this folder and all below it · a Trash window
-> (last line of the bookmarks menu) to put back, delete or empty, sorted by name, size, newest or
-> oldest · answers browsers' "Show in folder" · Checksums… · pictures of Blender files ·
-> thumbnail sizes · Open with → Set default · names under thumbnails on by default.
+> **New in 0.7.7:** languages: German and Greek, plus two joke languages, **Wizard** and
+> **Wienerisch** (Settings → Language, with "Restart now") · a clicked thumbnail lights up in its
+> column · `man millerx`.
 >
-> **0.7.5:** a double-click starts programs, asks before running scripts (Run, Run in
-> terminal, Open) and starts .desktop launchers · the disk fill bar in your highlight colour.
+> **0.7.6:** search (Ctrl+F) · a Trash window · "Show in folder" · Checksums… · Blender pictures ·
+> thumbnail sizes · Open with → Set default.
 >
 > All the details: [CHANGELOG](CHANGELOG.md).
 
