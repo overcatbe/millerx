@@ -1222,7 +1222,7 @@ typedef struct {
 
 enum { A_OPEN_DIR, A_OPEN, A_OPEN_WITH, A_CUT, A_COPY, A_PASTE_INTO, A_PASTE, A_RENAME, A_TRASH,
        A_DELETE, A_NEW_FOLDER, A_TERMINAL, A_COPY_PATH, A_BOOKMARK, A_PROPERTIES, A_ROOT, A_SHOW,
-       A_NEW_WINDOW, A_EXTRACT_HERE, A_EXTRACT_FOLDER, A_COMPRESS, A_SET_DEFAULT, A_CHECKSUMS };
+       A_NEW_WINDOW, A_EXTRACT_HERE, A_EXTRACT_FOLDER, A_COMPRESS, A_SET_DEFAULT, A_CHECKSUMS, A_COMPARE };
 
 /* ---- archives ------------------------------------------------------------------------------ */
 /* Asks for the archive's name and format, then packs the files (which share one folder) there. */
@@ -1381,8 +1381,12 @@ static void act_run(GtkMenuItem *mi, Act *a)
     case A_COMPRESS: compress_dialog(w, a->files); break;
     case A_SET_DEFAULT: set_default_app(w, a->app, a->files->data); break;
     case A_CHECKSUMS: dialog_checksums(w, a->files->data); break;
+    case A_COMPARE: compare_files(w, a->files->data, a->files->next->data); break;
     case A_PROPERTIES:
-        dialog_properties(w, a->files && (!a->files->next || !c) ? a->files->data : c->gfile);
+        if (a->files && a->files->next)
+            dialog_properties_multi(w, a->files);   /* several: one window for all of them */
+        else
+            dialog_properties(w, a->files ? a->files->data : c->gfile);
         break;
     }
 }
@@ -1650,6 +1654,8 @@ void win_context_menu(Win *w, Column *c, GdkEventButton *ev)
         item(menu, w, c, files, NULL, A_COPY_PATH, _("Copy path"), NULL, TRUE);
     if (n == 1 && !single_dir && !is_dir(files->data, TRUE))
         item(menu, w, c, files, NULL, A_CHECKSUMS, _("Checksums…"), NULL, TRUE);
+    if (n == 2)
+        item(menu, w, c, files, NULL, A_COMPARE, _("Compare"), NULL, TRUE);
     item(menu, w, c, NULL, folder, A_BOOKMARK, _("Add to bookmarks"), "<Control>d", TRUE);
     if (!is_root() && LOOK.use_pkexec)
         item(menu, w, c, NULL, folder, A_ROOT, _("Open as root…"), NULL, TRUE);
@@ -1719,6 +1725,8 @@ void win_file_menu(Win *w, GList *files, GdkEventButton *ev, GtkWidget *attach)
     item(menu, w, NULL, files, NULL, A_COPY_PATH, one ? _("Copy path") : _("Copy paths"), NULL, TRUE);
     if (one && !isdir)
         item(menu, w, NULL, files, NULL, A_CHECKSUMS, _("Checksums…"), NULL, TRUE);
+    if (g_list_length(files) == 2)
+        item(menu, w, NULL, files, NULL, A_COMPARE, _("Compare"), NULL, TRUE);
     item(menu, w, NULL, files, NULL, A_PROPERTIES, _("Properties…"), "<Alt>Return", one);
     gtk_widget_show_all(menu);
     gtk_menu_attach_to_widget(GTK_MENU(menu), attach, NULL);
@@ -1777,7 +1785,10 @@ static gboolean on_key(GtkWidget *win, GdkEventKey *ev, Win *w)
     if (alt && (k == GDK_KEY_Return || k == GDK_KEY_KP_Enter)) {
         Column *c = g_list_find(w->columns, w->focused) ? w->focused : NULL;
         GFile *f = NULL;
-        if (c && column_selected_single(c, &f, NULL)) {
+        GList *sel = c ? column_selected_files(c) : NULL;
+        if (sel && sel->next) {
+            dialog_properties_multi(w, sel);
+        } else if (c && column_selected_single(c, &f, NULL)) {
             dialog_properties(w, f);
         } else {
             GFile *cur = win_current_folder(w);
@@ -1785,6 +1796,7 @@ static gboolean on_key(GtkWidget *win, GdkEventKey *ev, Win *w)
             g_object_unref(cur);
         }
         g_clear_object(&f);
+        g_list_free_full(sel, g_object_unref);
         return TRUE;
     }
     if (ctrl && (k == GDK_KEY_d || k == GDK_KEY_D)) {
@@ -2106,6 +2118,9 @@ void app_apply_look(GtkApplication *app, const Look *nl)
     gboolean names = nl->gallery_names != LOOK.gallery_names || nl->thumbs != LOOK.thumbs ||
                      nl->use_ffmpeg != LOOK.use_ffmpeg || nl->use_pdftoppm != LOOK.use_pdftoppm ||
                      nl->use_blender != LOOK.use_blender || nl->thumb_size != LOOK.thumb_size;
+    char *cmp = g_strdup(nl->compare && *nl->compare ? nl->compare : "auto");
+    g_free(LOOK.compare);
+    LOOK.compare = cmp;
     char *col = g_strdup(nl->divider_color), *hl = g_strdup(nl->highlight);
     char *lang = g_strdup(nl->language ? nl->language : "system");
     gboolean hl_changed = g_strcmp0(nl->highlight, LOOK.highlight);

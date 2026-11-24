@@ -5,6 +5,7 @@
 #include <string.h>
 
 static const GtkTargetEntry URI_TARGET[] = { { (char *) "text/uri-list", 0, 0 } };
+static gboolean DRAG_ASK;             /* the running drag started with the right button: its drop asks */
 
 void column_ref(Column *c)
 {
@@ -460,6 +461,8 @@ static gboolean on_button(GtkWidget *view, GdkEventButton *ev, Column *c)
     }
     if (ev->type != GDK_BUTTON_PRESS || ev->button != 3)
         return FALSE;
+    /* the right button: the row is chosen now; the menu comes when it's let go, unless it
+     * became a drag first (then the drop asks Copy / Move / Link) */
     GtkTreeSelection *sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
     if (gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(view), ev->x, ev->y, &p, NULL, NULL, NULL)) {
         if (!gtk_tree_selection_path_is_selected(sel, p)) {
@@ -471,7 +474,54 @@ static gboolean on_button(GtkWidget *view, GdkEventButton *ev, Column *c)
         gtk_tree_selection_unselect_all(sel);
     }
     gtk_widget_grab_focus(view);
-    win_context_menu(c->win, c, ev);
+    c->right_down = TRUE;
+    c->right_x = ev->x, c->right_y = ev->y;
+    return TRUE;
+}
+
+/* the right button held and moved: a drag we start ourselves (GtkTreeView starts its own only with
+ * the left one); its drop asks what to do */
+static gboolean on_motion(GtkWidget *view, GdkEventMotion *ev, Column *c)
+{
+    if (!c->right_down || !(ev->state & GDK_BUTTON3_MASK) ||
+        !gtk_drag_check_threshold(view, (int) c->right_x, (int) c->right_y, (int) ev->x, (int) ev->y))
+        return FALSE;
+    c->right_down = FALSE;
+    GtkTargetList *tl = gtk_target_list_new(URI_TARGET, 1);
+    gtk_drag_begin_with_coordinates(view, tl, GDK_ACTION_COPY | GDK_ACTION_MOVE | GDK_ACTION_LINK | GDK_ACTION_ASK, 3,
+                                    (GdkEvent *) ev, (int) c->right_x, (int) c->right_y);
+    gtk_target_list_unref(tl);
+    DRAG_ASK = TRUE;
+    return TRUE;
+}
+
+/* after the tree view has had the release too (it holds the mouse since the press, and only lets
+ * go when it sees it): then the menu can take the mouse */
+typedef struct {
+    Column *c;
+    GdkEvent *ev;
+} MenuLater;
+
+static gboolean menu_later(gpointer data)
+{
+    MenuLater *m = data;
+    if (!m->c->closed)
+        win_context_menu(m->c->win, m->c, (GdkEventButton *) m->ev);
+    gdk_event_free(m->ev);
+    g_free(m);
+    return G_SOURCE_REMOVE;
+}
+
+static gboolean on_button_release(GtkWidget *view, GdkEventButton *ev, Column *c)
+{
+    (void) view;
+    if (ev->button != 3 || !c->right_down)
+        return FALSE;
+    c->right_down = FALSE;
+    MenuLater *m = g_new0(MenuLater, 1);
+    m->c = c;
+    m->ev = gdk_event_copy((GdkEvent *) ev);
+    g_idle_add(menu_later, m);
     return TRUE;
 }
 
@@ -654,6 +704,97 @@ static gboolean on_key(GtkWidget *view, GdkEventKey *ev, Column *c)
 }
 
 /* ---- drag & drop ----------------------------------------------------------------- */
+/* A drag with the right button (or a drop with Alt held, also from other programs) asks what to
+ * do: Copy here, Move here, Link here, Cancel. The left button does what it always did. */
+
+static void on_drag_begin(GtkWidget *view, GdkDragContext *ctx, Column *c)
+{
+    (void) view; (void) ctx;
+    if (win_pointer_mask(c->win) & GDK_BUTTON3_MASK)
+        DRAG_ASK = TRUE;            /* (on_motion set it already for the right button's drag) */
+    c->right_down = FALSE;          /* a drag, not a click: no context menu at the end */
+}
+
+static void on_drag_end(GtkWidget *view, GdkDragContext *ctx, gpointer d)
+{
+    (void) view; (void) ctx; (void) d;
+    DRAG_ASK = FALSE;
+}
+
+typedef struct {
+    Win *win;
+    GList *srcs;
+    GFile *target;
+} Drop;
+
+static void drop_free(Drop *d)
+{
+    g_list_free_full(d->srcs, g_object_unref);
+    g_object_unref(d->target);
+    win_unref(d->win);
+    g_free(d);
+}
+
+/* symbolic links in the target, one per item, pointing at where it is */
+static void link_into(Win *w, GList *srcs, GFile *target)
+{
+    int failed = 0;
+    char *why = NULL;
+    for (GList *l = srcs; l; l = l->next) {
+        char *src = g_file_get_path(l->data), *base = g_file_get_basename(l->data);
+        GFile *dest = g_file_get_child(target, base);
+        GError *err = NULL;
+        if (!src || !g_file_make_symbolic_link(dest, src, NULL, &err)) {
+            failed++;
+            if (err && !why)
+                why = g_strdup(err->message);
+        }
+        g_clear_error(&err);
+        g_object_unref(dest);
+        g_free(src);
+        g_free(base);
+    }
+    if (failed)
+        win_error(w, _("Couldn't make the link"), why ? why : "");
+    g_free(why);
+}
+
+static void on_drop_choice(GtkMenuItem *mi, Drop *d)
+{
+    int what = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(mi), "what"));
+    if (what == 2)
+        link_into(d->win, d->srcs, d->target);
+    else
+        job_run(d->win, what == 1, d->srcs, d->target);
+}
+
+static gpointer ref_copy(gconstpointer src, gpointer data)
+{
+    (void) data;
+    return g_object_ref((gpointer) src);
+}
+
+static void ask_drop(Column *c, GList *srcs, GFile *target)
+{
+    Drop *d = g_new0(Drop, 1);
+    d->win = win_ref(c->win);
+    d->srcs = g_list_copy_deep(srcs, ref_copy, NULL);
+    d->target = g_object_ref(target);
+    GtkWidget *menu = gtk_menu_new();
+    const char *names[] = { _("Copy here"), _("Move here"), _("Link here") };
+    for (int i = 0; i < 3; i++) {
+        GtkWidget *mi = gtk_menu_item_new_with_label(names[i]);
+        g_object_set_data(G_OBJECT(mi), "what", GINT_TO_POINTER(i));
+        g_signal_connect(mi, "activate", G_CALLBACK(on_drop_choice), d);
+        gtk_menu_shell_append(GTK_MENU_SHELL(menu), mi);
+    }
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), gtk_separator_menu_item_new());
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), gtk_menu_item_new_with_label(_("Cancel")));
+    g_object_set_data_full(G_OBJECT(menu), "drop", d, (GDestroyNotify) drop_free);
+    gtk_menu_attach_to_widget(GTK_MENU(menu), c->view, NULL);
+    gtk_widget_show_all(menu);
+    gtk_menu_popup_at_pointer(GTK_MENU(menu), NULL);
+}
 static void on_drag_get(GtkWidget *view, GdkDragContext *ctx, GtkSelectionData *data,
                         guint info, guint t, Column *c)
 {
@@ -709,6 +850,10 @@ static void on_drag_received(GtkWidget *view, GdkDragContext *ctx, int x, int y,
                 outside = g_list_append(outside, g_object_ref(l->data));
         win_trash(c->win, outside);
         g_list_free_full(outside, g_object_unref);
+    } else if (srcs && (DRAG_ASK || (win_pointer_mask(c->win) & GDK_MOD1_MASK))) {
+        DRAG_ASK = FALSE;
+        ask_drop(c, srcs, target);
+        g_list_free_full(srcs, g_object_unref);
     } else if (srcs) {
         GdkModifierType mask = win_pointer_mask(c->win);
         gboolean move;
@@ -960,6 +1105,8 @@ Column *column_new(Win *w, GFile *gfile, GPtrArray *chain)
                      G_CALLBACK(on_selection), c);
     g_signal_connect(c->view, "row-activated", G_CALLBACK(on_activated), c);
     g_signal_connect(c->view, "button-press-event", G_CALLBACK(on_button), c);
+    g_signal_connect(c->view, "button-release-event", G_CALLBACK(on_button_release), c);
+    g_signal_connect(c->view, "motion-notify-event", G_CALLBACK(on_motion), c);
     g_signal_connect(c->view, "key-press-event", G_CALLBACK(on_key), c);
     g_signal_connect(c->view, "focus-in-event", G_CALLBACK(on_focus), c);
 
@@ -969,9 +1116,11 @@ Column *column_new(Win *w, GFile *gfile, GPtrArray *chain)
         c->loaded = TRUE;
         return c;
     }
-    GdkDragAction actions = GDK_ACTION_COPY | GDK_ACTION_MOVE;
+    GdkDragAction actions = GDK_ACTION_COPY | GDK_ACTION_MOVE | GDK_ACTION_LINK | GDK_ACTION_ASK;
     gtk_tree_view_enable_model_drag_source(GTK_TREE_VIEW(c->view), GDK_BUTTON1_MASK, URI_TARGET, 1, actions);
     gtk_tree_view_enable_model_drag_dest(GTK_TREE_VIEW(c->view), URI_TARGET, 1, actions);
+    g_signal_connect(c->view, "drag-begin", G_CALLBACK(on_drag_begin), c);
+    g_signal_connect(c->view, "drag-end", G_CALLBACK(on_drag_end), NULL);
     g_signal_connect(c->view, "drag-data-get", G_CALLBACK(on_drag_get), c);
     g_signal_connect(c->view, "drag-data-received", G_CALLBACK(on_drag_received), c);
     g_signal_connect(c->view, "drag-data-delete", G_CALLBACK(on_drag_delete), NULL);

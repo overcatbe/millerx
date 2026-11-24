@@ -759,6 +759,53 @@ static gpointer list_thread(gpointer data)
 }
 
 /* Started a moment after a folder is shown, so stepping through folders with the keys loads nothing. */
+static gboolean start_grid(gpointer data);
+static void start_sizes(Preview *p, GPtrArray *paths, GtkWidget *size_l, GtkWidget *count_l,
+                        const char *single_dir);
+
+/* a folder's size count and gallery, started once its column is filled */
+typedef struct {
+    Preview *p;
+    char *dir;
+    GtkWidget *size_l, *count_l;    /* refs */
+    int waited;                     /* quarter seconds */
+} Later;
+
+static void later_free(gpointer data)
+{
+    Later *l = data;
+    g_free(l->dir);
+    g_object_unref(l->size_l);
+    g_object_unref(l->count_l);
+    g_free(l);
+}
+
+/* the folder's column is still reading its names? */
+static gboolean column_busy(Preview *p)
+{
+    if (!p->current)
+        return FALSE;
+    for (GList *c = p->win->columns; c; c = c->next) {
+        Column *col = c->data;
+        if (col->gfile && g_file_equal(col->gfile, p->current))
+            return !col->loaded;
+    }
+    return FALSE;
+}
+
+static gboolean folder_ready(gpointer data)
+{
+    Later *l = data;
+    Preview *p = l->p;
+    if (column_busy(p) && ++l->waited < 40)         /* wait for it, ten seconds at most */
+        return G_SOURCE_CONTINUE;
+    GPtrArray *paths = g_ptr_array_new_with_free_func(g_free);
+    g_ptr_array_add(paths, g_strdup(l->dir));
+    start_sizes(p, paths, l->size_l, l->count_l, l->dir);
+    start_grid(p);                                  /* clears p->grid_timer: this one ends now */
+    return G_SOURCE_REMOVE;
+}
+
 static gboolean start_grid(gpointer data)
 {
     Preview *p = data;
@@ -1125,8 +1172,8 @@ static gboolean on_grid_key(GtkWidget *grid, GdkEventKey *ev, Preview *p)
         win_delete_forever(p->win, files);
     else if (k == GDK_KEY_Delete)
         win_trash(p->win, files);
-    else if (alt && (k == GDK_KEY_Return || k == GDK_KEY_KP_Enter) && one)
-        dialog_properties(p->win, files->data);
+    else if (alt && (k == GDK_KEY_Return || k == GDK_KEY_KP_Enter))
+        one ? dialog_properties(p->win, files->data) : dialog_properties_multi(p->win, files);
     else
         done = FALSE;
     (void) grid;
@@ -1751,13 +1798,17 @@ void preview_show_file(Preview *p, GFile *f)
     show_icon(p, g_file_info_get_icon(info));
     if (path) {
         if (isdir) {
-            p->grid_timer = g_timeout_add(250, start_grid, p);
             grid_watch(p);
             p->dir_size_l = g_object_ref(size_l);
             p->dir_count_l = g_object_ref(count_l);
-            GPtrArray *paths = g_ptr_array_new_with_free_func(g_free);
-            g_ptr_array_add(paths, g_strdup(path));
-            start_sizes(p, paths, size_l, count_l, path);
+            /* the size count and the gallery wait for the folder's column: first the names, then
+             * the rest, not all three at once on the disk */
+            Later *l = g_new0(Later, 1);
+            l->p = p;
+            l->dir = g_strdup(path);
+            l->size_l = g_object_ref(size_l);
+            l->count_l = g_object_ref(count_l);
+            p->grid_timer = g_timeout_add_full(G_PRIORITY_DEFAULT, 250, folder_ready, l, later_free);
         } else if (media_kind(ct) != MEDIA_NONE) {
             p->image_path = g_strdup(path);
             p->image_kind = media_kind(ct);

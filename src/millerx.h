@@ -62,6 +62,7 @@ typedef struct {
     gboolean use_blender;   /* blender-thumbnailer: the picture saved inside .blend files */
     int thumb_size;         /* TSIZE_SMALL, _MEDIUM, _LARGE */
     char *language;         /* "system", "en", "wizard", "wienerisch" or "own:NAME": read once at start */
+    char *compare;          /* what compares two files: "auto" (meld, kdiff3, kompare, diffuse) or a command */
 } Look;
 
 extern Look LOOK;
@@ -133,6 +134,8 @@ struct Column {
     GPtrArray *chain;          /* names still to select, one per column, when opening a path */
     char *pending_select;      /* select this name as soon as it shows up */
     gboolean loaded, closed;
+    gboolean right_down;       /* a right press that may still become a drag (the menu comes on release) */
+    double right_x, right_y;   /* where it was pressed */
     gboolean added_early;      /* a change on disk added a row while the folder was still being read */
     GtkListStore *store;
     GtkWidget *view, *scroller, *frame, *divider;
@@ -337,6 +340,8 @@ void thumbcache_auto_clean(void);
 typedef enum { CH_CANCEL, CH_SKIP, CH_BOTH, CH_REPLACE } Choice;
 Choice dialog_conflict(Win *w, GFile *src, GFile *dst, gboolean merge, gboolean *for_all);
 void dialog_properties(Win *w, GFile *f);
+void dialog_properties_multi(Win *w, GList *files);   /* several items: one window for all */
+void compare_files(Win *w, GFile *a, GFile *b);        /* the compare program, or diff -u in a window */
 void dialog_settings(Win *w);
 void dialog_about(Win *w);
 void dialog_checksums(Win *w, GFile *f);

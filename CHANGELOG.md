@@ -1,12 +1,28 @@
 # Changelog
 
-## Next
+## 0.8.3 (2026-11-24)
 
 - **The gallery shows files only.** Folder tiles are gone from it: a folder is never an end
   point, every folder tile looked the same, and they pushed the files you're looking for further
-  down. A folder full of folders now shows its details and no gallery; a mixed one shows just its
-  files. It's even a little lighter, and in a folder with many subfolders all the gallery's room
-  goes to files. Thanks, brobr!
+  down (that was also the big gap between names and pictures). A folder full of folders now shows
+  its details and no gallery; a mixed one shows just its files. In a folder with many subfolders
+  all the gallery's room goes to files. Thanks, brobr!
+- **Columns first:** a folder's size count and its gallery now wait until its column is filled,
+  so in a folder full of folders the names come at once instead of sharing the disk with the
+  rest.
+- **Properties of several items:** select a few files and folders, right click → Properties (or
+  Alt+Return): one window for all of them, with how many files and folders, their size counted
+  together, and the permissions: a box is ticked if all have it, empty if none has, and shows a
+  dash if some have it; a click sets it for all of them. Before, it showed the folder they're in
+  (hence "Enter" instead of "Exec"). Thanks, LQ!
+- **Drag with the right button, and millerX asks:** Copy here, Move here or **Link here** (a
+  symbolic link in the target folder). Holding Alt while dropping asks too, also for drags from
+  other programs. The left button does what it always did; a right click without moving still
+  opens the menu (now when you let go).
+- **Compare two files:** select two, right click → **Compare**. It opens your comparison program:
+  Settings → Optional helpers → **Compare with**: `auto` takes meld, kdiff3, kompare or diffuse,
+  whichever is there, or put your own command (the two files go at its end). With none of them,
+  millerX shows the differences itself (`diff -u`, or `diff -ru` for two folders).
 
 ## 0.8.2 (2026-11-23)
 

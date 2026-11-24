@@ -1,7 +1,7 @@
 # Maintainer: overcatbe <1771834+overcatbe@users.noreply.github.com>
 # Contributor: Claude (Anthropic)
 pkgname=millerx
-pkgver=0.8.2
+pkgver=0.8.3
 pkgrel=1
 pkgdesc="Lightweight but fully functional file manager with Miller columns (GTK 3)"
 arch=('x86_64' 'aarch64')

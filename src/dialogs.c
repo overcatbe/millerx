@@ -4,6 +4,7 @@
 #include "millerx.h"
 #include <errno.h>
 #include <string.h>
+#include <sys/wait.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -73,6 +74,7 @@ typedef struct {
     GtkWidget *label;     /* ref */
     GCancellable *stop;   /* ref; cancelled when the dialog closes */
     char *path;
+    char **roots;         /* several folders to count (Properties of a selection), or NULL: path */
     guint64 total, files, dirs;
     gboolean running;
 } Count;
@@ -107,6 +109,7 @@ static void count_post(Count *c, gboolean running)
     u->label = g_object_ref(c->label);
     u->stop = g_object_ref(c->stop);
     u->path = NULL;
+    u->roots = NULL;
     u->running = running;
     g_idle_add(count_show, u);
 }
@@ -115,7 +118,11 @@ static gpointer count_thread(gpointer data)
 {
     Count *c = data;
     GPtrArray *stack = g_ptr_array_new_with_free_func(g_free);
-    g_ptr_array_add(stack, g_strdup(c->path));
+    if (c->roots)
+        for (char **r = c->roots; *r; r++)
+            g_ptr_array_add(stack, g_strdup(*r));
+    else
+        g_ptr_array_add(stack, g_strdup(c->path));
     gint64 last = g_get_monotonic_time();
     while (stack->len && !g_cancellable_is_cancelled(c->stop)) {
         char *dpath = g_ptr_array_steal_index(stack, stack->len - 1);
@@ -146,6 +153,7 @@ static gpointer count_thread(gpointer data)
     }
     g_ptr_array_unref(stack);
     count_post(c, FALSE);
+    g_strfreev(c->roots);
     g_object_unref(c->label);
     g_object_unref(c->stop);
     g_free(c->path);
@@ -364,6 +372,306 @@ void dialog_properties(Win *w, GFile *f)
     g_object_unref(info);
 }
 
+/* ---- compare two files ------------------------------------------------------------------------- */
+static void compare_text(Win *w, const char *a, const char *b)
+{
+    gboolean dirs = g_file_test(a, G_FILE_TEST_IS_DIR) && g_file_test(b, G_FILE_TEST_IS_DIR);
+    const char *argv[] = { "diff", dirs ? "-ru" : "-u", a, b, NULL };
+    char *out = NULL, *err = NULL;
+    int status = 0;
+    GError *e = NULL;
+    if (!g_spawn_sync(NULL, (char **) argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &out, &err, &status, &e)) {
+        win_error(w, _("Couldn't compare"), e->message);
+        g_error_free(e);
+        return;
+    }
+    char *ta = g_path_get_basename(a), *tb = g_path_get_basename(b);
+    char *title = g_strdup_printf(_("%s and %s"), ta, tb);
+    GtkWidget *d = gtk_dialog_new_with_buttons(title, GTK_WINDOW(w->window), 0, _("Close"), GTK_RESPONSE_CLOSE, NULL);
+    g_free(title);
+    g_free(ta);
+    g_free(tb);
+    gtk_window_set_default_size(GTK_WINDOW(d), 760, 520);
+    GtkWidget *area = gtk_dialog_get_content_area(GTK_DIALOG(d));
+    if (out && *out) {                  /* the differences, as diff writes them */
+        GtkWidget *sc = gtk_scrolled_window_new(NULL, NULL);
+        GtkWidget *tv = gtk_text_view_new();
+        gtk_text_view_set_editable(GTK_TEXT_VIEW(tv), FALSE);
+        gtk_text_view_set_monospace(GTK_TEXT_VIEW(tv), TRUE);
+        char *valid = g_utf8_make_valid(out, -1);
+        gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(tv)), valid, -1);
+        g_free(valid);
+        gtk_container_add(GTK_CONTAINER(sc), tv);
+        gtk_box_pack_start(GTK_BOX(area), sc, TRUE, TRUE, 0);
+    } else {
+        GtkWidget *l = gtk_label_new(WIFEXITED(status) && WEXITSTATUS(status) == 0 ? _("The two are the same.")
+                                                                                   : (err && *err ? err : _("diff found nothing to show.")));
+        g_object_set(l, "margin", 20, NULL);
+        gtk_box_pack_start(GTK_BOX(area), l, TRUE, TRUE, 0);
+        gtk_window_set_default_size(GTK_WINDOW(d), 360, -1);
+    }
+    g_signal_connect(d, "response", G_CALLBACK(gtk_widget_destroy), NULL);
+    gtk_widget_show_all(d);
+    g_free(out);
+    g_free(err);
+}
+
+void compare_files(Win *w, GFile *fa, GFile *fb)
+{
+    char *a = g_file_get_path(fa), *b = g_file_get_path(fb);
+    if (!a || !b) {
+        win_error(w, _("Couldn't compare"), _("Only files on this computer can be compared."));
+        g_free(a);
+        g_free(b);
+        return;
+    }
+    char **argv = NULL;
+    const char *setting = LOOK.compare && *LOOK.compare ? LOOK.compare : "auto";
+    if (strcmp(setting, "auto")) {      /* your own command: the two files at its end */
+        int argc = 0;
+        GError *e = NULL;
+        if (!g_shell_parse_argv(setting, &argc, &argv, &e)) {
+            win_error(w, _("Couldn't compare"), e->message);
+            g_error_free(e);
+            g_free(a);
+            g_free(b);
+            return;
+        }
+    } else {
+        const char *tools[] = { "meld", "kdiff3", "kompare", "diffuse" };
+        for (int i = 0; i < 4 && !argv; i++) {
+            char *found = g_find_program_in_path(tools[i]);
+            if (found) {
+                argv = g_new0(char *, 2);
+                argv[0] = found;
+            }
+        }
+    }
+    if (!argv) {                        /* none: the differences as text */
+        compare_text(w, a, b);
+        g_free(a);
+        g_free(b);
+        return;
+    }
+    guint n = g_strv_length(argv);
+    argv = g_renew(char *, argv, n + 3);
+    argv[n] = a;
+    argv[n + 1] = b;
+    argv[n + 2] = NULL;
+    GError *e = NULL;
+    if (!g_spawn_async(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, NULL, &e)) {
+        win_error(w, _("Couldn't compare"), e->message);
+        g_error_free(e);
+    }
+    g_strfreev(argv);                   /* a and b with it */
+}
+
+/* ---- properties of several items: one window for all of them ---------------------------------- */
+typedef struct {
+    Win *w;
+    GPtrArray *paths;       /* the selected items */
+    GtkWidget *boxes[9];
+} MultiPerm;
+
+static void multi_free(MultiPerm *m)
+{
+    g_ptr_array_unref(m->paths);
+    g_free(m);
+}
+
+/* each box: all have it (ticked), none (clear) or some ("mixed": inconsistent) */
+static void multi_show(MultiPerm *m)
+{
+    for (int b = 0; b < 9; b++) {
+        int bit = 1 << (8 - b), on = 0, off = 0;
+        for (guint i = 0; i < m->paths->len; i++) {
+            struct stat st;
+            if (stat(g_ptr_array_index(m->paths, i), &st) == 0)
+                (st.st_mode & bit) ? on++ : off++;
+        }
+        GtkToggleButton *cb = GTK_TOGGLE_BUTTON(m->boxes[b]);
+        g_signal_handlers_block_matched(cb, G_SIGNAL_MATCH_DATA, 0, 0, NULL, NULL, m);
+        gtk_toggle_button_set_inconsistent(cb, on && off);
+        gtk_toggle_button_set_active(cb, on && !off);
+        g_signal_handlers_unblock_matched(cb, G_SIGNAL_MATCH_DATA, 0, 0, NULL, NULL, m);
+    }
+}
+
+/* a click sets the bit on every item (or takes it from every item), "mixed" or not */
+static void multi_toggled(GtkToggleButton *cb, MultiPerm *m)
+{
+    int bit = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(cb), "bit"));
+    gboolean set = gtk_toggle_button_get_active(cb) || gtk_toggle_button_get_inconsistent(cb);
+    int failed = 0;
+    const char *why = NULL;
+    for (guint i = 0; i < m->paths->len; i++) {
+        const char *path = g_ptr_array_index(m->paths, i);
+        struct stat st;
+        if (stat(path, &st) != 0)
+            continue;
+        mode_t mode = set ? (st.st_mode | bit) : (st.st_mode & ~bit);
+        if (chmod(path, mode & 07777) != 0) {
+            failed++;
+            why = g_strerror(errno);
+        }
+    }
+    if (failed) {
+        char *t = g_strdup_printf(ngettext("%d item wasn't changed: %s", "%d items weren't changed: %s", failed),
+                                  failed, why);
+        win_error(m->w, _("Couldn't change permissions"), t);
+        g_free(t);
+    }
+    multi_show(m);                  /* as they really are now */
+}
+
+void dialog_properties_multi(Win *w, GList *files)
+{
+    guint n = g_list_length(files);
+    MultiPerm *m = g_new0(MultiPerm, 1);
+    m->w = w;
+    m->paths = g_ptr_array_new_with_free_func(g_free);
+    guint64 file_bytes = 0, nfiles = 0, ndirs = 0;
+    GPtrArray *dirs = g_ptr_array_new();
+    char *owner = NULL, *parent = NULL;
+    gboolean same_owner = TRUE, same_parent = TRUE, all_mine = TRUE;
+    GIcon *icon = NULL;
+    for (GList *l = files; l; l = l->next) {
+        char *path = g_file_get_path(l->data);
+        if (!path)
+            continue;
+        GFileInfo *info = g_file_query_info(l->data, "standard::*,unix::*,owner::*", G_FILE_QUERY_INFO_NONE,
+                                            NULL, NULL);
+        if (!info) {
+            g_free(path);
+            continue;
+        }
+        gboolean isdir = g_file_info_get_file_type(info) == G_FILE_TYPE_DIRECTORY;
+        if (isdir) {
+            ndirs++;
+            g_ptr_array_add(dirs, g_strdup(path));
+        } else {
+            nfiles++;
+            file_bytes += (guint64) g_file_info_get_size(info);
+        }
+        if (!icon && g_file_info_get_icon(info))
+            icon = g_object_ref(g_file_info_get_icon(info));
+        const char *ou = g_file_info_get_attribute_string(info, "owner::user");
+        const char *og = g_file_info_get_attribute_string(info, "owner::group");
+        char *o = g_strdup_printf("%s : %s", ou ? ou : "?", og ? og : "?");
+        if (!owner)
+            owner = o;
+        else {
+            same_owner &= !strcmp(owner, o);
+            g_free(o);
+        }
+        all_mine &= g_file_info_get_attribute_uint32(info, "unix::uid") == getuid() || getuid() == 0;
+        GFile *par = g_file_get_parent(l->data);
+        char *pp = par ? file_path(par) : g_strdup("/");
+        g_clear_object(&par);
+        if (!parent)
+            parent = pp;
+        else {
+            same_parent &= !strcmp(parent, pp);
+            g_free(pp);
+        }
+        g_ptr_array_add(m->paths, path);
+        g_object_unref(info);
+    }
+    char *title = g_strdup_printf(ngettext("Properties: %u item", "Properties: %u items", n), n);
+    GtkWidget *d = gtk_dialog_new_with_buttons(title, GTK_WINDOW(w->window), 0, _("Close"), GTK_RESPONSE_CLOSE, NULL);
+    g_free(title);
+    gtk_window_set_default_size(GTK_WINDOW(d), 460, -1);
+    Rows r = { gtk_grid_new(), 1 };
+    gtk_grid_set_column_spacing(GTK_GRID(r.grid), 12);
+    gtk_grid_set_row_spacing(GTK_GRID(r.grid), 6);
+    g_object_set(r.grid, "margin", 14, NULL);
+    gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(d))), r.grid, TRUE, TRUE, 0);
+
+    GtkWidget *head = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
+    GtkWidget *img = icon ? gtk_image_new_from_gicon(icon, GTK_ICON_SIZE_DIALOG) : gtk_image_new();
+    gtk_image_set_pixel_size(GTK_IMAGE(img), 48);
+    g_clear_object(&icon);
+    GtkWidget *name = gtk_label_new(NULL);
+    char *count = g_strdup_printf(ngettext("%u item", "%u items", n), n);
+    char *mk = g_markup_printf_escaped("<b>%s</b>", count);
+    gtk_label_set_markup(GTK_LABEL(name), mk);
+    g_free(mk);
+    g_free(count);
+    gtk_label_set_xalign(GTK_LABEL(name), 0);
+    gtk_box_pack_start(GTK_BOX(head), img, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(head), name, TRUE, TRUE, 0);
+    gtk_grid_attach(GTK_GRID(r.grid), head, 0, 0, 2, 1);
+
+    char *nf = g_strdup_printf(ngettext("%llu file", "%llu files", nfiles), (unsigned long long) nfiles);
+    char *nd = g_strdup_printf(ngettext("%llu folder", "%llu folders", ndirs), (unsigned long long) ndirs);
+    char *kind = g_strdup_printf("%s, %s", nf, nd);
+    prow(&r, _("Kind"), kind, NULL);
+    g_free(kind);
+    g_free(nf);
+    g_free(nd);
+    if (parent)
+        prow(&r, _("Location"), same_parent ? parent : _("several folders"), NULL);
+    GCancellable *stop = g_cancellable_new();
+    g_signal_connect_data(d, "response", G_CALLBACK(on_props_response), stop, unref_notify, 0);
+    if (dirs->len) {                /* the folders' contents counted in the background, the files' added */
+        GtkWidget *size_l = prow(&r, _("Size"), _("counting …"), NULL);
+        Count *c = g_new0(Count, 1);
+        c->label = g_object_ref(size_l);
+        c->stop = g_object_ref(stop);
+        g_ptr_array_add(dirs, NULL);
+        c->roots = (char **) g_ptr_array_steal(dirs, NULL);
+        c->total = file_bytes;
+        c->files = nfiles;
+        c->dirs = ndirs;
+        g_thread_unref(g_thread_new("millerx-count", count_thread, c));
+    } else {
+        char *sz = format_size_full(file_bytes);
+        prow(&r, _("Size"), sz, NULL);
+        g_free(sz);
+    }
+    g_ptr_array_unref(dirs);
+    prow(&r, _("Owner"), same_owner && owner ? owner : _("mixed"), NULL);
+
+    /* permissions: one box per bit for all of them; a dash where they differ */
+    GtkWidget *perm = gtk_grid_new();
+    gtk_grid_set_column_spacing(GTK_GRID(perm), 10);
+    gtk_grid_set_row_spacing(GTK_GRID(perm), 2);
+    const char *x = !nfiles ? _("Enter") : !ndirs ? _("Exec") : _("Exec / Enter");
+    const char *heads[] = { _("Read"), _("Write"), x };
+    const char *who[] = { _("Owner"), _("Group"), _("Others") };
+    for (int c = 0; c < 3; c++)
+        gtk_grid_attach(GTK_GRID(perm), gtk_label_new(heads[c]), c + 1, 0, 1, 1);
+    for (int rr = 0; rr < 3; rr++) {
+        GtkWidget *l = gtk_label_new(who[rr]);
+        gtk_label_set_xalign(GTK_LABEL(l), 0);
+        gtk_grid_attach(GTK_GRID(perm), l, 0, rr + 1, 1, 1);
+        for (int c = 0; c < 3; c++) {
+            int b = rr * 3 + c;
+            GtkWidget *cb = gtk_check_button_new();
+            gtk_widget_set_sensitive(cb, all_mine);
+            gtk_widget_set_halign(cb, GTK_ALIGN_CENTER);
+            g_object_set_data(G_OBJECT(cb), "bit", GINT_TO_POINTER(1 << (8 - b)));
+            g_signal_connect(cb, "toggled", G_CALLBACK(multi_toggled), m);
+            gtk_grid_attach(GTK_GRID(perm), cb, c + 1, rr + 1, 1, 1);
+            m->boxes[b] = cb;
+        }
+    }
+    multi_show(m);
+    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
+    gtk_box_pack_start(GTK_BOX(box), perm, FALSE, FALSE, 0);
+    GtkWidget *note = gtk_label_new(all_mine ? _("A dash: some have it, some don't. A click sets it for all of them.")
+                                             : _("Not all of them are yours: read only."));
+    gtk_label_set_xalign(GTK_LABEL(note), 0);
+    gtk_label_set_line_wrap(GTK_LABEL(note), TRUE);
+    gtk_style_context_add_class(gtk_widget_get_style_context(note), "dim-label");
+    gtk_box_pack_start(GTK_BOX(box), note, FALSE, FALSE, 0);
+    prow(&r, _("Permissions"), NULL, box);
+    g_object_set_data_full(G_OBJECT(d), "multi", m, (GDestroyNotify) multi_free);
+    g_free(owner);
+    g_free(parent);
+    gtk_widget_show_all(d);
+}
+
 /* ---- settings --------------------------------------------------------------------------------- */
 typedef struct {
     Win *w;
@@ -371,6 +679,7 @@ typedef struct {
     GtkWidget *cache_size, *cache_clear, *cache_mb, *cache_days, *cache_auto;
     GtkWidget *sort_list, *names, *thumbs, *tsize, *lang, *lang_note;
     GtkWidget *use[4];         /* the optional helpers, when installed; NULL when not */
+    GtkWidget *compare;        /* what compares two files */
     GtkWidget *hl_auto, *hl_own, *hl_colour, *hl_sys, *hl_unsys;
 } Set;
 
@@ -410,6 +719,7 @@ static void settings_changed(GtkWidget *any, Set *s)
     nl.language = (char *) gtk_combo_box_get_active_id(GTK_COMBO_BOX(s->lang));   /* copied by app_apply_look */
     gtk_widget_set_visible(s->lang_note, g_strcmp0(nl.language, LANGUAGE_AT_START ? LANGUAGE_AT_START : "system"));
     nl.gallery_names = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->names));
+    nl.compare = (char *) gtk_entry_get_text(GTK_ENTRY(s->compare));   /* copied by app_apply_look */
     gboolean *uses[] = { &nl.use_ffmpeg, &nl.use_pdftoppm, &nl.use_pkexec, &nl.use_blender };
     for (int i = 0; i < 4; i++)
         if (s->use[i])
@@ -949,6 +1259,12 @@ void dialog_settings(Win *w)
     thumbcache_measure(cache_measured, g_object_ref(s->cache_size));
     section(&grid, &r, _("Optional helpers (millerX works without them; untick to not use one)"));
     helper_rows(grid, &r, s);
+    s->compare = gtk_entry_new();
+    gtk_entry_set_text(GTK_ENTRY(s->compare), LOOK.compare ? LOOK.compare : "auto");
+    gtk_widget_set_tooltip_text(s->compare, _("Two files selected → Compare. \"auto\": meld, kdiff3, kompare or diffuse, "
+                                              "whichever is there; none: the differences as text. Or your own command "
+                                              "(the two files are added at the end)."));
+    srow(grid, &r, _("Compare with"), s->compare);
     new_column(folders_tab);
     section(&grid, &r, _("Folders sorted their own way (all others: by name)"));
     s->sort_list = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
@@ -969,6 +1285,7 @@ void dialog_settings(Win *w)
     g_signal_connect(s->ff, "toggled", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->sh, "toggled", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->names, "toggled", G_CALLBACK(settings_changed), s);
+    g_signal_connect(s->compare, "changed", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->thumbs, "changed", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->tsize, "changed", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->lang, "changed", G_CALLBACK(settings_changed), s);

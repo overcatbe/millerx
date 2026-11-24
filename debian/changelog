@@ -1,3 +1,13 @@
+millerx (0.8.3) unstable; urgency=medium
+
+  * Gallery: files only, no folder tiles; a folder of folders shows its details only.
+  * A folder's size count and gallery wait until its column is filled.
+  * Properties of several items: one window, mixed permissions shown and set for all.
+  * Right-button drag (or Alt when dropping) asks: copy, move or link.
+  * Compare two files: meld/kdiff3/kompare/diffuse or your own command; else diff -u.
+
+ -- overcatbe <1771834+overcatbe@users.noreply.github.com>  Tue, 24 Nov 2026 13:55:38 +0200
+
 millerx (0.8.2) unstable; urgency=medium
 
   * Own languages: Settings > Language > "Your own..." adds a checked .po/.mo file;

@@ -91,6 +91,12 @@ void look_load(void)
     LOOK.gallery_names = get_bool(kf, "look", "gallery_names", TRUE);
     g_free(LOOK.language);
     LOOK.language = get_str(kf, "look", "language");
+    g_free(LOOK.compare);
+    LOOK.compare = get_str(kf, "helpers", "compare");
+    if (!LOOK.compare || !*LOOK.compare) {
+        g_free(LOOK.compare);
+        LOOK.compare = g_strdup("auto");
+    }
     if (!LOOK.language || (strcmp(LOOK.language, "en") && strcmp(LOOK.language, "wizard")
                               && strcmp(LOOK.language, "wienerisch") && !g_str_has_prefix(LOOK.language, "own:"))) {
         g_free(LOOK.language);
@@ -134,6 +140,7 @@ gboolean look_save(GError **err)
     g_key_file_set_boolean(kf, "helpers", "pdftoppm", LOOK.use_pdftoppm);
     g_key_file_set_boolean(kf, "helpers", "pkexec", LOOK.use_pkexec);
     g_key_file_set_boolean(kf, "helpers", "blender", LOOK.use_blender);
+    g_key_file_set_string(kf, "helpers", "compare", LOOK.compare ? LOOK.compare : "auto");
     g_key_file_set_string(kf, "thumbnails", "show",
                           LOOK.thumbs == THUMBS_LOCAL ? "local" : LOOK.thumbs == THUMBS_NEVER ? "never" : "always");
     g_key_file_set_string(kf, "thumbnails", "size",
