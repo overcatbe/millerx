@@ -65,6 +65,11 @@
   </keywords>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="0.8.3" date="2026-11-24">
+      <description>
+        <p>The gallery shows files only. A folder's size and gallery wait until its column is filled. Properties of several items in one window, mixed permissions shown with a dash. Drag with the right button (or Alt when dropping): copy, move or link here. Compare two files.</p>
+      </description>
+    </release>
     <release version="0.8.2" date="2026-11-23">
       <description>
         <p>Your own languages: Settings → Language → "Your own…" adds a language file. Extra fun languages (pirate, LOLCAT) on GitHub. A busy folder no longer recounts its size over and over.</p>

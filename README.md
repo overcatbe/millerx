@@ -4,7 +4,12 @@ A small, native file browser with **Miller columns**: every folder from `/` down
 where you are sits in its own column, and the selected file is previewed on the right.
 Like a mind map of your disk. Written in C with GTK 3 and GIO.
 
-> **New in 0.8.2:** **your own languages**: Settings → Language → "Your own…" adds a language
+> **New in 0.8.3:** the gallery shows **files only** (no folder tiles) · a folder's size and
+> gallery wait until its column is filled · **Properties of several items** in one window, mixed
+> permissions shown with a dash · **drag with the right button** (or Alt when dropping): Copy,
+> Move or **Link here** · **Compare** two files (meld, kdiff3, kompare, diffuse or your own tool).
+>
+> **0.8.2:** **your own languages**: Settings → Language → "Your own…" adds a language
 > file · extra fun ones to download: [pirate, pirate-salty and LOLCAT](extras/languages/) · a busy
 > folder no longer recounts its size over and over.
 >
@@ -45,7 +50,8 @@ millerX carries his name.
 - **Preview** in the rest of the window: pictures (WebP, AVIF and HEIC too) fitted to the pane, a video's
   frame, a song's cover, the first
   page of PDFs, text, the contents of archives (zip, tar, 7z, rar, …), folder sizes counted in the background.
-- **Gallery**: a folder's pictures and PDFs as thumbnails under its details. Opens at once
+- **Gallery**: a folder's files as thumbnails under its details (files only: subfolders stay in
+  the columns, so a folder full of folders just shows its details). Opens at once
   even with thousands of files, loads only what is on screen, and right-click gives each
   thumbnail its own menu (open, show in column, rename, trash, …). Select several with
   Ctrl/Shift+click, drag them out or copy them like rows. Videos show a frame, music its cover. Names under the
@@ -68,7 +74,11 @@ millerX carries his name.
 - **Checksums** (right-click → Checksums…): MD5, SHA-1 and SHA-256 in one read, a Copy button each,
   and a field to paste the checksum you were given: ✓ or ✗.
 - **Cut, copy, paste**, compatible with Thunar's clipboard. A highlighted folder receives the paste.
-- **Drag & drop**: same file system moves, otherwise copies; Ctrl copies, Shift moves.
+- **Drag & drop**: same file system moves, otherwise copies; Ctrl copies, Shift moves. Drag with
+  the right button (or hold Alt when dropping) and millerX asks: Copy here, Move here or Link here.
+- **Compare** two files: select two, right-click → Compare. It opens meld, kdiff3, kompare or
+  diffuse, whichever is installed, or your own tool (Settings → Optional helpers → Compare with);
+  with none of them it shows the differences itself (`diff -u`).
 - **Rename, new folder, move to trash, delete permanently**, with a conflict dialog
   (skip, keep both, replace or merge, "do this for all").
 - **Bookmarks**, shared with Thunar and the GTK file dialogs. The **Trash** is always the last
@@ -82,7 +92,9 @@ millerX carries his name.
   USB sticks (one click mounts, right-click ejects), network shares and GVfs places (sftp://,
   smb://), and "Connect to server…". A disk opens to the right like any folder.
 - **Type to jump**: type the first letters of a name; the same letter again goes to the next match.
-- **Properties** with editable permissions, free space and folder totals.
+- **Properties** with editable permissions, free space and folder totals. Several items selected:
+  one window for all of them; a box with a dash means some have that permission, a click sets it
+  for all.
 - **Open as root** through polkit (`pkexec`): the password is asked by your polkit agent,
   millerX never sees it. A root window shows a red warning bar.
 - **Highlight colour** of your own, chosen live in the settings, for millerX or for every
@@ -184,6 +196,7 @@ helpers shows which ones it found):
 | PDF previews | `pdftoppm` (poppler) | the PDF's icon |
 | AVIF, HEIC and other pictures, video frames, music covers | `ffmpeg` | the file's icon |
 | Open as root | `pkexec` + a polkit agent | no root window |
+| Compare two files | `meld`, `kdiff3`, `kompare` or `diffuse` (or your own, in Settings) | the differences as text (`diff -u`) |
 | Blender files' pictures | `blender-thumbnailer` (comes with Blender; also found in `/opt/blender`, else the newest `/opt/blender-*`) | the .blend icon |
 | USB sticks, Connect to server | gvfs / udisks2 | only disks already mounted |
 | Open terminal here | any terminal (`$TERMINAL` or one of 17 known) | a message saying none was found |
@@ -250,6 +263,7 @@ ffmpeg = true            # video frames, music covers, AVIF/HEIC
 pdftoppm = true          # PDF pages
 pkexec = true            # "Open as root"
 blender = true           # pictures saved in .blend files
+compare = auto           # Compare: auto (meld, kdiff3, kompare, diffuse) or your own command
 
 [window]                 # written by millerX: where the last closed window was
 ```
