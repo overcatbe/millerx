@@ -714,7 +714,9 @@ static gboolean list_done(gpointer data)
     return G_SOURCE_REMOVE;
 }
 
-/* reads and sorts the folder; names and types only (by name, no file is opened) */
+/* reads and sorts the folder; names and types only (by name, no file is opened). Files only: a
+ * folder is never an end point, and its tile (the same icon every time) only pushes the files
+ * you're looking for further down; a folder of folders shows its details and no gallery */
 static gpointer list_thread(gpointer data)
 {
     ListJob *j = data;
@@ -734,6 +736,10 @@ static gpointer list_thread(gpointer data)
                     e->size = st.st_size;
                 }
                 g_free(full);
+                if (e->dir) {               /* files only */
+                    entry_free(e);
+                    continue;
+                }
                 e->ext = e->dir ? g_strdup("") : sorting_ext(n);
                 e->ct = e->dir ? g_strdup("inode/directory") : g_content_type_guess(n, NULL, 0, NULL);
                 char *disp = g_filename_display_name(n), *fold = g_utf8_casefold(disp, -1);

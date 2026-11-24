@@ -1,5 +1,13 @@
 # Changelog
 
+## Next
+
+- **The gallery shows files only.** Folder tiles are gone from it: a folder is never an end
+  point, every folder tile looked the same, and they pushed the files you're looking for further
+  down. A folder full of folders now shows its details and no gallery; a mixed one shows just its
+  files. It's even a little lighter, and in a folder with many subfolders all the gallery's room
+  goes to files. Thanks, brobr!
+
 ## 0.8.2 (2026-11-23)
 
 - **Your own languages:** Settings → Language → **"Your own…"** picks a language file (`.po` or
