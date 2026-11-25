@@ -906,6 +906,32 @@ void win_new_folder(Win *w, Column *c)
     g_free(name);
 }
 
+/* an empty file, named by the user, in the column's folder */
+void win_new_file(Win *w, Column *c)
+{
+    char *name = win_ask_name(w, _("New file"), _("New File"), FALSE);
+    if (!name)
+        return;
+    GFile *f = g_file_get_child(c->gfile, name);
+    GError *err = NULL;
+    GFileOutputStream *out = g_file_create(f, G_FILE_CREATE_NONE, NULL, &err);
+    if (!out) {
+        if (g_error_matches(err, G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED))
+            win_error_root(w, _("Couldn't create the file"), err->message, c->gfile);
+        else
+            win_error(w, _("Couldn't create the file"), err->message);
+        g_error_free(err);
+    } else {
+        g_output_stream_close(G_OUTPUT_STREAM(out), NULL, NULL);
+        g_object_unref(out);
+        g_free(c->pending_select);
+        c->pending_select = g_strdup(name);
+        column_add_file(c, f);
+    }
+    g_object_unref(f);
+    g_free(name);
+}
+
 /* Asks for a new name and renames f; the renamed file, or NULL. */
 static GFile *rename_file(Win *w, GFile *f)
 {
@@ -1221,7 +1247,7 @@ typedef struct {
 } Act;
 
 enum { A_OPEN_DIR, A_OPEN, A_OPEN_WITH, A_CUT, A_COPY, A_PASTE_INTO, A_PASTE, A_RENAME, A_TRASH,
-       A_DELETE, A_NEW_FOLDER, A_TERMINAL, A_COPY_PATH, A_BOOKMARK, A_PROPERTIES, A_ROOT, A_SHOW,
+       A_DELETE, A_NEW_FOLDER, A_NEW_FILE, A_TERMINAL, A_COPY_PATH, A_BOOKMARK, A_PROPERTIES, A_ROOT, A_SHOW,
        A_NEW_WINDOW, A_EXTRACT_HERE, A_EXTRACT_FOLDER, A_COMPRESS, A_SET_DEFAULT, A_CHECKSUMS, A_COMPARE };
 
 /* ---- archives ------------------------------------------------------------------------------ */
@@ -1361,6 +1387,7 @@ static void act_run(GtkMenuItem *mi, Act *a)
     case A_TRASH: win_trash(w, a->files); break;
     case A_DELETE: win_delete_forever(w, a->files); break;
     case A_NEW_FOLDER: win_new_folder(w, c); break;
+    case A_NEW_FILE: win_new_file(w, c); break;
     case A_TERMINAL: terminal_here(w, a->folder); break;
     case A_COPY_PATH: {
         GString *s = g_string_new(NULL);
@@ -1648,6 +1675,7 @@ void win_context_menu(Win *w, Column *c, GdkEventButton *ev)
         sep(menu);
     }
     item(menu, w, c, NULL, NULL, A_NEW_FOLDER, _("New folder…"), "<Control><Shift>n", TRUE);
+    item(menu, w, c, NULL, NULL, A_NEW_FILE, _("New file…"), NULL, TRUE);
     sort_menu(menu, w, folder);       /* the highlighted folder, else this column's own */
     item(menu, w, c, NULL, folder, A_TERMINAL, _("Open terminal here"), NULL, TRUE);
     if (files)

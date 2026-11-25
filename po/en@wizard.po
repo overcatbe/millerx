@@ -1704,3 +1704,12 @@ msgstr ""
 #: src/window.c:2200
 msgid "Couldn't restart millerX"
 msgstr "millerX could not be reborn"
+
+msgid "New file"
+msgstr "New scroll"
+
+msgid "New file…"
+msgstr "New scroll…"
+
+msgid "Couldn't create the file"
+msgstr "The scroll would not be written"

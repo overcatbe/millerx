@@ -1701,3 +1701,12 @@ msgstr ""
 #: src/window.c:2200
 msgid "Couldn't restart millerX"
 msgstr "millerX lasst si ned neich startn"
+
+msgid "New file"
+msgstr "Neiches Ding"
+
+msgid "New file…"
+msgstr "Neiches Ding…"
+
+msgid "Couldn't create the file"
+msgstr "Des Ding kriag i ned zaum"

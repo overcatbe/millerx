@@ -1708,3 +1708,12 @@ msgstr ""
 #: src/window.c:2200
 msgid "Couldn't restart millerX"
 msgstr "millerX konnte nicht neu gestartet werden"
+
+msgid "New file"
+msgstr "Neue Datei"
+
+msgid "New file…"
+msgstr "Neue Datei …"
+
+msgid "Couldn't create the file"
+msgstr "Die Datei konnte nicht erstellt werden"

@@ -278,7 +278,7 @@ static int thumb_target(void)
 /* Same order as the column: folders first (if set), then names, case-insensitive. */
 typedef struct {
     char *name, *key, *ct, *ext;
-    gboolean dir;
+    gboolean dir, link;
     gint64 mtime;
     guint64 size;
 } Entry;
@@ -636,8 +636,19 @@ static gboolean add_batch(gpointer data)
         GIcon *ic = g_content_type_get_icon(e->ct);
         GtkWidget *img = gtk_image_new_from_gicon(ic, GTK_ICON_SIZE_DIALOG);
         g_object_unref(ic);
-        gtk_image_set_pixel_size(GTK_IMAGE(img), p->tile / 2);
+        gtk_image_set_pixel_size(GTK_IMAGE(img), p->tile);      /* the type icon fills the tile */
+        /* the tile stays square (even rows), the picture centred in it */
         gtk_widget_set_size_request(img, p->tile, p->tile);
+        GtkWidget *frame = img;
+        if (e->link) {          /* a link: the link emblem in the tile's corner, over the picture */
+            frame = gtk_overlay_new();
+            gtk_container_add(GTK_CONTAINER(frame), img);
+            GtkWidget *mark = gtk_image_new_from_icon_name("emblem-symbolic-link", GTK_ICON_SIZE_BUTTON);
+            gtk_image_set_pixel_size(GTK_IMAGE(mark), MAX(16, p->tile / 6));
+            gtk_widget_set_halign(mark, GTK_ALIGN_END);
+            gtk_widget_set_valign(mark, GTK_ALIGN_END);
+            gtk_overlay_add_overlay(GTK_OVERLAY(frame), mark);
+        }
         char *disp = g_filename_display_name(e->name);
         GtkWidget *child = gtk_flow_box_child_new();
         gtk_widget_set_tooltip_text(child, disp);
@@ -651,15 +662,17 @@ static gboolean add_batch(gpointer data)
             gtk_widget_set_opacity(l, 0.8);
             PangoAttrList *at = pango_attr_list_new();
             pango_attr_list_insert(at, pango_attr_scale_new(0.85));
+            if (e->link)
+                pango_attr_list_insert(at, pango_attr_style_new(PANGO_STYLE_ITALIC));
             gtk_label_set_attributes(GTK_LABEL(l), at);
             pango_attr_list_unref(at);
             g_object_set_data(G_OBJECT(child), "label", l);
             GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
-            gtk_box_pack_start(GTK_BOX(box), img, FALSE, FALSE, 0);
+            gtk_box_pack_start(GTK_BOX(box), frame, FALSE, FALSE, 0);
             gtk_box_pack_start(GTK_BOX(box), l, FALSE, FALSE, 0);
             gtk_container_add(GTK_CONTAINER(child), box);
         } else {
-            gtk_container_add(GTK_CONTAINER(child), img);
+            gtk_container_add(GTK_CONTAINER(child), frame);
         }
         g_free(disp);
         g_object_set_data_full(G_OBJECT(child), "path", g_build_filename(p->pending_dir, e->name, NULL), g_free);
@@ -730,6 +743,7 @@ static gpointer list_thread(gpointer data)
                 e->name = g_strdup(n);
                 char *full = g_build_filename(j->dir, n, NULL);
                 GStatBuf st;
+                e->link = g_lstat(full, &st) == 0 && S_ISLNK(st.st_mode);
                 if (g_stat(full, &st) == 0) {
                     e->dir = S_ISDIR(st.st_mode);
                     e->mtime = st.st_mtime;

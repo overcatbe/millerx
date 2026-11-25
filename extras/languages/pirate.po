@@ -1705,3 +1705,12 @@ msgstr ""
 #: src/window.c:2200
 msgid "Couldn't restart millerX"
 msgstr "Couldn't set sail again"
+
+msgid "New file"
+msgstr "New loot"
+
+msgid "New file…"
+msgstr "New loot…"
+
+msgid "Couldn't create the file"
+msgstr "Couldn't stash the loot"

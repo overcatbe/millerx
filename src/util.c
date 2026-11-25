@@ -162,3 +162,14 @@ GAppLaunchContext *child_launch_context(void)
     g_app_launch_context_unsetenv(ctx, "MILLERX_LANG0");
     return ctx;
 }
+
+/* a symlink's icon: its target's icon with the theme's link emblem in the corner */
+GIcon *link_icon(GIcon *icon)
+{
+    GIcon *mark = g_themed_icon_new("emblem-symbolic-link");
+    GEmblem *em = g_emblem_new(mark);
+    GIcon *out = g_emblemed_icon_new(icon, em);
+    g_object_unref(em);
+    g_object_unref(mark);
+    return out;
+}

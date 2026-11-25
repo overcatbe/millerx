@@ -1710,3 +1710,12 @@ msgstr ""
 #: src/window.c:2200
 msgid "Couldn't restart millerX"
 msgstr "millerX won't set sail again. Bloody mutiny."
+
+msgid "New file"
+msgstr "New chart"
+
+msgid "New file…"
+msgstr "New chart…"
+
+msgid "Couldn't create the file"
+msgstr "Can't draw the chart. Some swab drank the ink."

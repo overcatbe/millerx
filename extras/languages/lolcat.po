@@ -1700,3 +1700,12 @@ msgstr "FILEZ STILL BEIN COPIED, MOVED OR PACKED. NOM NOM WEN DAT IZ DUN."
 #: src/window.c:2200
 msgid "Couldn't restart millerX"
 msgstr "millerX NO COME BAK. FOOD BOWL EMPTY."
+
+msgid "New file"
+msgstr "NU FILE"
+
+msgid "New file…"
+msgstr "NU FILE…"
+
+msgid "Couldn't create the file"
+msgstr "CANT MAKE FILE. CAT IZ DISAPPOINT."

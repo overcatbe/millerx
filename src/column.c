@@ -44,6 +44,16 @@ void column_close(Column *c)
         g_signal_handlers_disconnect_by_data(gtk_tree_view_get_selection(GTK_TREE_VIEW(c->view)), c);
 }
 
+/* links in italics, like other file managers show them */
+static void name_func(GtkTreeViewColumn *col, GtkCellRenderer *r, GtkTreeModel *m, GtkTreeIter *it, gpointer d)
+{
+    (void) col;
+    (void) d;
+    gboolean link = FALSE;
+    gtk_tree_model_get(m, it, C_LINK, &link, -1);
+    g_object_set(r, "style", link ? PANGO_STYLE_ITALIC : PANGO_STYLE_NORMAL, NULL);
+}
+
 /* ---- loading ------------------------------------------------------------- */
 static GtkTreeIter *append_info(Column *c, GFileInfo *info, GFile *child, GtkTreeIter *out)
 {
@@ -58,10 +68,16 @@ static GtkTreeIter *append_info(Column *c, GFileInfo *info, GFile *child, GtkTre
     gint64 mtime = mt ? g_date_time_to_unix(mt) : 0;
     if (mt)
         g_date_time_unref(mt);
-    gtk_list_store_insert_with_values(c->store, out, -1, C_ICON, g_file_info_get_icon(info),
+    /* a link: its target's icon with the link emblem, and (see name_func) its name in italics */
+    gboolean link = g_file_info_get_is_symlink(info);
+    GIcon *icon = g_file_info_get_icon(info);
+    GIcon *shown = link && icon ? link_icon(icon) : (icon ? g_object_ref(icon) : NULL);
+    gtk_list_store_insert_with_values(c->store, out, -1, C_ICON, shown,
                                       C_NAME, name, C_ISDIR, isdir, C_FILE, child, C_SORT, key,
                                       C_MTIME, mtime, C_SIZE, (guint64) g_file_info_get_size(info),
-                                      C_EXT, ext, -1);
+                                      C_EXT, ext, C_LINK, link, -1);
+    if (shown)
+        g_object_unref(shown);
     g_free(ext);
     g_free(key);
     return out;
@@ -854,7 +870,11 @@ static void on_drag_received(GtkWidget *view, GdkDragContext *ctx, int x, int y,
         DRAG_ASK = FALSE;
         ask_drop(c, srcs, target);
         g_list_free_full(srcs, g_object_unref);
-    } else if (srcs) {
+    } else if (srcs && (win_pointer_mask(c->win) & (GDK_CONTROL_MASK | GDK_SHIFT_MASK))
+                       == (GDK_CONTROL_MASK | GDK_SHIFT_MASK)) {
+        link_into(c->win, srcs, target);    /* Ctrl+Shift: links, like other file managers */
+        g_list_free_full(srcs, g_object_unref);
+    } else if (srcs) {      /* Ctrl: copy, Shift: move, neither: move on the same disk, else copy */
         GdkModifierType mask = win_pointer_mask(c->win);
         gboolean move;
         if (mask & GDK_CONTROL_MASK)
@@ -1033,7 +1053,7 @@ Column *column_new(Win *w, GFile *gfile, GPtrArray *chain)
     c->typed = g_string_new(NULL);
     c->drag_start = -1;
     c->store = gtk_list_store_new(C_N, G_TYPE_ICON, G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_FILE,
-                                  G_TYPE_STRING, G_TYPE_INT64, G_TYPE_UINT64, G_TYPE_STRING);
+                                  G_TYPE_STRING, G_TYPE_INT64, G_TYPE_UINT64, G_TYPE_STRING, G_TYPE_BOOLEAN);
     char *own = g_file_get_path(gfile);
     c->custom = sorting_get(own, &c->sort);
     g_free(own);
@@ -1060,6 +1080,7 @@ Column *column_new(Win *w, GFile *gfile, GPtrArray *chain)
     g_object_set(r_name, "ellipsize", PANGO_ELLIPSIZE_END, NULL);
     gtk_tree_view_column_pack_start(col, r_name, TRUE);
     gtk_tree_view_column_add_attribute(col, r_name, "text", C_NAME);
+    gtk_tree_view_column_set_cell_data_func(col, r_name, name_func, NULL, NULL);
     GtkCellRenderer *r_arrow = gtk_cell_renderer_text_new();
     g_object_set(r_arrow, "xalign", 1.0, NULL);
     gtk_tree_view_column_pack_end(col, r_arrow, FALSE);

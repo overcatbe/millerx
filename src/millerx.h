@@ -35,11 +35,12 @@ enum { TSIZE_SMALL, TSIZE_MEDIUM, TSIZE_LARGE };    /* gallery tiles: about 100,
 #define ARCHIVE_LIST_MAX 300
 
 #define ATTRS "standard::name,standard::display-name,standard::type,standard::icon," \
-              "standard::is-hidden,standard::is-backup,standard::size," \
+              "standard::is-hidden,standard::is-backup,standard::size,standard::is-symlink," \
               "standard::content-type,time::modified,unix::mode,trash::deletion-date"
 
 /* list store columns */
-enum { C_ICON, C_NAME, C_ISDIR, C_FILE, C_SORT, C_MTIME, C_SIZE, C_EXT, C_N };
+GIcon *link_icon(GIcon *icon);
+enum { C_ICON, C_NAME, C_ISDIR, C_FILE, C_SORT, C_MTIME, C_SIZE, C_EXT, C_LINK, C_N };
 
 /* ---- settings (settings.c) --------------------------------------------- */
 typedef struct {
@@ -244,6 +245,7 @@ void win_open_default(Win *w, GFile *f);
 void win_trash(Win *w, GList *files);
 void win_delete_forever(Win *w, GList *files);
 void win_new_folder(Win *w, Column *c);
+void win_new_file(Win *w, Column *c);
 void win_rename(Win *w, Column *c);
 void win_clip_set(Win *w, GList *files, gboolean cut);
 void win_paste_into(Win *w, GFile *folder);

@@ -1724,3 +1724,12 @@ msgstr ""
 #: src/window.c:2200
 msgid "Couldn't restart millerX"
 msgstr "Δεν ήταν δυνατή η επανεκκίνηση του millerX"
+
+msgid "New file"
+msgstr "Νέο αρχείο"
+
+msgid "New file…"
+msgstr "Νέο αρχείο…"
+
+msgid "Couldn't create the file"
+msgstr "Δεν ήταν δυνατή η δημιουργία του αρχείου"
