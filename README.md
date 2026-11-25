@@ -4,7 +4,11 @@ A small, native file browser with **Miller columns**: every folder from `/` down
 where you are sits in its own column, and the selected file is previewed on the right.
 Like a mind map of your disk. Written in C with GTK 3 and GIO.
 
-> **New in 0.8.3:** the gallery shows **files only** (no folder tiles) · a folder's size and
+> **New in 0.8.4:** gallery icons **fill their tiles** · **Tiny** thumbnails (about 64 px) ·
+> **links** in italics with the link emblem · **New file** in the right-click menu · **Ctrl+Shift**
+> when dropping makes links.
+>
+> **0.8.3:** the gallery shows **files only** (no folder tiles) · a folder's size and
 > gallery wait until its column is filled · **Properties of several items** in one window, mixed
 > permissions shown with a dash · **drag with the right button** (or Alt when dropping): Copy,
 > Move or **Link here** · **Compare** two files (meld, kdiff3, kompare, diffuse or your own tool).

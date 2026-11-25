@@ -1,3 +1,12 @@
+millerx (0.8.4) unstable; urgency=medium
+
+  * Gallery: type icons fill their tiles; new size Tiny (about 64 px).
+  * Links shown in italics with the link emblem, in columns and gallery.
+  * New file in the right-click menu.
+  * Ctrl+Shift when dropping makes links.
+
+ -- overcatbe <1771834+overcatbe@users.noreply.github.com>  Wed, 25 Nov 2026 08:40:00 +0200
+
 millerx (0.8.3) unstable; urgency=medium
 
   * Gallery: files only, no folder tiles; a folder of folders shows its details only.

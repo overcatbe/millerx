@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.8.4 (not released yet)
+## 0.8.4 (2026-11-25)
 
 - **Gallery icons fill their tiles.** Files without a picture (text, code, …) showed their type
   icon at half the tile's size, which left a big gap between icon and name. Thanks, random_guy!

@@ -65,6 +65,11 @@
   </keywords>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="0.8.4" date="2026-11-25">
+      <description>
+        <p>Gallery icons fill their tiles. Tiny thumbnails (about 64 px). Links show in italics with the link emblem. New file in the right-click menu. Ctrl+Shift when dropping makes links.</p>
+      </description>
+    </release>
     <release version="0.8.3" date="2026-11-24">
       <description>
         <p>The gallery shows files only. A folder's size and gallery wait until its column is filled. Properties of several items in one window, mixed permissions shown with a dash. Drag with the right button (or Alt when dropping): copy, move or link here. Compare two files.</p>
