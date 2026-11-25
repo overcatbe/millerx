@@ -55,8 +55,8 @@ millerX carries his name.
   even with thousands of files, loads only what is on screen, and right-click gives each
   thumbnail its own menu (open, show in column, rename, trash, …). Select several with
   Ctrl/Shift+click, drag them out or copy them like rows. Videos show a frame, music its cover. Names under the
-  thumbnails if you like (one line, cut in the middle so the extension stays). Three sizes: small,
-  medium, large. Blender files show the picture saved in them.
+  thumbnails if you like (one line, cut in the middle so the extension stays). Four sizes: tiny,
+  small, medium, large. Blender files show the picture saved in them.
 - **Shared thumbnail cache** (`~/.cache/thumbnails`, like Thunar and the file dialogs),
   cleaned up automatically: files that are gone, unused for 180 days, above 1 GB.
 - **Sorting per folder**: everything is sorted by name, so your eye learns where things are.
@@ -74,12 +74,14 @@ millerX carries his name.
 - **Checksums** (right-click → Checksums…): MD5, SHA-1 and SHA-256 in one read, a Copy button each,
   and a field to paste the checksum you were given: ✓ or ✗.
 - **Cut, copy, paste**, compatible with Thunar's clipboard. A highlighted folder receives the paste.
-- **Drag & drop**: same file system moves, otherwise copies; Ctrl copies, Shift moves. Drag with
-  the right button (or hold Alt when dropping) and millerX asks: Copy here, Move here or Link here.
+- **Drag & drop**: same file system moves, otherwise copies; Ctrl copies, Shift moves, Ctrl+Shift
+  links. Drag with the right button (or hold Alt when dropping) and millerX asks: Copy here, Move
+  here or Link here.
 - **Compare** two files: select two, right-click → Compare. It opens meld, kdiff3, kompare or
   diffuse, whichever is installed, or your own tool (Settings → Optional helpers → Compare with);
   with none of them it shows the differences itself (`diff -u`).
-- **Rename, new folder, move to trash, delete permanently**, with a conflict dialog
+- **Links** show in italics with the link emblem, in the columns and the gallery.
+- **Rename, new folder, new file, move to trash, delete permanently**, with a conflict dialog
   (skip, keep both, replace or merge, "do this for all").
 - **Bookmarks**, shared with Thunar and the GTK file dialogs. The **Trash** is always the last
   line of the menu. It opens in a window of its own (close it and you are back) with the trash of

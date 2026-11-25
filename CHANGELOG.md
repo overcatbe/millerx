@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.8.4 (not released yet)
+
+- **Gallery icons fill their tiles.** Files without a picture (text, code, …) showed their type
+  icon at half the tile's size, which left a big gap between icon and name. Thanks, random_guy!
+- **Tiny thumbnails:** Settings → Thumbnails → Size → **Tiny**, about 64 px, at least 6 per row:
+  a big folder of photos at a glance.
+- **Links look like links:** a symbolic link's name is in italics and its icon carries the link
+  emblem, in the columns and in the gallery. Thanks, random_guy!
+- **New file:** right click → **New file…**, right under New folder: asks for a name and makes
+  an empty file, e.g. a notes.md in the folder you just made. Thanks, random_guy!
+- **Ctrl+Shift when dropping makes links**, like Ctrl copies and Shift moves. The right-button
+  drag (or Alt) still asks, the classic way. Thanks, SCerovec!
+
 ## 0.8.3 (2026-11-24)
 
 - **The gallery shows files only.** Folder tiles are gone from it: a folder is never an end
