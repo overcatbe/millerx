@@ -1710,3 +1710,6 @@ msgstr "Neiches Ding…"
 
 msgid "Couldn't create the file"
 msgstr "Des Ding kriag i ned zaum"
+
+msgid "Tiny (about 64 px)"
+msgstr "Winzig (so 64 px)"

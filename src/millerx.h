@@ -26,7 +26,7 @@
 #endif
 
 enum { THUMBS_ALWAYS, THUMBS_LOCAL, THUMBS_NEVER };
-enum { TSIZE_SMALL, TSIZE_MEDIUM, TSIZE_LARGE };    /* gallery tiles: about 100, 200, 400 px */
+enum { TSIZE_SMALL, TSIZE_MEDIUM, TSIZE_LARGE, TSIZE_TINY };  /* gallery tiles: about 100, 200, 400, 64 px */
 #define COL_DEFAULT 230      /* the start width of a column, unless set in Settings */
 #define COL_MIN 120
 #define COL_MAX 1200
@@ -61,7 +61,7 @@ typedef struct {
     gboolean use_pdftoppm;
     gboolean use_pkexec;    /* off: no "Open as root" anywhere */
     gboolean use_blender;   /* blender-thumbnailer: the picture saved inside .blend files */
-    int thumb_size;         /* TSIZE_SMALL, _MEDIUM, _LARGE */
+    int thumb_size;         /* TSIZE_TINY, _SMALL, _MEDIUM, _LARGE */
     char *language;         /* "system", "en", "wizard", "wienerisch" or "own:NAME": read once at start */
     char *compare;          /* what compares two files: "auto" (meld, kdiff3, kompare, diffuse) or a command */
 } Look;

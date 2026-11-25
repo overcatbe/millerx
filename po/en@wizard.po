@@ -1713,3 +1713,6 @@ msgstr "New scroll…"
 
 msgid "Couldn't create the file"
 msgstr "The scroll would not be written"
+
+msgid "Tiny (about 64 px)"
+msgstr "Tiny (some 64 px)"

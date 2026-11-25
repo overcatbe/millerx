@@ -1733,3 +1733,6 @@ msgstr "Νέο αρχείο…"
 
 msgid "Couldn't create the file"
 msgstr "Δεν ήταν δυνατή η δημιουργία του αρχείου"
+
+msgid "Tiny (about 64 px)"
+msgstr "Πολύ μικρές (περίπου 64 px)"

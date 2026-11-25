@@ -86,7 +86,8 @@ void look_load(void)
     LOOK.thumbs = !g_strcmp0(th, "always") ? THUMBS_ALWAYS : !g_strcmp0(th, "never") ? THUMBS_NEVER : THUMBS_LOCAL;
     g_free(th);
     char *ts = get_str(kf, "thumbnails", "size");
-    LOOK.thumb_size = !g_strcmp0(ts, "small") ? TSIZE_SMALL : !g_strcmp0(ts, "large") ? TSIZE_LARGE : TSIZE_MEDIUM;
+    LOOK.thumb_size = !g_strcmp0(ts, "tiny") ? TSIZE_TINY : !g_strcmp0(ts, "small") ? TSIZE_SMALL
+                    : !g_strcmp0(ts, "large") ? TSIZE_LARGE : TSIZE_MEDIUM;
     g_free(ts);
     LOOK.gallery_names = get_bool(kf, "look", "gallery_names", TRUE);
     g_free(LOOK.language);
@@ -144,7 +145,8 @@ gboolean look_save(GError **err)
     g_key_file_set_string(kf, "thumbnails", "show",
                           LOOK.thumbs == THUMBS_LOCAL ? "local" : LOOK.thumbs == THUMBS_NEVER ? "never" : "always");
     g_key_file_set_string(kf, "thumbnails", "size",
-                          LOOK.thumb_size == TSIZE_SMALL ? "small" : LOOK.thumb_size == TSIZE_LARGE ? "large" : "medium");
+                          LOOK.thumb_size == TSIZE_TINY ? "tiny" : LOOK.thumb_size == TSIZE_SMALL ? "small"
+                          : LOOK.thumb_size == TSIZE_LARGE ? "large" : "medium");
     g_key_file_set_integer(kf, "thumbnails", "max_mb", LOOK.cache_max_mb);
     g_key_file_set_integer(kf, "thumbnails", "max_days", LOOK.cache_days);
     g_key_file_set_boolean(kf, "thumbnails", "auto_clean", LOOK.cache_auto);

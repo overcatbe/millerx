@@ -253,7 +253,7 @@ show_hidden = false
 
 [thumbnails]
 show = local             # local (none in network folders) | always | never
-size = medium            # small | medium | large (about 100, 200, 400 px; at least 4, 3, 2 per row)
+size = medium            # tiny | small | medium | large (about 64, 100, 200, 400 px; at least 6, 4, 3, 2 per row)
 max_mb = 1024            # cache size to shrink to, least used first
 max_days = 180           # forget thumbnails unused this long
 auto_clean = true        # once a day when millerX starts

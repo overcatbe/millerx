@@ -1719,3 +1719,6 @@ msgstr "New chart…"
 
 msgid "Couldn't create the file"
 msgstr "Can't draw the chart. Some swab drank the ink."
+
+msgid "Tiny (about 64 px)"
+msgstr "Tiny (about 64 px)"

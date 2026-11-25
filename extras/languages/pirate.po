@@ -1714,3 +1714,6 @@ msgstr "New loot…"
 
 msgid "Couldn't create the file"
 msgstr "Couldn't stash the loot"
+
+msgid "Tiny (about 64 px)"
+msgstr "Tiny (about 64 px)"

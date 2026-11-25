@@ -1709,3 +1709,6 @@ msgstr "NU FILE…"
 
 msgid "Couldn't create the file"
 msgstr "CANT MAKE FILE. CAT IZ DISAPPOINT."
+
+msgid "Tiny (about 64 px)"
+msgstr "TEENSY (ABOUT 64 px)"

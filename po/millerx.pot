@@ -1645,3 +1645,6 @@ msgstr ""
 
 msgid "Couldn't create the file"
 msgstr ""
+
+msgid "Tiny (about 64 px)"
+msgstr ""

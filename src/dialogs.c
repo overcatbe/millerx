@@ -727,7 +727,8 @@ static void settings_changed(GtkWidget *any, Set *s)
     const char *tid = gtk_combo_box_get_active_id(GTK_COMBO_BOX(s->thumbs));
     nl.thumbs = !g_strcmp0(tid, "local") ? THUMBS_LOCAL : !g_strcmp0(tid, "never") ? THUMBS_NEVER : THUMBS_ALWAYS;
     const char *zid = gtk_combo_box_get_active_id(GTK_COMBO_BOX(s->tsize));
-    nl.thumb_size = !g_strcmp0(zid, "small") ? TSIZE_SMALL : !g_strcmp0(zid, "large") ? TSIZE_LARGE : TSIZE_MEDIUM;
+    nl.thumb_size = !g_strcmp0(zid, "tiny") ? TSIZE_TINY : !g_strcmp0(zid, "small") ? TSIZE_SMALL
+                  : !g_strcmp0(zid, "large") ? TSIZE_LARGE : TSIZE_MEDIUM;
     nl.cache_max_mb = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(s->cache_mb));
     nl.cache_days = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(s->cache_days));
     nl.cache_auto = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->cache_auto));
@@ -1230,10 +1231,12 @@ void dialog_settings(Win *w)
                                            "shown big. Network folders (NFS, Samba, sshfs) can be slow with them."));
     srow(grid, &r, _("Show"), s->thumbs);
     s->tsize = gtk_combo_box_text_new();
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->tsize), "tiny", _("Tiny (about 64 px)"));
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->tsize), "small", _("Small (about 100 px)"));
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->tsize), "medium", _("Medium (about 200 px)"));
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->tsize), "large", _("Large (about 400 px)"));
-    gtk_combo_box_set_active_id(GTK_COMBO_BOX(s->tsize), LOOK.thumb_size == TSIZE_SMALL ? "small"
+    gtk_combo_box_set_active_id(GTK_COMBO_BOX(s->tsize), LOOK.thumb_size == TSIZE_TINY ? "tiny"
+                                                         : LOOK.thumb_size == TSIZE_SMALL ? "small"
                                                          : LOOK.thumb_size == TSIZE_LARGE ? "large" : "medium");
     gtk_widget_set_tooltip_text(s->tsize, _("How big the gallery's pictures are. Large ones are made again the "
                                           "first time (bigger thumbnails, a bigger cache); a wide pane gets "

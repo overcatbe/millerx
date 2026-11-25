@@ -259,15 +259,18 @@ static gpointer image_thread(gpointer data)
 
 /* ---- folder contents as a thumbnail grid ----------------------------------------- */
 static GdkPixbuf *render_pdf(const char *path, int max_w, int max_h, int timeout_ms);
-/* at least this many per row, so a narrow pane still shows the sizes apart: small 4, medium 3, large 2 */
+/* at least this many per row, so a narrow pane still shows the sizes apart: tiny 6, small 4, medium 3,
+ * large 2 */
 static int thumb_min_cols(void)
 {
-    return LOOK.thumb_size == TSIZE_SMALL ? 4 : LOOK.thumb_size == TSIZE_LARGE ? 2 : 3;
+    return LOOK.thumb_size == TSIZE_TINY ? 6 : LOOK.thumb_size == TSIZE_SMALL ? 4
+         : LOOK.thumb_size == TSIZE_LARGE ? 2 : 3;
 }
 /* wanted tile size (Settings → Thumbnails → Size): a wide pane gets more columns, not bigger tiles */
 static int thumb_target(void)
 {
-    return LOOK.thumb_size == TSIZE_SMALL ? 100 : LOOK.thumb_size == TSIZE_LARGE ? 400 : 200;
+    return LOOK.thumb_size == TSIZE_TINY ? 64 : LOOK.thumb_size == TSIZE_SMALL ? 100
+         : LOOK.thumb_size == TSIZE_LARGE ? 400 : 200;
 }
 #define THUMB_GAP 2             /* between thumbnails */
 #define THUMB_PAD 2             /* around each one: room for the selection colour */
