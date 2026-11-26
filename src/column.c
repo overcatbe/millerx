@@ -217,11 +217,36 @@ void column_add_file(Column *c, GFile *f)
     g_object_unref(info);
 }
 
+static void on_selection(GtkTreeSelection *sel, Column *c);
+
+/* GTK moves the cursor to the next row when the cursor's row goes and selects that one, so a
+ * moved or trashed folder would open its neighbour. Keep the rest of the selection as it was:
+ * if the gone row was selected, this column's folder is what's left to show. */
 void column_remove_file(Column *c, GFile *f)
 {
     GtkTreeIter it;
-    if (find_iter(c, f, &it))
-        gtk_list_store_remove(c->store, &it);
+    if (!find_iter(c, f, &it))
+        return;
+    GtkTreeSelection *sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(c->view));
+    gboolean was = gtk_tree_selection_iter_is_selected(sel, &it);
+    GList *keep = column_selected_files(c);
+    g_signal_handlers_block_by_func(sel, on_selection, c);
+    gtk_list_store_remove(c->store, &it);
+    gtk_tree_selection_unselect_all(sel);
+    for (GList *l = keep; l; l = l->next)
+        if (!g_file_equal(l->data, f) && find_iter(c, l->data, &it))
+            gtk_tree_selection_select_iter(sel, &it);
+    g_signal_handlers_unblock_by_func(sel, on_selection, c);
+    g_list_free_full(keep, g_object_unref);
+    if (was) {
+        win_column_selected(c->win, c);
+        if (!column_n_selected(c)) {
+            char *p = file_path(c->gfile);
+            int n = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(c->store), NULL);
+            win_status(c->win, ngettext("%s: %d item", "%s: %d items", n), p, n);
+            g_free(p);
+        }
+    }
 }
 
 static void on_changed(GFileMonitor *mon, GFile *f, GFile *other, GFileMonitorEvent ev, Column *c)
