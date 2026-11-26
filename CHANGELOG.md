@@ -1,6 +1,6 @@
 # Changelog
 
-## Next (not released yet)
+## 0.8.5 (2026-11-26)
 
 - **Fixed a crash in Settings:** after changing a setting, closing Settings and changing another
   one, millerX could abort (double free), and the Compare box showed garbage. Since 0.8.3.
@@ -14,6 +14,8 @@
   stays (that is Set default).
 - **Open with → Check file type** runs `file` on it in a terminal: a "photo.jpg" that is really
   text says so. Only there when `file` is installed. Thanks, gus3!
+- **Greek** is complete again: the strings that came with 0.8.3 (Compare, the drop menu,
+  Properties of several items) were missing.
 
 ## 0.8.4 (2026-11-25)
 

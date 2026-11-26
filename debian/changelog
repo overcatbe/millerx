@@ -1,3 +1,12 @@
+millerx (0.8.5) unstable; urgency=medium
+
+  * Fix a crash after changing a setting twice (since 0.8.3).
+  * Extract to… (folder chooser) replaces Extract to "name/".
+  * Open with: Other application… and Check file type.
+  * Greek translation: the strings from 0.8.3 filled in.
+
+ -- overcatbe <1771834+overcatbe@users.noreply.github.com>  Thu, 26 Nov 2026 10:10:00 +0200
+
 millerx (0.8.4) unstable; urgency=medium
 
   * Gallery: type icons fill their tiles; new size Tiny (about 64 px).

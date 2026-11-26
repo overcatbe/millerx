@@ -65,6 +65,11 @@
   </keywords>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="0.8.5" date="2026-11-26">
+      <description>
+        <p>Fixes a crash in Settings (since 0.8.3). Extract to… picks any folder to unpack into. Open with offers Other application… (every installed program) and Check file type (what the file really is). Greek translation complete again.</p>
+      </description>
+    </release>
     <release version="0.8.4" date="2026-11-25">
       <description>
         <p>Gallery icons fill their tiles. Tiny thumbnails (about 64 px). Links show in italics with the link emblem. New file in the right-click menu. Ctrl+Shift when dropping makes links.</p>
