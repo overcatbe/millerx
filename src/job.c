@@ -7,7 +7,7 @@
 #include <string.h>
 #include <unistd.h>
 
-typedef enum { K_COPY, K_EXTRACT_HERE, K_EXTRACT_FOLDER, K_COMPRESS } Kind;
+typedef enum { K_COPY, K_EXTRACT, K_EXTRACT_TO, K_COMPRESS } Kind;   /* K_EXTRACT_TO: into dest */
 
 struct Job {
     Win *win;
@@ -305,13 +305,14 @@ static GFile *free_child(GFile *folder, const char *name)
     return f;
 }
 
-/* Unpacks into a hidden temporary folder next to the archive first, then puts the result in place:
- * "here" with one top item moves that item (asking on conflicts, like a paste); several items, or
- * "into a folder", become a folder named after the archive. Nothing half-done is left behind. */
+/* Unpacks into a hidden temporary folder in the target first (next to the archive, or the folder
+ * chosen with "Extract to…"), then puts the result in place: one top item moves there (asking on
+ * conflicts, like a paste); several items become a folder named after the archive. Nothing
+ * half-done is left behind. */
 static gboolean extract_one(Job *j, GFile *archive, double base, double span, GError **err)
 {
     char *path = g_file_get_path(archive);
-    GFile *dest = g_file_get_parent(archive);
+    GFile *dest = j->kind == K_EXTRACT_TO ? g_object_ref(j->dest) : g_file_get_parent(archive);
     char *dpath = dest ? g_file_get_path(dest) : NULL;
     if (!path || !dpath) {
         g_set_error_literal(err, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED, _("only local files can be extracted"));
@@ -343,13 +344,11 @@ static gboolean extract_one(Job *j, GFile *archive, double base, double span, GE
         g_clear_object(&en);
         guint n = g_list_length(kids);
         gboolean single = n == 1;
-        char *kid_name = single ? g_file_get_basename(kids->data) : NULL;
         if (n == 0) {
             if (err && !*err)
                 g_set_error_literal(err, G_IO_ERROR, G_IO_ERROR_FAILED, _("the archive is empty"));
             ok = FALSE;
-        } else if (single && (j->kind == K_EXTRACT_HERE
-                              || (is_dir(kids->data, FALSE) && !strcmp(kid_name, stem)))) {
+        } else if (single) {
             /* one top item: move it next to the archive, like a paste (asks if it exists) */
             GFile *saved = j->dest;
             gboolean saved_move = j->move;
@@ -363,7 +362,6 @@ static gboolean extract_one(Job *j, GFile *archive, double base, double span, GE
             ok = g_file_move(tmp, target, G_FILE_COPY_NOFOLLOW_SYMLINKS, NULL, NULL, NULL, err);
             g_object_unref(target);
         }
-        g_free(kid_name);
         g_list_free_full(kids, g_object_unref);
     }
     if (g_file_query_exists(tmp, NULL))       /* cancelled, failed, skipped or moved out of */
@@ -492,12 +490,12 @@ Job *job_run(Win *w, gboolean move, GList *sources, GFile *dest)
     return job_start(w, K_COPY, move, sources, dest, NULL, 0, job_thread);
 }
 
-/* each archive is unpacked next to itself; dest (only for the job's bookkeeping) is the first one's folder */
-Job *job_extract(Win *w, GList *archives, gboolean into_folder)
+/* to NULL: each archive is unpacked next to itself (dest, only for the job's bookkeeping, is the
+ * first one's folder); otherwise all of them into the folder to */
+Job *job_extract(Win *w, GList *archives, GFile *to)
 {
-    GFile *dest = g_file_get_parent(archives->data);
-    Job *j = job_start(w, into_folder ? K_EXTRACT_FOLDER : K_EXTRACT_HERE, FALSE, archives, dest, NULL, 0,
-                       job_thread);
+    GFile *dest = to ? g_object_ref(to) : g_file_get_parent(archives->data);
+    Job *j = job_start(w, to ? K_EXTRACT_TO : K_EXTRACT, FALSE, archives, dest, NULL, 0, job_thread);
     g_object_unref(dest);
     return j;
 }

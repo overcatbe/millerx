@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: millerx\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-25 08:29+0200\n"
+"POT-Creation-Date: 2026-11-26 09:58+0200\n"
 "PO-Revision-Date: 2026-11-23 08:30+0200\n"
 "Last-Translator: overcatbe\n"
 "Language-Team: Pirate (salty)\n"
@@ -87,7 +87,8 @@ msgid "Link here"
 msgstr "Lash a line here"
 
 #: src/column.c:808 src/dialogs.c:27 src/dialogs.c:791 src/window.c:178
-#: src/window.c:189 src/window.c:701 src/window.c:1266 src/window.c:2106
+#: src/window.c:189 src/window.c:701 src/window.c:1338 src/window.c:1366
+#: src/window.c:2205
 msgid "Cancel"
 msgstr "Belay that!"
 
@@ -242,7 +243,7 @@ msgid_plural "Properties: %u items"
 msgstr[0] "Inspect %u thing"
 msgstr[1] "Inspect %u things"
 
-#: src/dialogs.c:595 src/places.c:236 src/window.c:1272
+#: src/dialogs.c:595 src/places.c:236 src/window.c:1372
 #, c-format
 msgid "%u item"
 msgid_plural "%u items"
@@ -429,7 +430,7 @@ msgstr "scrapping…"
 msgid "None. Right-click a folder → Sort … to give it its own order."
 msgstr "None yet. Right-click a hold → Order … to give it orders of its own."
 
-#: src/dialogs.c:977 src/window.c:1532
+#: src/dialogs.c:977 src/window.c:1634
 msgid "Name"
 msgstr "Name"
 
@@ -437,15 +438,15 @@ msgstr "Name"
 msgid "Date (newest first)"
 msgstr "Date (freshest first)"
 
-#: src/dialogs.c:979 src/window.c:1532
+#: src/dialogs.c:979 src/window.c:1634
 msgid "Size (largest first)"
 msgstr "Bulk (biggest first)"
 
-#: src/dialogs.c:980 src/preview.c:1753 src/window.c:1533
+#: src/dialogs.c:980 src/preview.c:1753 src/window.c:1635
 msgid "Type"
 msgstr "Kind"
 
-#: src/dialogs.c:982 src/window.c:1545
+#: src/dialogs.c:982 src/window.c:1647
 msgid "Reversed"
 msgstr "Arse about face"
 
@@ -546,7 +547,7 @@ msgstr "Highlight colour"
 msgid "Follow the theme"
 msgstr "Follow the theme"
 
-#: src/dialogs.c:1150 src/window.c:2029
+#: src/dialogs.c:1150 src/window.c:2128
 msgid "millerX"
 msgstr "millerX"
 
@@ -799,11 +800,11 @@ msgstr "_Shut it"
 msgid "reading…"
 msgstr "inspecting the seals…"
 
-#: src/dialogs.c:1501 src/window.c:1658 src/window.c:1747
+#: src/dialogs.c:1501 src/window.c:1766 src/window.c:1846
 msgid "Copy"
 msgstr "Copy"
 
-#: src/dialogs.c:1508 src/window.c:1686 src/window.c:1757
+#: src/dialogs.c:1508 src/window.c:1794 src/window.c:1856
 msgid "Compare"
 msgstr "Compare"
 
@@ -856,7 +857,7 @@ msgstr[1] "Copied %u prizes to %s"
 msgid "can't put a folder into itself"
 msgstr "a hold can't go inside itself. Even drunk, ye should know that."
 
-#: src/job.c:317
+#: src/job.c:318
 msgid "only local files can be extracted"
 msgstr "only local chests can be unpacked"
 
@@ -864,7 +865,7 @@ msgstr "only local chests can be unpacked"
 msgid "the archive is empty"
 msgstr "the chest's empty. Robbed by a better pirate, were ye?"
 
-#: src/job.c:397
+#: src/job.c:395
 msgid "only local files can be packed"
 msgstr "only charts aboard this ship can be packed"
 
@@ -992,7 +993,7 @@ msgstr "%s: safe to pull free. Off ye fuck."
 msgid "%s unmounted"
 msgstr "%s has cast off"
 
-#: src/places.c:765 src/window.c:1633
+#: src/places.c:765 src/window.c:1750
 msgid "Open in new window"
 msgstr "Open in a fresh window"
 
@@ -1252,7 +1253,7 @@ msgstr "Emptying the brig…"
 msgid "Put back"
 msgstr "Haul back"
 
-#: src/trash.c:224 src/window.c:1671 src/window.c:1751
+#: src/trash.c:224 src/window.c:1779 src/window.c:1850
 msgid "Delete permanently…"
 msgstr "Sink for good…"
 
@@ -1354,7 +1355,7 @@ msgstr ""
 "This needs the Captain's authority. Keep yer grubby hands where I can see "
 "'em."
 
-#: src/window.c:165 src/window.c:1689
+#: src/window.c:165 src/window.c:1797
 msgid "Open as root…"
 msgstr "Open as Captain…"
 
@@ -1403,8 +1404,8 @@ msgstr "“%s” be a set o' orders"
 msgid "Run it, or open it to read what it does?"
 msgstr "Execute the orders, or read what the bastard wrote first?"
 
-#: src/window.c:702 src/window.c:1632 src/window.c:1635 src/window.c:1721
-#: src/window.c:1723
+#: src/window.c:702 src/window.c:1749 src/window.c:1752 src/window.c:1829
+#: src/window.c:1831
 msgid "Open"
 msgstr "Open"
 
@@ -1420,11 +1421,11 @@ msgstr "Execute"
 msgid "Couldn't run it"
 msgstr "The orders failed. Who wrote this shite?"
 
-#: src/window.c:842 src/window.c:881
+#: src/window.c:842 src/window.c:901 src/window.c:959
 msgid "No terminal found"
 msgstr "No terminal found. Who fitted this ship, a fucking turnip?"
 
-#: src/window.c:843 src/window.c:882
+#: src/window.c:843 src/window.c:902 src/window.c:960
 msgid ""
 "Install a terminal (xterm, xfce4-terminal, konsole, …) or set the TERMINAL "
 "environment variable to the one you use."
@@ -1432,59 +1433,59 @@ msgstr ""
 "Install a terminal (xterm, xfce4-terminal, konsole, …) for the quarterdeck, "
 "or put yer preferred one in the TERMINAL environment variable."
 
-#: src/window.c:889
+#: src/window.c:967
 msgid "New folder"
 msgstr "New hold"
 
-#: src/window.c:889
+#: src/window.c:967
 msgid "New Folder"
 msgstr "New hold"
 
-#: src/window.c:896 src/window.c:898
+#: src/window.c:974 src/window.c:976
 msgid "Couldn't create the folder"
 msgstr "Can't build the hold. Shoddy bloody workmanship."
 
-#: src/window.c:912
+#: src/window.c:990
 msgid "New file"
 msgstr "New chart"
 
-#: src/window.c:912
+#: src/window.c:990
 msgid "New File"
 msgstr "New Chart"
 
-#: src/window.c:920 src/window.c:922
+#: src/window.c:998 src/window.c:1000
 msgid "Couldn't create the file"
 msgstr "Can't draw the chart. Some swab drank the ink."
 
-#: src/window.c:942
+#: src/window.c:1020
 msgid "Rename"
 msgstr "Rechristen"
 
-#: src/window.c:946
+#: src/window.c:1024
 #, c-format
 msgid "“%s” already exists."
 msgstr "“%s” be aboard already."
 
-#: src/window.c:947 src/window.c:953
+#: src/window.c:1025 src/window.c:1031
 msgid "Couldn't rename"
 msgstr "Can't rechristen it. The old name won't fucking budge."
 
-#: src/window.c:1009
+#: src/window.c:1087
 msgid "Some items couldn't be deleted"
 msgstr "Some prizes refused to sink. Stubborn little shits."
 
-#: src/window.c:1013
+#: src/window.c:1091
 #, c-format
 msgid "%u item deleted"
 msgid_plural "%u items deleted"
 msgstr[0] "%u prize sunk for good"
 msgstr[1] "%u prizes sunk for good"
 
-#: src/window.c:1087 src/window.c:1095
+#: src/window.c:1165 src/window.c:1173
 msgid "Can't move to trash"
 msgstr "Can't clap it in the brig"
 
-#: src/window.c:1094
+#: src/window.c:1172
 #, c-format
 msgid ""
 "%s: %s\n"
@@ -1495,25 +1496,25 @@ msgstr ""
 "\n"
 "Sink it for good instead?"
 
-#: src/window.c:1095
+#: src/window.c:1173
 msgid "Delete permanently"
 msgstr "Sink for good"
 
-#: src/window.c:1102
+#: src/window.c:1180
 #, c-format
 msgid "%u item moved to the trash"
 msgid_plural "%u items moved to the trash"
 msgstr[0] "%u prize clapped in the brig"
 msgstr[1] "%u prizes clapped in the brig"
 
-#: src/window.c:1113
+#: src/window.c:1191
 #, c-format
 msgid "Delete %u item permanently?"
 msgid_plural "Delete %u items permanently?"
 msgstr[0] "Sink %u prize for good?"
 msgstr[1] "Sink %u prizes for good?"
 
-#: src/window.c:1114
+#: src/window.c:1192
 #, c-format
 msgid ""
 "%s\n"
@@ -1524,213 +1525,224 @@ msgstr ""
 "\n"
 "Gone for good. Ye can't undo this, ye reckless bastard."
 
-#: src/window.c:1115
+#: src/window.c:1193
 msgid "Delete"
 msgstr "Sink"
 
-#: src/window.c:1182
+#: src/window.c:1260
 #, c-format
 msgid "%u item cut"
 msgid_plural "%u items cut"
 msgstr[0] "%u prize cut"
 msgstr[1] "%u prizes cut"
 
-#: src/window.c:1184
+#: src/window.c:1262
 #, c-format
 msgid "%u item copied"
 msgid_plural "%u items copied"
 msgstr[0] "%u prize copied"
 msgstr[1] "%u prizes copied"
 
-#: src/window.c:1230
+#: src/window.c:1308
 msgid "Nothing to paste"
 msgstr "Nothing to unload. Empty-handed again?"
 
-#: src/window.c:1265 src/window.c:1266
+#: src/window.c:1337
+msgid "Extract to"
+msgstr "Unpack into which hold?"
+
+#: src/window.c:1339
+msgid "Extract"
+msgstr "Unpack"
+
+#: src/window.c:1365 src/window.c:1366
 msgid "Compress"
 msgstr "Pack"
 
-#: src/window.c:1273
+#: src/window.c:1373
 #, c-format
 msgid "Pack “%s” into an archive in the same folder:"
 msgstr "Pack “%s” into a chest in the same hold:"
 
-#: src/window.c:1300
+#: src/window.c:1400
 #, c-format
 msgid "“%s” already exists. Pick another name."
 msgstr "“%s” be aboard already. Pick another name, ye unimaginative bastard."
 
-#: src/window.c:1301
+#: src/window.c:1401
 msgid "Couldn't compress"
 msgstr "Can't pack the chest. Bloody useless."
 
-#: src/window.c:1351
+#: src/window.c:1451
 msgid "Couldn't tell what kind of file this is"
 msgstr "Fuck knows what kind o' chart this is"
 
-#: src/window.c:1353
+#: src/window.c:1453
 msgid "Couldn't set the default program"
 msgstr "Can't set the default program. Mutinous bastard."
 
-#: src/window.c:1357
+#: src/window.c:1457
 #, c-format
 msgid "%s opens with %s now"
 msgstr "%s now answers to %s"
 
-#: src/window.c:1532
+#: src/window.c:1634
 msgid "Date modified (newest first)"
 msgstr "Last meddled with (freshest first)"
 
-#: src/window.c:1551
+#: src/window.c:1653
 msgid "Back to name"
 msgstr "Back to names"
 
-#: src/window.c:1557
+#: src/window.c:1659
 #, c-format
 msgid "Sort “%s”"
 msgstr "Order “%s”"
 
-#: src/window.c:1599
+#: src/window.c:1704
 msgid "Set default"
 msgstr "Make default"
 
-#: src/window.c:1603
+#: src/window.c:1714
+msgid "Other application…"
+msgstr "Some other swab…"
+
+#: src/window.c:1717
+msgid "Check file type"
+msgstr "Sniff the barrel"
+
+#: src/window.c:1720
 msgid "Open with"
 msgstr "Open with"
 
-#: src/window.c:1643 src/window.c:1732
+#: src/window.c:1760 src/window.c:1840
 msgid "Extract here"
 msgstr "Unpack here"
 
-#: src/window.c:1646 src/window.c:1735
-#, c-format
-msgid "Extract to “%s/”"
-msgstr "Unpack into “%s/”"
+#: src/window.c:1761 src/window.c:1841
+msgid "Extract to…"
+msgstr "Unpack into…"
 
-#: src/window.c:1652 src/window.c:1741
-msgid "Extract each to its own folder"
-msgstr "Unpack each into its own hold"
-
-#: src/window.c:1655 src/window.c:1744
+#: src/window.c:1763 src/window.c:1843
 msgid "Compress…"
 msgstr "Pack into a chest…"
 
-#: src/window.c:1657 src/window.c:1746
+#: src/window.c:1765 src/window.c:1845
 msgid "Cut"
 msgstr "Cut"
 
-#: src/window.c:1661
+#: src/window.c:1769
 #, c-format
 msgid "Paste into “%s”"
 msgstr "Unload into “%s”"
 
-#: src/window.c:1666 src/window.c:1674
+#: src/window.c:1774 src/window.c:1782
 msgid "Paste"
 msgstr "Unload here"
 
-#: src/window.c:1669 src/window.c:1749
+#: src/window.c:1777 src/window.c:1848
 msgid "Rename…"
 msgstr "Rechristen…"
 
-#: src/window.c:1670 src/window.c:1750
+#: src/window.c:1778 src/window.c:1849
 msgid "Move to trash"
 msgstr "Clap in the brig"
 
-#: src/window.c:1677
+#: src/window.c:1785
 msgid "New folder…"
 msgstr "New hold…"
 
-#: src/window.c:1678
+#: src/window.c:1786
 msgid "New file…"
 msgstr "New chart…"
 
 #. the highlighted folder, else this column's own
-#: src/window.c:1680
+#: src/window.c:1788
 msgid "Open terminal here"
 msgstr "Open the quarterdeck here"
 
-#: src/window.c:1682 src/window.c:1753
+#: src/window.c:1790 src/window.c:1852
 msgid "Copy path"
 msgstr "Copy path"
 
-#: src/window.c:1684 src/window.c:1755
+#: src/window.c:1792 src/window.c:1854
 msgid "Checksums…"
 msgstr "Inspect cargo seals…"
 
-#: src/window.c:1687
+#: src/window.c:1795
 msgid "Add to bookmarks"
 msgstr "Mark this port"
 
-#: src/window.c:1691 src/window.c:1758
+#: src/window.c:1799 src/window.c:1857
 msgid "Properties…"
 msgstr "Inspect…"
 
-#: src/window.c:1693
+#: src/window.c:1801
 msgid "Show hidden files"
 msgstr "Reveal stashed charts"
 
-#: src/window.c:1727
+#: src/window.c:1835
 msgid "Show in column"
 msgstr "Show in column"
 
-#: src/window.c:1753
+#: src/window.c:1852
 msgid "Copy paths"
 msgstr "Copy paths"
 
-#: src/window.c:2038
+#: src/window.c:2137
 msgid "Parent folder (Backspace, Alt+Up)"
 msgstr "Up to the parent hold (Backspace, Alt+Up)"
 
-#: src/window.c:2040
+#: src/window.c:2139
 msgid "Home (Alt+Home)"
 msgstr "Home port (Alt+Home)"
 
-#: src/window.c:2042
+#: src/window.c:2141
 msgid "Computer: disks, USB sticks, network (Alt+/)"
 msgstr "The fleet: disks, USB sticks, network (Alt+/)"
 
-#: src/window.c:2046
+#: src/window.c:2145
 msgid "Bookmarks (Ctrl+D adds this folder)"
 msgstr "Marked ports (Ctrl+D marks this hold)"
 
-#: src/window.c:2050
+#: src/window.c:2149
 msgid "New window"
 msgstr "Fresh window"
 
-#: src/window.c:2056
+#: src/window.c:2155
 msgid "Open this folder as root…"
 msgstr "Open this hold as Captain…"
 
-#: src/window.c:2062
+#: src/window.c:2161
 msgid "Search here…"
 msgstr "Ransack here…"
 
-#: src/window.c:2066
+#: src/window.c:2165
 msgid "Settings…"
 msgstr "Captain's orders…"
 
-#: src/window.c:2069
+#: src/window.c:2168
 msgid "About millerX"
 msgstr "The tale o' millerX"
 
-#: src/window.c:2119
+#: src/window.c:2218
 msgid ""
 "<b>You are root:</b> every change here is made as administrator. Be careful."
 msgstr ""
 "<b>Ye be the Captain:</b> every change here uses administrator powers. Mind "
 "what ye're doing, ye reckless bastard."
 
-#: src/window.c:2196
+#: src/window.c:2295
 msgid "Not now"
 msgstr "Not now, ye impatient sod"
 
-#: src/window.c:2196
+#: src/window.c:2295
 msgid ""
 "Files are still being copied, moved or packed. Restart when that is done."
 msgstr ""
 "Cargo's still bein' copied, hauled or packed. Set sail again when the lazy "
 "bastards are done."
 
-#: src/window.c:2228
+#: src/window.c:2327
 msgid "Couldn't restart millerX"
 msgstr "millerX won't set sail again. Bloody mutiny."

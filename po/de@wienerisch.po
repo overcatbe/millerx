@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: millerx\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-25 08:29+0200\n"
+"POT-Creation-Date: 2026-11-26 09:58+0200\n"
 "PO-Revision-Date: 2026-11-23 08:30+0200\n"
 "Last-Translator: overcatbe\n"
 "Language-Team: Viennese (Wienerisch)\n"
@@ -87,7 +87,8 @@ msgid "Link here"
 msgstr "Do her verknüpfn"
 
 #: src/column.c:808 src/dialogs.c:27 src/dialogs.c:791 src/window.c:178
-#: src/window.c:189 src/window.c:701 src/window.c:1266 src/window.c:2106
+#: src/window.c:189 src/window.c:701 src/window.c:1338 src/window.c:1366
+#: src/window.c:2205
 msgid "Cancel"
 msgstr "Loss guat sein"
 
@@ -240,7 +241,7 @@ msgid_plural "Properties: %u items"
 msgstr[0] "Wos is des: %u Trumm"
 msgstr[1] "Wos is des: %u Trümmer"
 
-#: src/dialogs.c:595 src/places.c:236 src/window.c:1272
+#: src/dialogs.c:595 src/places.c:236 src/window.c:1372
 #, c-format
 msgid "%u item"
 msgid_plural "%u items"
@@ -427,7 +428,7 @@ msgstr ""
 "Ka Ordna. Rechtsklick auf an Ordna → Sortier … und er kriagt sei eigene "
 "Ordnung."
 
-#: src/dialogs.c:977 src/window.c:1532
+#: src/dialogs.c:977 src/window.c:1634
 msgid "Name"
 msgstr "Nam"
 
@@ -435,15 +436,15 @@ msgstr "Nam"
 msgid "Date (newest first)"
 msgstr "Datum (Neichste z'erst)"
 
-#: src/dialogs.c:979 src/window.c:1532
+#: src/dialogs.c:979 src/window.c:1634
 msgid "Size (largest first)"
 msgstr "Größn (de Fettn z'erst)"
 
-#: src/dialogs.c:980 src/preview.c:1753 src/window.c:1533
+#: src/dialogs.c:980 src/preview.c:1753 src/window.c:1635
 msgid "Type"
 msgstr "Sortn"
 
-#: src/dialogs.c:982 src/window.c:1545
+#: src/dialogs.c:982 src/window.c:1647
 msgid "Reversed"
 msgstr "Umkehrt"
 
@@ -543,7 +544,7 @@ msgstr "Markierfarb"
 msgid "Follow the theme"
 msgstr "Wia's Theme"
 
-#: src/dialogs.c:1150 src/window.c:2029
+#: src/dialogs.c:1150 src/window.c:2128
 msgid "millerX"
 msgstr "millerX"
 
@@ -795,11 +796,11 @@ msgstr "_Zuamochn"
 msgid "reading…"
 msgstr "i les no…"
 
-#: src/dialogs.c:1501 src/window.c:1658 src/window.c:1747
+#: src/dialogs.c:1501 src/window.c:1766 src/window.c:1846
 msgid "Copy"
 msgstr "Kopiern"
 
-#: src/dialogs.c:1508 src/window.c:1686 src/window.c:1757
+#: src/dialogs.c:1508 src/window.c:1794 src/window.c:1856
 msgid "Compare"
 msgstr "Vergleichn"
 
@@ -852,7 +853,7 @@ msgstr[1] "%u Trümmer noch %s kopiert"
 msgid "can't put a folder into itself"
 msgstr "an Ordna in si söba stecka? Bist meschugge?"
 
-#: src/job.c:317
+#: src/job.c:318
 msgid "only local files can be extracted"
 msgstr "nur Dinga vo do kenna auspackt wern"
 
@@ -860,7 +861,7 @@ msgstr "nur Dinga vo do kenna auspackt wern"
 msgid "the archive is empty"
 msgstr "des Packerl is laar"
 
-#: src/job.c:397
+#: src/job.c:395
 msgid "only local files can be packed"
 msgstr "nur Dinga vo do kenna eipackt wern"
 
@@ -986,7 +987,7 @@ msgstr "%s: kaunst jetzt ausstecka"
 msgid "%s unmounted"
 msgstr "%s is ausghängt"
 
-#: src/places.c:765 src/window.c:1633
+#: src/places.c:765 src/window.c:1750
 msgid "Open in new window"
 msgstr "In an neichn Fensta aufmochn"
 
@@ -1245,7 +1246,7 @@ msgstr "I leer den Mistkübel aus…"
 msgid "Put back"
 msgstr "Z'ruckholn"
 
-#: src/trash.c:224 src/window.c:1671 src/window.c:1751
+#: src/trash.c:224 src/window.c:1779 src/window.c:1850
 msgid "Delete permanently…"
 msgstr "Fia imma weg…"
 
@@ -1345,7 +1346,7 @@ msgstr ""
 "\n"
 "Do muasst scho da Kaiser sein."
 
-#: src/window.c:165 src/window.c:1689
+#: src/window.c:165 src/window.c:1797
 msgid "Open as root…"
 msgstr "Ois Kaiser aufmochn…"
 
@@ -1394,8 +1395,8 @@ msgstr "„%s“ is a Skript"
 msgid "Run it, or open it to read what it does?"
 msgstr "Rennen lossn, oda aufmochn und lesn, wos des mocht?"
 
-#: src/window.c:702 src/window.c:1632 src/window.c:1635 src/window.c:1721
-#: src/window.c:1723
+#: src/window.c:702 src/window.c:1749 src/window.c:1752 src/window.c:1829
+#: src/window.c:1831
 msgid "Open"
 msgstr "Aufmochn"
 
@@ -1411,11 +1412,11 @@ msgstr "Rennen lossn"
 msgid "Couldn't run it"
 msgstr "Des rennt ned"
 
-#: src/window.c:842 src/window.c:881
+#: src/window.c:842 src/window.c:901 src/window.c:959
 msgid "No terminal found"
 msgstr "Ka Terminal do, a so a Schlamassl"
 
-#: src/window.c:843 src/window.c:882
+#: src/window.c:843 src/window.c:902 src/window.c:960
 msgid ""
 "Install a terminal (xterm, xfce4-terminal, konsole, …) or set the TERMINAL "
 "environment variable to the one you use."
@@ -1423,59 +1424,59 @@ msgstr ""
 "Hau a Terminal drauf (xterm, xfce4-terminal, konsole, …) oder setz de "
 "Umgebungsvariable TERMINAL auf deins."
 
-#: src/window.c:889
+#: src/window.c:967
 msgid "New folder"
 msgstr "Neicher Ordna"
 
-#: src/window.c:889
+#: src/window.c:967
 msgid "New Folder"
 msgstr "Neicha Ordner"
 
-#: src/window.c:896 src/window.c:898
+#: src/window.c:974 src/window.c:976
 msgid "Couldn't create the folder"
 msgstr "Den Ordna kriag i ned zaum"
 
-#: src/window.c:912
+#: src/window.c:990
 msgid "New file"
 msgstr "Neiches Ding"
 
-#: src/window.c:912
+#: src/window.c:990
 msgid "New File"
 msgstr "Neiches Ding"
 
-#: src/window.c:920 src/window.c:922
+#: src/window.c:998 src/window.c:1000
 msgid "Couldn't create the file"
 msgstr "Des Ding kriag i ned zaum"
 
-#: src/window.c:942
+#: src/window.c:1020
 msgid "Rename"
 msgstr "Umtaufn"
 
-#: src/window.c:946
+#: src/window.c:1024
 #, c-format
 msgid "“%s” already exists."
 msgstr "„%s“ gibt's eh scho."
 
-#: src/window.c:947 src/window.c:953
+#: src/window.c:1025 src/window.c:1031
 msgid "Couldn't rename"
 msgstr "Umtaufn geht ned"
 
-#: src/window.c:1009
+#: src/window.c:1087
 msgid "Some items couldn't be deleted"
 msgstr "A poa Sochn wolln ned weg"
 
-#: src/window.c:1013
+#: src/window.c:1091
 #, c-format
 msgid "%u item deleted"
 msgid_plural "%u items deleted"
 msgstr[0] "%u Trumm weg"
 msgstr[1] "%u Trümmer weg"
 
-#: src/window.c:1087 src/window.c:1095
+#: src/window.c:1165 src/window.c:1173
 msgid "Can't move to trash"
 msgstr "Des geht ned in'n Mistkübel"
 
-#: src/window.c:1094
+#: src/window.c:1172
 #, c-format
 msgid ""
 "%s: %s\n"
@@ -1486,25 +1487,25 @@ msgstr ""
 "\n"
 "Dann glei fia imma weg?"
 
-#: src/window.c:1095
+#: src/window.c:1173
 msgid "Delete permanently"
 msgstr "Fia imma weg"
 
-#: src/window.c:1102
+#: src/window.c:1180
 #, c-format
 msgid "%u item moved to the trash"
 msgid_plural "%u items moved to the trash"
 msgstr[0] "%u Trumm in'n Mistkübel ghaut"
 msgstr[1] "%u Trümmer in'n Mistkübel ghaut"
 
-#: src/window.c:1113
+#: src/window.c:1191
 #, c-format
 msgid "Delete %u item permanently?"
 msgid_plural "Delete %u items permanently?"
 msgstr[0] "%u Trumm fia imma löschn?"
 msgstr[1] "%u Trümmer fia imma löschn?"
 
-#: src/window.c:1114
+#: src/window.c:1192
 #, c-format
 msgid ""
 "%s\n"
@@ -1515,212 +1516,223 @@ msgstr ""
 "\n"
 "Des kriagst nimma z'ruck, Oida."
 
-#: src/window.c:1115
+#: src/window.c:1193
 msgid "Delete"
 msgstr "Weg damit"
 
-#: src/window.c:1182
+#: src/window.c:1260
 #, c-format
 msgid "%u item cut"
 msgid_plural "%u items cut"
 msgstr[0] "%u Trumm ausgschnittn"
 msgstr[1] "%u Trümmer ausgschnittn"
 
-#: src/window.c:1184
+#: src/window.c:1262
 #, c-format
 msgid "%u item copied"
 msgid_plural "%u items copied"
 msgstr[0] "%u Trumm kopiert"
 msgstr[1] "%u Trümmer kopiert"
 
-#: src/window.c:1230
+#: src/window.c:1308
 msgid "Nothing to paste"
 msgstr "Mei, do is nix zum Hinpicken"
 
-#: src/window.c:1265 src/window.c:1266
+#: src/window.c:1337
+msgid "Extract to"
+msgstr "Auspackn nach"
+
+#: src/window.c:1339
+msgid "Extract"
+msgstr "Auspackn"
+
+#: src/window.c:1365 src/window.c:1366
 msgid "Compress"
 msgstr "Eipackn"
 
-#: src/window.c:1273
+#: src/window.c:1373
 #, c-format
 msgid "Pack “%s” into an archive in the same folder:"
 msgstr "„%s“ in a Packerl im söbn Ordna eipackn:"
 
-#: src/window.c:1300
+#: src/window.c:1400
 #, c-format
 msgid "“%s” already exists. Pick another name."
 msgstr "„%s“ gibt's eh scho. Nimm an aundan Nam."
 
-#: src/window.c:1301
+#: src/window.c:1401
 msgid "Couldn't compress"
 msgstr "Eipackn geht ned"
 
-#: src/window.c:1351
+#: src/window.c:1451
 msgid "Couldn't tell what kind of file this is"
 msgstr "Wos des fia a Ding is? Ka Ahnung, a Schmonzes."
 
-#: src/window.c:1353
+#: src/window.c:1453
 msgid "Couldn't set the default program"
 msgstr "Des Standardprogramm lasst si ned setzn"
 
-#: src/window.c:1357
+#: src/window.c:1457
 #, c-format
 msgid "%s opens with %s now"
 msgstr "%s geht jetzt mit %s auf"
 
-#: src/window.c:1532
+#: src/window.c:1634
 msgid "Date modified (newest first)"
 msgstr "Zletzt grührt (Neichste z'erst)"
 
-#: src/window.c:1551
+#: src/window.c:1653
 msgid "Back to name"
 msgstr "Z'ruck zum Nam"
 
-#: src/window.c:1557
+#: src/window.c:1659
 #, c-format
 msgid "Sort “%s”"
 msgstr "„%s“ sortiern"
 
-#: src/window.c:1599
+#: src/window.c:1704
 msgid "Set default"
 msgstr "Ois Standard festlegn"
 
-#: src/window.c:1603
+#: src/window.c:1714
+msgid "Other application…"
+msgstr "A anders Programm…"
+
+#: src/window.c:1717
+msgid "Check file type"
+msgstr "Nochschaun, wos des wirklich is"
+
+#: src/window.c:1720
 msgid "Open with"
 msgstr "Aufmochn mit"
 
-#: src/window.c:1643 src/window.c:1732
+#: src/window.c:1760 src/window.c:1840
 msgid "Extract here"
 msgstr "Do auspackn"
 
-#: src/window.c:1646 src/window.c:1735
-#, c-format
-msgid "Extract to “%s/”"
-msgstr "Auspackn in „%s/“"
+#: src/window.c:1761 src/window.c:1841
+msgid "Extract to…"
+msgstr "Auspackn nach…"
 
-#: src/window.c:1652 src/window.c:1741
-msgid "Extract each to its own folder"
-msgstr "Jeds in an eigenen Ordna auspackn"
-
-#: src/window.c:1655 src/window.c:1744
+#: src/window.c:1763 src/window.c:1843
 msgid "Compress…"
 msgstr "Eipackn…"
 
-#: src/window.c:1657 src/window.c:1746
+#: src/window.c:1765 src/window.c:1845
 msgid "Cut"
 msgstr "Ausschneidn"
 
-#: src/window.c:1661
+#: src/window.c:1769
 #, c-format
 msgid "Paste into “%s”"
 msgstr "Hinpicken in „%s“"
 
-#: src/window.c:1666 src/window.c:1674
+#: src/window.c:1774 src/window.c:1782
 msgid "Paste"
 msgstr "Hinpicken"
 
-#: src/window.c:1669 src/window.c:1749
+#: src/window.c:1777 src/window.c:1848
 msgid "Rename…"
 msgstr "Umtaufn…"
 
-#: src/window.c:1670 src/window.c:1750
+#: src/window.c:1778 src/window.c:1849
 msgid "Move to trash"
 msgstr "In'n Mistkübel haun"
 
-#: src/window.c:1677
+#: src/window.c:1785
 msgid "New folder…"
 msgstr "Neicher Ordna…"
 
-#: src/window.c:1678
+#: src/window.c:1786
 msgid "New file…"
 msgstr "Neiches Ding…"
 
 #. the highlighted folder, else this column's own
-#: src/window.c:1680
+#: src/window.c:1788
 msgid "Open terminal here"
 msgstr "Terminal do aufmochn"
 
-#: src/window.c:1682 src/window.c:1753
+#: src/window.c:1790 src/window.c:1852
 msgid "Copy path"
 msgstr "Pfad kopiern"
 
-#: src/window.c:1684 src/window.c:1755
+#: src/window.c:1792 src/window.c:1854
 msgid "Checksums…"
 msgstr "Prüfsummen…"
 
-#: src/window.c:1687
+#: src/window.c:1795
 msgid "Add to bookmarks"
 msgstr "Zu de Lesezeichn"
 
-#: src/window.c:1691 src/window.c:1758
+#: src/window.c:1799 src/window.c:1857
 msgid "Properties…"
 msgstr "Wos is des…"
 
-#: src/window.c:1693
+#: src/window.c:1801
 msgid "Show hidden files"
 msgstr "Versteckte Dinga zeign"
 
-#: src/window.c:1727
+#: src/window.c:1835
 msgid "Show in column"
 msgstr "In da Spoitn zeign"
 
-#: src/window.c:1753
+#: src/window.c:1852
 msgid "Copy paths"
 msgstr "Pfade kopiern"
 
-#: src/window.c:2038
+#: src/window.c:2137
 msgid "Parent folder (Backspace, Alt+Up)"
 msgstr "A Stockwerk aufe (Rücktaste, Alt+Auf)"
 
-#: src/window.c:2040
+#: src/window.c:2139
 msgid "Home (Alt+Home)"
 msgstr "Dahoam (Alt+Pos1)"
 
-#: src/window.c:2042
+#: src/window.c:2141
 msgid "Computer: disks, USB sticks, network (Alt+/)"
 msgstr "Kastl: Plattn, USB-Stickerl, Netzwerk (Alt+/)"
 
-#: src/window.c:2046
+#: src/window.c:2145
 msgid "Bookmarks (Ctrl+D adds this folder)"
 msgstr "Lesezeichn (Strg+D merkt si den Ordna)"
 
-#: src/window.c:2050
+#: src/window.c:2149
 msgid "New window"
 msgstr "Neiches Fensta"
 
-#: src/window.c:2056
+#: src/window.c:2155
 msgid "Open this folder as root…"
 msgstr "Den Ordna ois Kaiser aufmochn…"
 
-#: src/window.c:2062
+#: src/window.c:2161
 msgid "Search here…"
 msgstr "Wo is des Glump?…"
 
-#: src/window.c:2066
+#: src/window.c:2165
 msgid "Settings…"
 msgstr "Einstellungen…"
 
-#: src/window.c:2069
+#: src/window.c:2168
 msgid "About millerX"
 msgstr "Üba millerX"
 
-#: src/window.c:2119
+#: src/window.c:2218
 msgid ""
 "<b>You are root:</b> every change here is made as administrator. Be careful."
 msgstr ""
 "<b>Du bist da Kaiser:</b> ois, wos'd do mochst, mochst mit kaiserlicher "
 "Gwoit. Pass auf, Oida."
 
-#: src/window.c:2196
+#: src/window.c:2295
 msgid "Not now"
 msgstr "Jetzt ned"
 
-#: src/window.c:2196
+#: src/window.c:2295
 msgid ""
 "Files are still being copied, moved or packed. Restart when that is done."
 msgstr ""
 "Es wird no kopiert, verschobn oder eipackt. Start neich, wann des fertig is."
 
-#: src/window.c:2228
+#: src/window.c:2327
 msgid "Couldn't restart millerX"
 msgstr "millerX lasst si ned neich startn"

@@ -283,7 +283,7 @@ void preview_show_disk(Preview *p, const char *name, GIcon *icon, GFile *root, c
 /* ---- jobs (job.c) ------------------------------------------------------------ */
 typedef struct Job Job;
 Job *job_run(Win *w, gboolean move, GList *sources, GFile *dest);
-Job *job_extract(Win *w, GList *archives, gboolean into_folder);
+Job *job_extract(Win *w, GList *archives, GFile *to);   /* to NULL: next to each */
 Job *job_compress(Win *w, GList *sources, GFile *out, int format);
 void job_cancel(Job *j);
 

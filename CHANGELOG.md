@@ -1,5 +1,20 @@
 # Changelog
 
+## Next (not released yet)
+
+- **Fixed a crash in Settings:** after changing a setting, closing Settings and changing another
+  one, millerX could abort (double free), and the Compare box showed garbage. Since 0.8.3.
+  Thanks, random_guy and SCerovec!
+- **Extract to…** picks any folder to unpack into. It replaces "Extract to "name/"", which did
+  the same as Extract here nearly always; Extract here stays as it was (one folder or file on
+  top lands next to the archive, loose files get a folder of their own). Thanks, kgha, brobr and
+  SCerovec!
+- **Open with → Other application…** opens GTK's program chooser with every installed program,
+  for files whose program doesn't register for their type. Opens the file once; the default
+  stays (that is Set default).
+- **Open with → Check file type** runs `file` on it in a terminal: a "photo.jpg" that is really
+  text says so. Only there when `file` is installed. Thanks, gus3!
+
 ## 0.8.4 (2026-11-25)
 
 - **Gallery icons fill their tiles.** Files without a picture (text, code, …) showed their type

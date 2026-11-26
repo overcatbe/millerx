@@ -845,6 +845,84 @@ static void run_in_terminal(Win *w, const char *path)
     g_free(dir);
 }
 
+/* Open with → Check file type: a terminal in the file's folder runs `file` on it, so you see
+ * what the file really is, whatever its name says. Its own function on purpose: run_in_terminal
+ * (scripts) stays as it is; both use the same TERMINALS list. The name goes in as an argument
+ * ("$0"), never into the shell text, so odd names can't do anything. */
+static void check_file_type(Win *w, GFile *f)
+{
+    char *path = g_file_get_path(f);
+    if (!path)
+        return;
+    char *dir = g_path_get_dirname(path), *name = g_path_get_basename(path);
+    const char *script = "file -- \"$0\"; echo; printf '[finished: press Enter]'; read x";
+    gboolean ok = FALSE;
+    const char *env = g_getenv("TERMINAL");
+    if (env && *env) {
+        char **tv = NULL;
+        if (g_shell_parse_argv(env, NULL, &tv, NULL)) {
+            GPtrArray *a = g_ptr_array_new();
+            for (int i = 0; tv[i]; i++)
+                g_ptr_array_add(a, tv[i]);
+            const char *rest[] = { "-e", "/bin/sh", "-c", script, name };
+            for (guint i = 0; i < G_N_ELEMENTS(rest); i++)
+                g_ptr_array_add(a, (char *) rest[i]);
+            g_ptr_array_add(a, NULL);
+            ok = spawn_child(dir, (char **) a->pdata, G_SPAWN_SEARCH_PATH, NULL);
+            g_ptr_array_free(a, TRUE);
+        }
+        g_strfreev(tv);
+    }
+    for (guint i = 0; !ok && i < G_N_ELEMENTS(TERMINALS); i++) {
+        if (!TERMINALS[i].exec)
+            continue;
+        char *exe = g_find_program_in_path(TERMINALS[i].exe);
+        if (!exe)
+            continue;
+        GPtrArray *a = g_ptr_array_new_with_free_func(g_free);
+        g_ptr_array_add(a, exe);
+        const char *flag = TERMINALS[i].flag;
+        if (flag && g_str_has_suffix(flag, "=")) {
+            g_ptr_array_add(a, g_strconcat(flag, dir, NULL));
+        } else if (flag) {
+            g_ptr_array_add(a, g_strdup(flag));
+            g_ptr_array_add(a, g_strdup(dir));
+        }
+        if (*TERMINALS[i].exec)
+            g_ptr_array_add(a, g_strdup(TERMINALS[i].exec));
+        const char *rest[] = { "/bin/sh", "-c", script, name };
+        for (guint k = 0; k < G_N_ELEMENTS(rest); k++)
+            g_ptr_array_add(a, g_strdup(rest[k]));
+        g_ptr_array_add(a, NULL);
+        ok = spawn_child(dir, (char **) a->pdata, G_SPAWN_DEFAULT, NULL);
+        g_ptr_array_free(a, TRUE);
+    }
+    if (!ok)
+        win_error(w, _("No terminal found"),
+                  _("Install a terminal (xterm, xfce4-terminal, konsole, …) or set the TERMINAL "
+                  "environment variable to the one you use."));
+    g_free(name);
+    g_free(dir);
+    g_free(path);
+}
+
+/* Open with → Other application…: GTK's own chooser, every installed program; opens the file
+ * once with the one picked (the default stays: that is "Set default") */
+static void other_application(Win *w, GList *files)
+{
+    GtkWidget *d = gtk_app_chooser_dialog_new(GTK_WINDOW(w->window), GTK_DIALOG_MODAL, files->data);
+    gtk_app_chooser_widget_set_show_other(
+        GTK_APP_CHOOSER_WIDGET(gtk_app_chooser_dialog_get_widget(GTK_APP_CHOOSER_DIALOG(d))), TRUE);
+    GList *keep = g_list_copy_deep(files, obj_copy, NULL);
+    GAppInfo *app = gtk_dialog_run(GTK_DIALOG(d)) == GTK_RESPONSE_OK ? gtk_app_chooser_get_app_info(GTK_APP_CHOOSER(d))
+                                                                     : NULL;
+    gtk_widget_destroy(d);
+    if (app && !w->dead)
+        open_with(w, app, keep);
+    g_clear_object(&app);
+    g_list_free_full(keep, g_object_unref);
+}
+
 static void terminal_here(Win *w, GFile *folder)
 {
     char *path = g_file_get_path(folder);
@@ -1248,9 +1326,31 @@ typedef struct {
 
 enum { A_OPEN_DIR, A_OPEN, A_OPEN_WITH, A_CUT, A_COPY, A_PASTE_INTO, A_PASTE, A_RENAME, A_TRASH,
        A_DELETE, A_NEW_FOLDER, A_NEW_FILE, A_TERMINAL, A_COPY_PATH, A_BOOKMARK, A_PROPERTIES, A_ROOT, A_SHOW,
-       A_NEW_WINDOW, A_EXTRACT_HERE, A_EXTRACT_FOLDER, A_COMPRESS, A_SET_DEFAULT, A_CHECKSUMS, A_COMPARE };
+       A_NEW_WINDOW, A_EXTRACT_HERE, A_EXTRACT_TO, A_COMPRESS, A_SET_DEFAULT, A_CHECKSUMS, A_COMPARE,
+       A_OTHER_APP, A_FILE_TYPE };
 
 /* ---- archives ------------------------------------------------------------------------------ */
+/* "Extract to…": a folder chooser, starting where the archives are; they all go into that folder */
+static void extract_to_dialog(Win *w, GList *files)
+{
+    GList *archives = g_list_copy_deep(files, obj_copy, NULL);
+    GtkWidget *d = gtk_file_chooser_dialog_new(_("Extract to"), GTK_WINDOW(w->window),
+                                               GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER, _("Cancel"),
+                                               GTK_RESPONSE_CANCEL, _("Extract"), GTK_RESPONSE_ACCEPT, NULL);
+    gtk_dialog_set_default_response(GTK_DIALOG(d), GTK_RESPONSE_ACCEPT);
+    GFile *parent = g_file_get_parent(archives->data);
+    if (parent)
+        gtk_file_chooser_set_current_folder_file(GTK_FILE_CHOOSER(d), parent, NULL);
+    g_clear_object(&parent);
+    GFile *to = gtk_dialog_run(GTK_DIALOG(d)) == GTK_RESPONSE_ACCEPT ? gtk_file_chooser_get_file(GTK_FILE_CHOOSER(d))
+                                                                     : NULL;
+    gtk_widget_destroy(d);
+    if (to && !w->dead)
+        job_extract(w, archives, to);
+    g_clear_object(&to);
+    g_list_free_full(archives, g_object_unref);
+}
+
 /* Asks for the archive's name and format, then packs the files (which share one folder) there. */
 static void compress_dialog(Win *w, GList *files)
 {
@@ -1371,6 +1471,8 @@ static void act_run(GtkMenuItem *mi, Act *a)
     case A_OPEN_DIR: win_focus_next(w, c); break;
     case A_OPEN: win_open_default(w, a->files->data); break;
     case A_OPEN_WITH: open_with(w, a->app, a->files); break;
+    case A_OTHER_APP: other_application(w, a->files); break;
+    case A_FILE_TYPE: check_file_type(w, a->files->data); break;
     case A_CUT:
     case A_COPY:
         win_clip_set(w, g_list_copy_deep(a->files, obj_copy, NULL), a->action == A_CUT);
@@ -1403,8 +1505,8 @@ static void act_run(GtkMenuItem *mi, Act *a)
     case A_BOOKMARK: places_bookmark_add(w, a->folder); break;
     case A_ROOT: win_open_as_root(w, a->folder); break;
     case A_NEW_WINDOW: win_new(w->app, a->folder); break;
-    case A_EXTRACT_HERE:
-    case A_EXTRACT_FOLDER: job_extract(w, a->files, a->action == A_EXTRACT_FOLDER); break;
+    case A_EXTRACT_HERE: job_extract(w, a->files, NULL); break;
+    case A_EXTRACT_TO: extract_to_dialog(w, a->files); break;
     case A_COMPRESS: compress_dialog(w, a->files); break;
     case A_SET_DEFAULT: set_default_app(w, a->app, a->files->data); break;
     case A_CHECKSUMS: dialog_checksums(w, a->files->data); break;
@@ -1568,7 +1670,9 @@ static void sort_menu(GtkWidget *menu, Win *w, GFile *folder)
 static void open_with_menu(GtkWidget *menu, Win *w, Column *c, GList *files, const char *ct, gboolean can_default)
 {
     GList *apps = ct ? g_app_info_get_all_for_type(ct) : NULL;
-    if (!apps)
+    /* one file (not a folder) on this computer: also Other application… and Check file type */
+    gboolean one_file = ct && !files->next && g_strcmp0(ct, "inode/directory") && g_file_is_native(files->data);
+    if (!apps && !one_file)
         return;
     GtkWidget *sub = gtk_menu_new();
     for (GList *l = apps; l; l = l->next) {
@@ -1595,10 +1699,23 @@ static void open_with_menu(GtkWidget *menu, Win *w, Column *c, GList *files, con
             gtk_menu_shell_append(GTK_MENU_SHELL(dsub), mi);
         }
         g_clear_object(&def);
-        sep(sub);
-        GtkWidget *sd = gtk_menu_item_new_with_label(_("Set default"));
-        gtk_menu_item_set_submenu(GTK_MENU_ITEM(sd), dsub);
-        gtk_menu_shell_append(GTK_MENU_SHELL(sub), sd);
+        if (apps) {
+            sep(sub);
+            GtkWidget *sd = gtk_menu_item_new_with_label(_("Set default"));
+            gtk_menu_item_set_submenu(GTK_MENU_ITEM(sd), dsub);
+            gtk_menu_shell_append(GTK_MENU_SHELL(sub), sd);
+        } else {
+            gtk_widget_destroy(dsub);
+        }
+    }
+    if (one_file) {
+        if (apps)
+            sep(sub);
+        item(sub, w, c, files, NULL, A_OTHER_APP, _("Other application…"), NULL, TRUE);
+        char *fp = g_find_program_in_path("file");      /* not installed: no entry */
+        if (fp)
+            item(sub, w, c, files, NULL, A_FILE_TYPE, _("Check file type"), NULL, TRUE);
+        g_free(fp);
     }
     GtkWidget *ow = gtk_menu_item_new_with_label(_("Open with"));
     gtk_menu_item_set_submenu(GTK_MENU_ITEM(ow), sub);
@@ -1641,16 +1758,7 @@ void win_context_menu(Win *w, Column *c, GdkEventButton *ev)
         sep(menu);
         if (all_archives(files)) {
             item(menu, w, c, files, NULL, A_EXTRACT_HERE, _("Extract here"), NULL, TRUE);
-            if (n == 1) {
-                char *b = g_file_get_basename(files->data), *stem = arc_stem(b);
-                char *l = g_strdup_printf(_("Extract to “%s/”"), stem);
-                item(menu, w, c, files, NULL, A_EXTRACT_FOLDER, l, NULL, TRUE);
-                g_free(l);
-                g_free(stem);
-                g_free(b);
-            } else {
-                item(menu, w, c, files, NULL, A_EXTRACT_FOLDER, _("Extract each to its own folder"), NULL, TRUE);
-            }
+            item(menu, w, c, files, NULL, A_EXTRACT_TO, _("Extract to…"), NULL, TRUE);
         }
         item(menu, w, c, files, NULL, A_COMPRESS, _("Compress…"), NULL, TRUE);
         sep(menu);
@@ -1730,16 +1838,7 @@ void win_file_menu(Win *w, GList *files, GdkEventButton *ev, GtkWidget *attach)
     g_clear_object(&info);
     if (all_archives(files)) {
         item(menu, w, NULL, files, NULL, A_EXTRACT_HERE, _("Extract here"), NULL, TRUE);
-        if (one) {
-            char *b = g_file_get_basename(f), *stem = arc_stem(b);
-            char *l = g_strdup_printf(_("Extract to “%s/”"), stem);
-            item(menu, w, NULL, files, NULL, A_EXTRACT_FOLDER, l, NULL, TRUE);
-            g_free(l);
-            g_free(stem);
-            g_free(b);
-        } else {
-            item(menu, w, NULL, files, NULL, A_EXTRACT_FOLDER, _("Extract each to its own folder"), NULL, TRUE);
-        }
+        item(menu, w, NULL, files, NULL, A_EXTRACT_TO, _("Extract to…"), NULL, TRUE);
     }
     item(menu, w, NULL, files, NULL, A_COMPRESS, _("Compress…"), NULL, TRUE);
     sep(menu);

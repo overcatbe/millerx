@@ -66,15 +66,17 @@ millerX carries his name.
 - **Sorting per folder**: everything is sorted by name, so your eye learns where things are.
   A folder can have its own order (date, size, type, reversed), shown by a bar on top of
   its column and a ⇅ next to its name.
-- **Archives**: right-click → Extract here / Extract to "name/", or Compress… to zip, tar.gz,
-  tar.xz, tar.zst or 7z. In the background, with Cancel; hostile archives can't write outside the
-  folder.
+- **Archives**: right-click → Extract here (loose files get a folder of their own) / Extract
+  to… (pick a folder), or Compress… to zip, tar.gz, tar.xz, tar.zst or 7z. In the background,
+  with Cancel; hostile archives can't write outside the folder.
 - **Resizable columns**: drag a divider for long names, double-click for the default width.
 - **More windows**: Ctrl+N, Menu → New window, or middle-click a folder. Copy, paste and
   drag & drop work between them, e.g. one window above the other to compare two folders.
 - **Open, Open with, Open terminal here** (your `$TERMINAL`, or the first of 17 known terminals).
   Open with → Set default picks the program a click opens that kind of file with (saved in
-  `~/.config/mimeapps.list`, so Thunar and the file dialogs follow it too).
+  `~/.config/mimeapps.list`, so Thunar and the file dialogs follow it too). Open with → Other
+  application… offers every installed program, and Check file type shows in a terminal what
+  `file` says the file really is, whatever its name says.
 - **Checksums** (right-click → Checksums…): MD5, SHA-1 and SHA-256 in one read, a Copy button each,
   and a field to paste the checksum you were given: ✓ or ✗.
 - **Cut, copy, paste**, compatible with Thunar's clipboard. A highlighted folder receives the paste.

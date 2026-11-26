@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: millerx\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-25 08:29+0200\n"
+"POT-Creation-Date: 2026-11-26 09:58+0200\n"
 "PO-Revision-Date: 2026-11-23 08:30+0200\n"
 "Last-Translator: overcatbe\n"
 "Language-Team: German\n"
@@ -87,7 +87,8 @@ msgid "Link here"
 msgstr "Hier verknüpfen"
 
 #: src/column.c:808 src/dialogs.c:27 src/dialogs.c:791 src/window.c:178
-#: src/window.c:189 src/window.c:701 src/window.c:1266 src/window.c:2106
+#: src/window.c:189 src/window.c:701 src/window.c:1338 src/window.c:1366
+#: src/window.c:2205
 msgid "Cancel"
 msgstr "Abbrechen"
 
@@ -240,7 +241,7 @@ msgid_plural "Properties: %u items"
 msgstr[0] "Eigenschaften: %u Element"
 msgstr[1] "Eigenschaften: %u Elemente"
 
-#: src/dialogs.c:595 src/places.c:236 src/window.c:1272
+#: src/dialogs.c:595 src/places.c:236 src/window.c:1372
 #, c-format
 msgid "%u item"
 msgid_plural "%u items"
@@ -428,7 +429,7 @@ msgstr ""
 "Keine. Rechtsklick auf einen Ordner → Sortieren … gibt ihm eine eigene "
 "Reihenfolge."
 
-#: src/dialogs.c:977 src/window.c:1532
+#: src/dialogs.c:977 src/window.c:1634
 msgid "Name"
 msgstr "Name"
 
@@ -436,15 +437,15 @@ msgstr "Name"
 msgid "Date (newest first)"
 msgstr "Datum (neueste zuerst)"
 
-#: src/dialogs.c:979 src/window.c:1532
+#: src/dialogs.c:979 src/window.c:1634
 msgid "Size (largest first)"
 msgstr "Größe (größte zuerst)"
 
-#: src/dialogs.c:980 src/preview.c:1753 src/window.c:1533
+#: src/dialogs.c:980 src/preview.c:1753 src/window.c:1635
 msgid "Type"
 msgstr "Typ"
 
-#: src/dialogs.c:982 src/window.c:1545
+#: src/dialogs.c:982 src/window.c:1647
 msgid "Reversed"
 msgstr "Umgekehrt"
 
@@ -545,7 +546,7 @@ msgstr "Hervorhebungsfarbe"
 msgid "Follow the theme"
 msgstr "Dem Theme folgen"
 
-#: src/dialogs.c:1150 src/window.c:2029
+#: src/dialogs.c:1150 src/window.c:2128
 msgid "millerX"
 msgstr "millerX"
 
@@ -798,11 +799,11 @@ msgstr "_Schließen"
 msgid "reading…"
 msgstr "wird gelesen …"
 
-#: src/dialogs.c:1501 src/window.c:1658 src/window.c:1747
+#: src/dialogs.c:1501 src/window.c:1766 src/window.c:1846
 msgid "Copy"
 msgstr "Kopieren"
 
-#: src/dialogs.c:1508 src/window.c:1686 src/window.c:1757
+#: src/dialogs.c:1508 src/window.c:1794 src/window.c:1856
 msgid "Compare"
 msgstr "Vergleichen"
 
@@ -855,7 +856,7 @@ msgstr[1] "%u Einträge nach %s kopiert"
 msgid "can't put a folder into itself"
 msgstr "ein Ordner kann nicht in sich selbst gelegt werden"
 
-#: src/job.c:317
+#: src/job.c:318
 msgid "only local files can be extracted"
 msgstr "nur lokale Dateien können entpackt werden"
 
@@ -863,7 +864,7 @@ msgstr "nur lokale Dateien können entpackt werden"
 msgid "the archive is empty"
 msgstr "das Archiv ist leer"
 
-#: src/job.c:397
+#: src/job.c:395
 msgid "only local files can be packed"
 msgstr "nur lokale Dateien können gepackt werden"
 
@@ -990,7 +991,7 @@ msgstr "%s: kann sicher entfernt werden"
 msgid "%s unmounted"
 msgstr "%s ausgehängt"
 
-#: src/places.c:765 src/window.c:1633
+#: src/places.c:765 src/window.c:1750
 msgid "Open in new window"
 msgstr "In neuem Fenster öffnen"
 
@@ -1250,7 +1251,7 @@ msgstr "Papierkorb wird geleert …"
 msgid "Put back"
 msgstr "Zurücklegen"
 
-#: src/trash.c:224 src/window.c:1671 src/window.c:1751
+#: src/trash.c:224 src/window.c:1779 src/window.c:1850
 msgid "Delete permanently…"
 msgstr "Endgültig löschen …"
 
@@ -1352,7 +1353,7 @@ msgstr ""
 "\n"
 "Dafür braucht es root-Rechte."
 
-#: src/window.c:165 src/window.c:1689
+#: src/window.c:165 src/window.c:1797
 msgid "Open as root…"
 msgstr "Als root öffnen …"
 
@@ -1401,8 +1402,8 @@ msgstr "„%s“ ist ein Skript"
 msgid "Run it, or open it to read what it does?"
 msgstr "Ausführen oder öffnen, um nachzulesen, was es tut?"
 
-#: src/window.c:702 src/window.c:1632 src/window.c:1635 src/window.c:1721
-#: src/window.c:1723
+#: src/window.c:702 src/window.c:1749 src/window.c:1752 src/window.c:1829
+#: src/window.c:1831
 msgid "Open"
 msgstr "Öffnen"
 
@@ -1418,11 +1419,11 @@ msgstr "Ausführen"
 msgid "Couldn't run it"
 msgstr "Konnte nicht ausgeführt werden"
 
-#: src/window.c:842 src/window.c:881
+#: src/window.c:842 src/window.c:901 src/window.c:959
 msgid "No terminal found"
 msgstr "Kein Terminal gefunden"
 
-#: src/window.c:843 src/window.c:882
+#: src/window.c:843 src/window.c:902 src/window.c:960
 msgid ""
 "Install a terminal (xterm, xfce4-terminal, konsole, …) or set the TERMINAL "
 "environment variable to the one you use."
@@ -1430,59 +1431,59 @@ msgstr ""
 "Installiere ein Terminal (xterm, xfce4-terminal, konsole, …) oder setze die "
 "Umgebungsvariable TERMINAL auf deines."
 
-#: src/window.c:889
+#: src/window.c:967
 msgid "New folder"
 msgstr "Neuer Ordner"
 
-#: src/window.c:889
+#: src/window.c:967
 msgid "New Folder"
 msgstr "Neuer Ordner"
 
-#: src/window.c:896 src/window.c:898
+#: src/window.c:974 src/window.c:976
 msgid "Couldn't create the folder"
 msgstr "Der Ordner konnte nicht erstellt werden"
 
-#: src/window.c:912
+#: src/window.c:990
 msgid "New file"
 msgstr "Neue Datei"
 
-#: src/window.c:912
+#: src/window.c:990
 msgid "New File"
 msgstr "Neue Datei"
 
-#: src/window.c:920 src/window.c:922
+#: src/window.c:998 src/window.c:1000
 msgid "Couldn't create the file"
 msgstr "Die Datei konnte nicht erstellt werden"
 
-#: src/window.c:942
+#: src/window.c:1020
 msgid "Rename"
 msgstr "Umbenennen"
 
-#: src/window.c:946
+#: src/window.c:1024
 #, c-format
 msgid "“%s” already exists."
 msgstr "„%s“ gibt es schon."
 
-#: src/window.c:947 src/window.c:953
+#: src/window.c:1025 src/window.c:1031
 msgid "Couldn't rename"
 msgstr "Konnte nicht umbenannt werden"
 
-#: src/window.c:1009
+#: src/window.c:1087
 msgid "Some items couldn't be deleted"
 msgstr "Manches konnte nicht gelöscht werden"
 
-#: src/window.c:1013
+#: src/window.c:1091
 #, c-format
 msgid "%u item deleted"
 msgid_plural "%u items deleted"
 msgstr[0] "%u Eintrag gelöscht"
 msgstr[1] "%u Einträge gelöscht"
 
-#: src/window.c:1087 src/window.c:1095
+#: src/window.c:1165 src/window.c:1173
 msgid "Can't move to trash"
 msgstr "Kann nicht in den Papierkorb verschieben"
 
-#: src/window.c:1094
+#: src/window.c:1172
 #, c-format
 msgid ""
 "%s: %s\n"
@@ -1493,25 +1494,25 @@ msgstr ""
 "\n"
 "Stattdessen endgültig löschen?"
 
-#: src/window.c:1095
+#: src/window.c:1173
 msgid "Delete permanently"
 msgstr "Endgültig löschen"
 
-#: src/window.c:1102
+#: src/window.c:1180
 #, c-format
 msgid "%u item moved to the trash"
 msgid_plural "%u items moved to the trash"
 msgstr[0] "%u Eintrag in den Papierkorb verschoben"
 msgstr[1] "%u Einträge in den Papierkorb verschoben"
 
-#: src/window.c:1113
+#: src/window.c:1191
 #, c-format
 msgid "Delete %u item permanently?"
 msgid_plural "Delete %u items permanently?"
 msgstr[0] "%u Eintrag endgültig löschen?"
 msgstr[1] "%u Einträge endgültig löschen?"
 
-#: src/window.c:1114
+#: src/window.c:1192
 #, c-format
 msgid ""
 "%s\n"
@@ -1522,213 +1523,224 @@ msgstr ""
 "\n"
 "Das lässt sich nicht rückgängig machen."
 
-#: src/window.c:1115
+#: src/window.c:1193
 msgid "Delete"
 msgstr "Löschen"
 
-#: src/window.c:1182
+#: src/window.c:1260
 #, c-format
 msgid "%u item cut"
 msgid_plural "%u items cut"
 msgstr[0] "%u Eintrag ausgeschnitten"
 msgstr[1] "%u Einträge ausgeschnitten"
 
-#: src/window.c:1184
+#: src/window.c:1262
 #, c-format
 msgid "%u item copied"
 msgid_plural "%u items copied"
 msgstr[0] "%u Eintrag kopiert"
 msgstr[1] "%u Einträge kopiert"
 
-#: src/window.c:1230
+#: src/window.c:1308
 msgid "Nothing to paste"
 msgstr "Nichts zum Einfügen"
 
-#: src/window.c:1265 src/window.c:1266
+#: src/window.c:1337
+msgid "Extract to"
+msgstr "Entpacken nach"
+
+#: src/window.c:1339
+msgid "Extract"
+msgstr "Entpacken"
+
+#: src/window.c:1365 src/window.c:1366
 msgid "Compress"
 msgstr "Packen"
 
-#: src/window.c:1273
+#: src/window.c:1373
 #, c-format
 msgid "Pack “%s” into an archive in the same folder:"
 msgstr "„%s“ in ein Archiv im selben Ordner packen:"
 
-#: src/window.c:1300
+#: src/window.c:1400
 #, c-format
 msgid "“%s” already exists. Pick another name."
 msgstr "„%s“ gibt es schon. Bitte einen anderen Namen wählen."
 
-#: src/window.c:1301
+#: src/window.c:1401
 msgid "Couldn't compress"
 msgstr "Packen fehlgeschlagen"
 
-#: src/window.c:1351
+#: src/window.c:1451
 msgid "Couldn't tell what kind of file this is"
 msgstr "Dateityp nicht erkennbar"
 
-#: src/window.c:1353
+#: src/window.c:1453
 msgid "Couldn't set the default program"
 msgstr "Standardprogramm konnte nicht gesetzt werden"
 
-#: src/window.c:1357
+#: src/window.c:1457
 #, c-format
 msgid "%s opens with %s now"
 msgstr "%s öffnet jetzt mit %s"
 
-#: src/window.c:1532
+#: src/window.c:1634
 msgid "Date modified (newest first)"
 msgstr "Änderungsdatum (neueste zuerst)"
 
-#: src/window.c:1551
+#: src/window.c:1653
 msgid "Back to name"
 msgstr "Zurück zu Name"
 
-#: src/window.c:1557
+#: src/window.c:1659
 #, c-format
 msgid "Sort “%s”"
 msgstr "„%s“ sortieren"
 
-#: src/window.c:1599
+#: src/window.c:1704
 msgid "Set default"
 msgstr "Als Standard festlegen"
 
-#: src/window.c:1603
+#: src/window.c:1714
+msgid "Other application…"
+msgstr "Anderes Programm…"
+
+#: src/window.c:1717
+msgid "Check file type"
+msgstr "Dateityp prüfen"
+
+#: src/window.c:1720
 msgid "Open with"
 msgstr "Öffnen mit"
 
-#: src/window.c:1643 src/window.c:1732
+#: src/window.c:1760 src/window.c:1840
 msgid "Extract here"
 msgstr "Hier entpacken"
 
-#: src/window.c:1646 src/window.c:1735
-#, c-format
-msgid "Extract to “%s/”"
-msgstr "Entpacken nach „%s/“"
+#: src/window.c:1761 src/window.c:1841
+msgid "Extract to…"
+msgstr "Entpacken nach…"
 
-#: src/window.c:1652 src/window.c:1741
-msgid "Extract each to its own folder"
-msgstr "Jedes in einen eigenen Ordner entpacken"
-
-#: src/window.c:1655 src/window.c:1744
+#: src/window.c:1763 src/window.c:1843
 msgid "Compress…"
 msgstr "Packen …"
 
-#: src/window.c:1657 src/window.c:1746
+#: src/window.c:1765 src/window.c:1845
 msgid "Cut"
 msgstr "Ausschneiden"
 
-#: src/window.c:1661
+#: src/window.c:1769
 #, c-format
 msgid "Paste into “%s”"
 msgstr "Einfügen in „%s“"
 
-#: src/window.c:1666 src/window.c:1674
+#: src/window.c:1774 src/window.c:1782
 msgid "Paste"
 msgstr "Einfügen"
 
-#: src/window.c:1669 src/window.c:1749
+#: src/window.c:1777 src/window.c:1848
 msgid "Rename…"
 msgstr "Umbenennen …"
 
-#: src/window.c:1670 src/window.c:1750
+#: src/window.c:1778 src/window.c:1849
 msgid "Move to trash"
 msgstr "In den Papierkorb verschieben"
 
-#: src/window.c:1677
+#: src/window.c:1785
 msgid "New folder…"
 msgstr "Neuer Ordner …"
 
-#: src/window.c:1678
+#: src/window.c:1786
 msgid "New file…"
 msgstr "Neue Datei …"
 
 #. the highlighted folder, else this column's own
-#: src/window.c:1680
+#: src/window.c:1788
 msgid "Open terminal here"
 msgstr "Terminal hier öffnen"
 
-#: src/window.c:1682 src/window.c:1753
+#: src/window.c:1790 src/window.c:1852
 msgid "Copy path"
 msgstr "Pfad kopieren"
 
-#: src/window.c:1684 src/window.c:1755
+#: src/window.c:1792 src/window.c:1854
 msgid "Checksums…"
 msgstr "Prüfsummen …"
 
-#: src/window.c:1687
+#: src/window.c:1795
 msgid "Add to bookmarks"
 msgstr "Zu den Lesezeichen"
 
-#: src/window.c:1691 src/window.c:1758
+#: src/window.c:1799 src/window.c:1857
 msgid "Properties…"
 msgstr "Eigenschaften …"
 
-#: src/window.c:1693
+#: src/window.c:1801
 msgid "Show hidden files"
 msgstr "Versteckte Dateien anzeigen"
 
-#: src/window.c:1727
+#: src/window.c:1835
 msgid "Show in column"
 msgstr "In der Spalte zeigen"
 
-#: src/window.c:1753
+#: src/window.c:1852
 msgid "Copy paths"
 msgstr "Pfade kopieren"
 
-#: src/window.c:2038
+#: src/window.c:2137
 msgid "Parent folder (Backspace, Alt+Up)"
 msgstr "Übergeordneter Ordner (Rücktaste, Alt+Pfeil hoch)"
 
-#: src/window.c:2040
+#: src/window.c:2139
 msgid "Home (Alt+Home)"
 msgstr "Persönlicher Ordner (Alt+Pos1)"
 
-#: src/window.c:2042
+#: src/window.c:2141
 msgid "Computer: disks, USB sticks, network (Alt+/)"
 msgstr "Computer: Laufwerke, USB-Sticks, Netzwerk (Alt+/)"
 
-#: src/window.c:2046
+#: src/window.c:2145
 msgid "Bookmarks (Ctrl+D adds this folder)"
 msgstr "Lesezeichen (Strg+D fügt diesen Ordner hinzu)"
 
-#: src/window.c:2050
+#: src/window.c:2149
 msgid "New window"
 msgstr "Neues Fenster"
 
-#: src/window.c:2056
+#: src/window.c:2155
 msgid "Open this folder as root…"
 msgstr "Diesen Ordner als root öffnen …"
 
-#: src/window.c:2062
+#: src/window.c:2161
 msgid "Search here…"
 msgstr "Hier suchen …"
 
-#: src/window.c:2066
+#: src/window.c:2165
 msgid "Settings…"
 msgstr "Einstellungen …"
 
-#: src/window.c:2069
+#: src/window.c:2168
 msgid "About millerX"
 msgstr "Über millerX"
 
-#: src/window.c:2119
+#: src/window.c:2218
 msgid ""
 "<b>You are root:</b> every change here is made as administrator. Be careful."
 msgstr ""
 "<b>Du bist root:</b> Jede Änderung hier geschieht als Administrator. "
 "Vorsicht."
 
-#: src/window.c:2196
+#: src/window.c:2295
 msgid "Not now"
 msgstr "Gerade nicht"
 
-#: src/window.c:2196
+#: src/window.c:2295
 msgid ""
 "Files are still being copied, moved or packed. Restart when that is done."
 msgstr ""
 "Es werden noch Dateien kopiert, verschoben oder gepackt. Starte neu, wenn "
 "das fertig ist."
 
-#: src/window.c:2228
+#: src/window.c:2327
 msgid "Couldn't restart millerX"
 msgstr "millerX konnte nicht neu gestartet werden"
