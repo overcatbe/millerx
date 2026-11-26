@@ -9,7 +9,7 @@
 Look LOOK = { NULL, 2, FALSE, PREVIEW_DEFAULT, TRUE, FALSE, .column_width = COL_DEFAULT,
               .use_ffmpeg = TRUE, .use_pdftoppm = TRUE, .use_pkexec = TRUE, .use_blender = TRUE,
               .thumb_size = TSIZE_MEDIUM,
-              .thumbs = THUMBS_LOCAL };
+              .thumbs = THUMBS_LOCAL, .detect = DETECT_NAME };
 
 static char *config_file(void)
 {
@@ -86,6 +86,9 @@ void look_load(void)
     char *th = get_str(kf, "thumbnails", "show");
     LOOK.thumbs = !g_strcmp0(th, "always") ? THUMBS_ALWAYS : !g_strcmp0(th, "never") ? THUMBS_NEVER : THUMBS_LOCAL;
     g_free(th);
+    char *dt = get_str(kf, "look", "recognise");      /* by name unless asked for */
+    LOOK.detect = !g_strcmp0(dt, "content") ? DETECT_CONTENT : DETECT_NAME;
+    g_free(dt);
     char *ts = get_str(kf, "thumbnails", "size");
     LOOK.thumb_size = !g_strcmp0(ts, "tiny") ? TSIZE_TINY : !g_strcmp0(ts, "small") ? TSIZE_SMALL
                     : !g_strcmp0(ts, "large") ? TSIZE_LARGE : TSIZE_MEDIUM;
@@ -145,6 +148,7 @@ gboolean look_save(GError **err)
     g_key_file_set_string(kf, "helpers", "compare", LOOK.compare ? LOOK.compare : "auto");
     g_key_file_set_string(kf, "thumbnails", "show",
                           LOOK.thumbs == THUMBS_LOCAL ? "local" : LOOK.thumbs == THUMBS_NEVER ? "never" : "always");
+    g_key_file_set_string(kf, "look", "recognise", LOOK.detect == DETECT_CONTENT ? "content" : "name");
     g_key_file_set_string(kf, "thumbnails", "size",
                           LOOK.thumb_size == TSIZE_TINY ? "tiny" : LOOK.thumb_size == TSIZE_SMALL ? "small"
                           : LOOK.thumb_size == TSIZE_LARGE ? "large" : "medium");

@@ -222,7 +222,7 @@ static void on_props_response(GtkDialog *d, int r, GCancellable *stop)
 void dialog_properties(Win *w, GFile *f)
 {
     GError *err = NULL;
-    GFileInfo *info = g_file_query_info(f, "standard::*,time::*,unix::*,owner::*", G_FILE_QUERY_INFO_NONE,
+    GFileInfo *info = mx_query_info(f, "standard::*,time::*,unix::*,owner::*", G_FILE_QUERY_INFO_NONE,
                                         NULL, &err);
     if (!info) {
         win_error(w, _("No properties"), err->message);
@@ -740,7 +740,7 @@ typedef struct {
     Win *w;
     GtkWidget *auto_rb, *own_rb, *colour, *width, *style, *pw, *cw, *ff, *sh;
     GtkWidget *cache_size, *cache_clear, *cache_mb, *cache_days, *cache_auto;
-    GtkWidget *sort_list, *names, *thumbs, *tsize, *lang, *lang_note;
+    GtkWidget *sort_list, *names, *thumbs, *tsize, *lang, *lang_note, *detect;
     GtkWidget *use[4];         /* the optional helpers, when installed; NULL when not */
     GtkWidget *compare;        /* what compares two files */
     GtkWidget *hl_auto, *hl_own, *hl_colour, *hl_sys, *hl_unsys;
@@ -787,6 +787,8 @@ static void settings_changed(GtkWidget *any, Set *s)
     for (int i = 0; i < 4; i++)
         if (s->use[i])
             *uses[i] = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->use[i]));
+    nl.detect = !g_strcmp0(gtk_combo_box_get_active_id(GTK_COMBO_BOX(s->detect)), "content") ? DETECT_CONTENT
+                                                                                              : DETECT_NAME;
     const char *tid = gtk_combo_box_get_active_id(GTK_COMBO_BOX(s->thumbs));
     nl.thumbs = !g_strcmp0(tid, "local") ? THUMBS_LOCAL : !g_strcmp0(tid, "never") ? THUMBS_NEVER : THUMBS_ALWAYS;
     const char *zid = gtk_combo_box_get_active_id(GTK_COMBO_BOX(s->tsize));
@@ -1332,6 +1334,18 @@ void dialog_settings(Win *w)
                                               "(the two files are added at the end)."));
     srow(grid, &r, _("Compare with"), s->compare);
     new_column(folders_tab);
+    section(&grid, &r, _("Recognise files"));
+    s->detect = gtk_combo_box_text_new();
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->detect), "name", _("By name, like other file managers"));
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->detect), "content", _("By content, when you open a file"));
+    gtk_combo_box_set_active_id(GTK_COMBO_BOX(s->detect), LOOK.detect == DETECT_CONTENT ? "content" : "name");
+    gtk_widget_set_tooltip_text(s->detect,
+        _("Other file managers go by the name: a “holiday.jpg” that is really a program shows as a picture "
+          "and opens in the picture viewer. By content, millerX also reads the first few KB of a file when "
+          "you select or open it, and where the content says something else (a program, text, a picture, "
+          "an archive), the content wins: preview, Properties and the program that opens it. The icons in "
+          "the lists stay by name. Not a virus scanner: it catches files in disguise, not every trick."));
+    srow(grid, &r, _("Recognise"), s->detect);
     section(&grid, &r, _("Folders sorted their own way (all others: by name)"));
     s->sort_list = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
     GtkWidget *sl_scroll = gtk_scrolled_window_new(NULL, NULL);
@@ -1353,6 +1367,7 @@ void dialog_settings(Win *w)
     g_signal_connect(s->names, "toggled", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->compare, "changed", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->thumbs, "changed", G_CALLBACK(settings_changed), s);
+    g_signal_connect(s->detect, "changed", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->tsize, "changed", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->lang, "changed", G_CALLBACK(settings_changed), s);
     for (int i = 0; i < 4; i++)

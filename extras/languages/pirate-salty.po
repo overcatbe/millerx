@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: millerx\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 19:44+0200\n"
+"POT-Creation-Date: 2026-11-26 20:00+0200\n"
 "PO-Revision-Date: 2026-11-23 08:30+0200\n"
 "Last-Translator: overcatbe\n"
 "Language-Team: Pirate (salty)\n"
@@ -86,9 +86,9 @@ msgstr "Haul the damn thing here"
 msgid "Link here"
 msgstr "Lash a line here"
 
-#: src/column.c:833 src/dialogs.c:27 src/dialogs.c:854 src/window.c:178
-#: src/window.c:189 src/window.c:701 src/window.c:730 src/window.c:768
-#: src/window.c:1403 src/window.c:1431 src/window.c:2270
+#: src/column.c:833 src/dialogs.c:27 src/dialogs.c:856 src/window.c:178
+#: src/window.c:189 src/window.c:715 src/window.c:744 src/window.c:782
+#: src/window.c:1417 src/window.c:1445 src/window.c:2284
 msgid "Cancel"
 msgstr "Belay that!"
 
@@ -114,7 +114,7 @@ msgstr "oldest"
 msgid "Sort:"
 msgstr "Order by:"
 
-#: src/column.c:1131 src/dialogs.c:1049
+#: src/column.c:1131 src/dialogs.c:1051
 msgid "Sort by name again"
 msgstr "Names, once more"
 
@@ -185,7 +185,7 @@ msgstr "Nothing to inspect"
 msgid "Properties: %s"
 msgstr "Inspecting %s"
 
-#: src/dialogs.c:237 src/dialogs.c:462 src/dialogs.c:644 src/dialogs.c:1140
+#: src/dialogs.c:237 src/dialogs.c:462 src/dialogs.c:644 src/dialogs.c:1142
 #: src/window.c:164
 msgid "Close"
 msgstr "Shut it"
@@ -195,7 +195,7 @@ msgid "Link to"
 msgstr "Passage to"
 
 #. the folders' contents counted in the background, the files' added
-#: src/dialogs.c:281 src/dialogs.c:680 src/dialogs.c:692 src/dialogs.c:1307
+#: src/dialogs.c:281 src/dialogs.c:680 src/dialogs.c:692 src/dialogs.c:1309
 #: src/preview.c:1623 src/preview.c:1758
 msgid "Size"
 msgstr "Bulk"
@@ -247,7 +247,7 @@ msgid_plural "Properties: %u items"
 msgstr[0] "Inspect %u thing"
 msgstr[1] "Inspect %u things"
 
-#: src/dialogs.c:658 src/places.c:236 src/window.c:1437
+#: src/dialogs.c:658 src/places.c:236 src/window.c:1451
 #, c-format
 msgid "%u item"
 msgid_plural "%u items"
@@ -315,76 +315,76 @@ msgstr "Not all of it's yours, thief: hands off."
 msgid "Permissions"
 msgstr "Who's allowed"
 
-#: src/dialogs.c:808
+#: src/dialogs.c:810
 msgid "Couldn't save the settings"
 msgstr "Can't save the Captain's orders. Mutiny in the paperwork."
 
-#: src/dialogs.c:853
+#: src/dialogs.c:855
 msgid "Add a language file"
 msgstr "Bring a new tongue aboard"
 
-#: src/dialogs.c:854
+#: src/dialogs.c:856
 msgid "Add"
 msgstr "Bring aboard"
 
-#: src/dialogs.c:856
+#: src/dialogs.c:858
 msgid "Language files (.po, .mo)"
 msgstr "Tongue scrolls (.po, .mo)"
 
-#: src/dialogs.c:874
+#: src/dialogs.c:876
 #, c-format
 msgid "Couldn't add “%s”"
 msgstr "Couldn't bring “%s” aboard. Bloody thing's cursed."
 
-#: src/dialogs.c:928
+#: src/dialogs.c:930
 msgid "video frames, music covers, AVIF and HEIC pictures"
 msgstr "frames o' moving pictures, music covers, AVIF and HEIC pictures"
 
-#: src/dialogs.c:929
+#: src/dialogs.c:931
 msgid "videos and music show their icon, AVIF/HEIC too"
 msgstr "videos and music show their badge, AVIF/HEIC too"
 
-#: src/dialogs.c:929
+#: src/dialogs.c:931
 msgid "ffmpeg (Slackware: l/ffmpeg)"
 msgstr "ffmpeg (Slackware: l/ffmpeg)"
 
-#: src/dialogs.c:930
+#: src/dialogs.c:932
 msgid "the first page of PDFs"
 msgstr "the first page o' PDF charts"
 
-#: src/dialogs.c:931
+#: src/dialogs.c:933
 msgid "PDFs show their icon"
 msgstr "PDF charts show their badge"
 
-#: src/dialogs.c:931
+#: src/dialogs.c:933
 msgid "poppler (Debian/Ubuntu: poppler-utils)"
 msgstr "poppler (Debian/Ubuntu: poppler-utils)"
 
-#: src/dialogs.c:932
+#: src/dialogs.c:934
 msgid "“Open as root”"
 msgstr "“Open as Captain”"
 
-#: src/dialogs.c:933
+#: src/dialogs.c:935
 msgid "no root window"
 msgstr "no Captain's window"
 
-#: src/dialogs.c:933
+#: src/dialogs.c:935
 msgid "polkit, plus an authentication agent"
 msgstr "polkit, plus a password officer"
 
-#: src/dialogs.c:934
+#: src/dialogs.c:936
 msgid "the pictures saved in Blender (.blend) files"
 msgstr "the pictures stowed inside Blender (.blend) charts"
 
-#: src/dialogs.c:935
+#: src/dialogs.c:937
 msgid ".blend files show their icon"
 msgstr ".blend charts show their badge"
 
-#: src/dialogs.c:935
+#: src/dialogs.c:937
 msgid "Blender (it comes with it; also found in /opt/blender*)"
 msgstr "Blender (it carries one aboard, also found in /opt/blender*)"
 
-#: src/dialogs.c:955
+#: src/dialogs.c:957
 #, c-format
 msgid ""
 "✗ not installed: %s.\n"
@@ -395,25 +395,25 @@ msgstr ""
 "<small>Install %s\n"
 "for %s.</small>"
 
-#: src/dialogs.c:973
+#: src/dialogs.c:975
 #, c-format
 msgid "%s in %u thumbnail (%u deleted)"
 msgid_plural "%s in %u thumbnails (%u deleted)"
 msgstr[0] "%s in %u little picture (%u scrapped)"
 msgstr[1] "%s in %u little pictures (%u scrapped)"
 
-#: src/dialogs.c:975
+#: src/dialogs.c:977
 #, c-format
 msgid "%s in %u thumbnail"
 msgid_plural "%s in %u thumbnails"
 msgstr[0] "%s in %u little picture"
 msgstr[1] "%s in %u little pictures"
 
-#: src/dialogs.c:985
+#: src/dialogs.c:987
 msgid "Clear the thumbnail cache?"
 msgstr "Scrap the thumbnail stash?"
 
-#: src/dialogs.c:986
+#: src/dialogs.c:988
 msgid ""
 "All thumbnails in ~/.cache/thumbnails are deleted. Thunar and file dialogs "
 "use them too; everything is made again when it's needed."
@@ -422,39 +422,39 @@ msgstr ""
 "dialogs use the same stash. They'll all be drawn again when needed. Wasteful "
 "little bastards."
 
-#: src/dialogs.c:987
+#: src/dialogs.c:989
 msgid "Clear"
 msgstr "Scrap them"
 
-#: src/dialogs.c:989
+#: src/dialogs.c:991
 msgid "clearing…"
 msgstr "scrapping…"
 
-#: src/dialogs.c:1024
+#: src/dialogs.c:1026
 msgid "None. Right-click a folder → Sort … to give it its own order."
 msgstr "None yet. Right-click a hold → Order … to give it orders of its own."
 
-#: src/dialogs.c:1040 src/window.c:1699
+#: src/dialogs.c:1042 src/window.c:1713
 msgid "Name"
 msgstr "Name"
 
-#: src/dialogs.c:1041
+#: src/dialogs.c:1043
 msgid "Date (newest first)"
 msgstr "Date (freshest first)"
 
-#: src/dialogs.c:1042 src/window.c:1699
+#: src/dialogs.c:1044 src/window.c:1713
 msgid "Size (largest first)"
 msgstr "Bulk (biggest first)"
 
-#: src/dialogs.c:1043 src/preview.c:1755 src/window.c:1700
+#: src/dialogs.c:1045 src/preview.c:1755 src/window.c:1714
 msgid "Type"
 msgstr "Kind"
 
-#: src/dialogs.c:1045 src/window.c:1712
+#: src/dialogs.c:1047 src/window.c:1726
 msgid "Reversed"
 msgstr "Arse about face"
 
-#: src/dialogs.c:1119
+#: src/dialogs.c:1121
 #, c-format
 msgid ""
 "%s goes into ~/.config/gtk-3.0/gtk.css, in a block marked as millerX's; the "
@@ -465,7 +465,7 @@ msgstr ""
 "o' that file stays put. GTK 3 programs take the colour when next they "
 "launch. Ye can strip our block out again here."
 
-#: src/dialogs.c:1123
+#: src/dialogs.c:1125
 msgid ""
 "millerX's block is taken out of ~/.config/gtk-3.0/gtk.css; the rest of that "
 "file stays. GTK 3 programs use the theme's colour again the next time they "
@@ -475,103 +475,103 @@ msgstr ""
 "that file stays put. GTK 3 programs return to the theme's colour when next "
 "they launch."
 
-#: src/dialogs.c:1126
+#: src/dialogs.c:1128
 msgid "Use this highlight in all GTK programs?"
 msgstr "Fly this highlight across all GTK programs?"
 
-#: src/dialogs.c:1126
+#: src/dialogs.c:1128
 msgid "Remove it from all GTK programs?"
 msgstr "Strike it from all GTK programs?"
 
-#: src/dialogs.c:1127
+#: src/dialogs.c:1129
 msgid "Use it"
 msgstr "Fly it"
 
-#: src/dialogs.c:1127
+#: src/dialogs.c:1129
 msgid "Remove"
 msgstr "Strike it"
 
-#: src/dialogs.c:1130
+#: src/dialogs.c:1132
 msgid "Couldn't write ~/.config/gtk-3.0/gtk.css"
 msgstr "Can't write ~/.config/gtk-3.0/gtk.css. Bloody uncooperative parchment."
 
-#: src/dialogs.c:1140
+#: src/dialogs.c:1142
 msgid "millerX settings"
 msgstr "millerX: Captain's orders"
 
-#: src/dialogs.c:1151
+#: src/dialogs.c:1153
 msgid "Look"
 msgstr "Livery"
 
-#: src/dialogs.c:1158 src/dialogs.c:1286
+#: src/dialogs.c:1160 src/dialogs.c:1288
 msgid "Thumbnails"
 msgstr "Little pictures"
 
-#: src/dialogs.c:1159
+#: src/dialogs.c:1161
 msgid "Folders"
 msgstr "Holds"
 
-#: src/dialogs.c:1167
+#: src/dialogs.c:1169
 msgid "Column dividers"
 msgstr "Column bulkheads"
 
-#: src/dialogs.c:1168
+#: src/dialogs.c:1170
 msgid "Follow the theme (20 % lighter / darker)"
 msgstr "Follow the theme (20 % lighter / darker)"
 
-#: src/dialogs.c:1169 src/dialogs.c:1197
+#: src/dialogs.c:1171 src/dialogs.c:1199
 msgid "Own colour"
 msgstr "Me own colour"
 
-#: src/dialogs.c:1186
+#: src/dialogs.c:1188
 msgid "Colour"
 msgstr "Colour"
 
-#: src/dialogs.c:1189
+#: src/dialogs.c:1191
 msgid "Width (px)"
 msgstr "Thickness (px)"
 
-#: src/dialogs.c:1191
+#: src/dialogs.c:1193
 msgid "Solid"
 msgstr "Solid as the hull"
 
-#: src/dialogs.c:1192
+#: src/dialogs.c:1194
 msgid "Fading at the ends"
 msgstr "Fading into the fog"
 
-#: src/dialogs.c:1194
+#: src/dialogs.c:1196
 msgid "Style"
 msgstr "Style"
 
-#: src/dialogs.c:1195
+#: src/dialogs.c:1197
 msgid "Highlight colour"
 msgstr "Highlight colour"
 
-#: src/dialogs.c:1196
+#: src/dialogs.c:1198
 msgid "Follow the theme"
 msgstr "Follow the theme"
 
-#: src/dialogs.c:1213 src/window.c:2193
+#: src/dialogs.c:1215 src/window.c:2207
 msgid "millerX"
 msgstr "millerX"
 
-#: src/dialogs.c:1214
+#: src/dialogs.c:1216
 msgid "Use for all GTK programs…"
 msgstr "Fly across all GTK programs…"
 
-#: src/dialogs.c:1215
+#: src/dialogs.c:1217
 msgid "Remove from all"
 msgstr "Strike from all"
 
-#: src/dialogs.c:1221 src/dialogs.c:1236
+#: src/dialogs.c:1223 src/dialogs.c:1238
 msgid "System"
 msgstr "Shipwide"
 
-#: src/dialogs.c:1223
+#: src/dialogs.c:1225
 msgid "Browsing"
 msgstr "Navigation"
 
-#: src/dialogs.c:1226
+#: src/dialogs.c:1228
 msgid ""
 "Where new columns start. A column you drag keeps its own width; double-click "
 "its divider to bring it back to this one."
@@ -579,40 +579,40 @@ msgstr ""
 "Starting width for new columns. A column ye drag keeps its own width. Double-"
 "click its bulkhead to reset it to this one."
 
-#: src/dialogs.c:1228
+#: src/dialogs.c:1230
 msgid "Column width (px)"
 msgstr "Column width (px)"
 
-#: src/dialogs.c:1229
+#: src/dialogs.c:1231
 msgid "Folders first"
 msgstr "Holds first"
 
-#: src/dialogs.c:1231
+#: src/dialogs.c:1233
 msgid "Sort by name"
 msgstr "Order by name"
 
-#: src/dialogs.c:1232
+#: src/dialogs.c:1234
 msgid "Show hidden files when millerX starts"
 msgstr "Reveal stashed charts when millerX sets sail"
 
-#: src/dialogs.c:1234
+#: src/dialogs.c:1236
 msgid "Hidden files"
 msgstr "Stashed charts"
 
-#: src/dialogs.c:1237
+#: src/dialogs.c:1239
 msgid "English"
 msgstr "English, the boring bastard's tongue"
 
-#: src/dialogs.c:1238
+#: src/dialogs.c:1240
 msgid "Wizard (English, of a sort)"
 msgstr "Wizard (some old git in a pointy hat)"
 
-#: src/dialogs.c:1239
+#: src/dialogs.c:1241
 msgid "Wienerisch (Viennese slang)"
 msgstr "Wienerisch (Austrian sailors, God help us)"
 
 #. its file is gone
-#: src/dialogs.c:1251
+#: src/dialogs.c:1253
 msgid ""
 "System: the language your computer is set to (English where there is no "
 "translation). Takes effect the next time millerX starts."
@@ -620,11 +620,11 @@ msgstr ""
 "System: whatever tongue yer machine speaks (English where there's no "
 "translation). Takes hold next time millerX sets sail."
 
-#: src/dialogs.c:1256
+#: src/dialogs.c:1258
 msgid "Your own…"
 msgstr "Yer own…"
 
-#: src/dialogs.c:1257
+#: src/dialogs.c:1259
 #, c-format
 msgid ""
 "Add a language file (.po or .mo), for example one from millerX's extras on "
@@ -635,48 +635,48 @@ msgstr ""
 "To write yer own, copy %s and fill in the msgstr lines; whatever ye leave "
 "empty stays plain bloody English."
 
-#: src/dialogs.c:1265 src/dialogs.c:1267
+#: src/dialogs.c:1267 src/dialogs.c:1269
 msgid "Language"
 msgstr "Tongue"
 
-#: src/dialogs.c:1271
+#: src/dialogs.c:1273
 msgid "Takes effect after a restart."
 msgstr "Takes hold after ye set sail again."
 
-#: src/dialogs.c:1273
+#: src/dialogs.c:1275
 msgid "Restart now"
 msgstr "Set sail again, now"
 
-#: src/dialogs.c:1278
+#: src/dialogs.c:1280
 msgid "Preview"
 msgstr "The spyglass"
 
-#: src/dialogs.c:1281
+#: src/dialogs.c:1283
 msgid "Minimum width (px)"
 msgstr "Narrowest allowed (px)"
 
 #. it takes the rest of the window
-#: src/dialogs.c:1282
+#: src/dialogs.c:1284
 msgid "Show names under thumbnails"
 msgstr "Put names beneath the little pictures"
 
-#: src/dialogs.c:1284
+#: src/dialogs.c:1286
 msgid "Gallery"
 msgstr "Gallery"
 
-#: src/dialogs.c:1288
+#: src/dialogs.c:1290
 msgid "Always"
 msgstr "Always, damn it"
 
-#: src/dialogs.c:1289
+#: src/dialogs.c:1291
 msgid "Not in network folders"
 msgstr "Not in distant network holds"
 
-#: src/dialogs.c:1290
+#: src/dialogs.c:1292
 msgid "Never (plain icons)"
 msgstr "Never (badges only)"
 
-#: src/dialogs.c:1293
+#: src/dialogs.c:1295
 msgid ""
 "Pictures in the gallery under a folder. A file you click is always shown "
 "big. Network folders (NFS, Samba, sshfs) can be slow with them."
@@ -685,27 +685,27 @@ msgstr ""
 "big view. Network holds (NFS, Samba, sshfs) can be slow with these. Bloody "
 "long supply lines."
 
-#: src/dialogs.c:1295
+#: src/dialogs.c:1297
 msgid "Show"
 msgstr "Show"
 
-#: src/dialogs.c:1297
+#: src/dialogs.c:1299
 msgid "Tiny (about 64 px)"
 msgstr "Tiny (about 64 px)"
 
-#: src/dialogs.c:1298
+#: src/dialogs.c:1300
 msgid "Small (about 100 px)"
 msgstr "Small (about 100 px)"
 
-#: src/dialogs.c:1299
+#: src/dialogs.c:1301
 msgid "Medium (about 200 px)"
 msgstr "Medium (about 200 px)"
 
-#: src/dialogs.c:1300
+#: src/dialogs.c:1302
 msgid "Large (about 400 px)"
 msgstr "Large (about 400 px)"
 
-#: src/dialogs.c:1304
+#: src/dialogs.c:1306
 msgid ""
 "How big the gallery's pictures are. Large ones are made again the first time "
 "(bigger thumbnails, a bigger cache); a wide pane gets more of them per row, "
@@ -715,43 +715,43 @@ msgstr ""
 "with larger thumbnails and a larger stash. A wider pane fits more per row. "
 "It won't make the pictures bigger, ye greedy sod."
 
-#: src/dialogs.c:1308
+#: src/dialogs.c:1310
 msgid "Cache (shared with Thunar)"
 msgstr "Picture stash (shared with Thunar)"
 
-#: src/dialogs.c:1309
+#: src/dialogs.c:1311
 msgid "measuring…"
 msgstr "weighing the haul…"
 
-#: src/dialogs.c:1311
+#: src/dialogs.c:1313
 msgid "Clear…"
 msgstr "Scrap…"
 
-#: src/dialogs.c:1315
+#: src/dialogs.c:1317
 msgid "Now"
 msgstr "Now"
 
-#: src/dialogs.c:1318
+#: src/dialogs.c:1320
 msgid "Keep at most (MB)"
 msgstr "Stow no more than (MB)"
 
-#: src/dialogs.c:1321
+#: src/dialogs.c:1323
 msgid "Forget unused after (days)"
 msgstr "Scrap unused after (days)"
 
-#: src/dialogs.c:1322
+#: src/dialogs.c:1324
 msgid "Once a day when millerX starts"
 msgstr "Once a day when millerX sets sail"
 
-#: src/dialogs.c:1324
+#: src/dialogs.c:1326
 msgid "Clean up"
 msgstr "Swab the deck"
 
-#: src/dialogs.c:1326
+#: src/dialogs.c:1328
 msgid "Optional helpers (millerX works without them; untick to not use one)"
 msgstr "Optional crew (millerX sails without 'em, untick to sack one)"
 
-#: src/dialogs.c:1330
+#: src/dialogs.c:1332
 msgid ""
 "Two files selected → Compare. \"auto\": meld, kdiff3, kompare or diffuse, "
 "whichever is there; none: the differences as text. Or your own command (the "
@@ -761,58 +761,92 @@ msgstr ""
 "whichever be aboard; none: the differences as plain text. Or yer own command "
 "(the two files go at its end)."
 
-#: src/dialogs.c:1333
+#: src/dialogs.c:1335
 msgid "Compare with"
 msgstr "Compare with"
 
-#: src/dialogs.c:1335
+#: src/dialogs.c:1337
+msgid "Recognise files"
+msgstr "Sniffin' out the bloody cargo"
+
+#: src/dialogs.c:1339
+msgid "By name, like other file managers"
+msgstr "By the label, like every other lazy ship"
+
+#: src/dialogs.c:1340
+msgid "By content, when you open a file"
+msgstr "By what's inside, when ye crack open a crate"
+
+#: src/dialogs.c:1343
+msgid ""
+"Other file managers go by the name: a “holiday.jpg” that is really a program "
+"shows as a picture and opens in the picture viewer. By content, millerX also "
+"reads the first few KB of a file when you select or open it, and where the "
+"content says something else (a program, text, a picture, an archive), the "
+"content wins: preview, Properties and the program that opens it. The icons "
+"in the lists stay by name. Not a virus scanner: it catches files in "
+"disguise, not every trick."
+msgstr ""
+"Every other lazy ship judges cargo by the label: a “holiday.jpg” that's "
+"really a loaded cannon looks like a picture and opens in the picture viewer. "
+"By what's inside, millerX also peeks at the first few KB of a crate when ye "
+"pick or open it, and where the inside says somethin' else (a cannon, words, "
+"a picture, a chest), the inside wins: the peek, the crate's papers and who "
+"opens it. The flags in the lists stay by label. It ain't no bloody plague "
+"doctor: it catches cargo in disguise, not every dirty trick."
+
+#: src/dialogs.c:1348
+msgid "Recognise"
+msgstr "Sniff"
+
+#: src/dialogs.c:1349
 msgid "Folders sorted their own way (all others: by name)"
 msgstr "Holds with their own orders (all others: by name)"
 
-#: src/dialogs.c:1381
+#: src/dialogs.c:1396
 msgid "Files in Miller columns, from / to where you are."
 msgstr "Charts in Miller columns, from / to yer current berth."
 
-#: src/dialogs.c:1468
+#: src/dialogs.c:1483
 msgid "✗ matches none of them"
 msgstr "✗ not a match among the lot. Bloody suspicious."
 
-#: src/dialogs.c:1471
+#: src/dialogs.c:1486
 #, c-format
 msgid "✓ matches %s"
 msgstr "✓ matches %s. Cargo checks out."
 
-#: src/dialogs.c:1475
+#: src/dialogs.c:1490
 msgid "…when the file is read"
 msgstr "…once the chart's been read"
 
-#: src/dialogs.c:1498
+#: src/dialogs.c:1513
 #, c-format
 msgid "✗ couldn't read the file: %s"
 msgstr "✗ can't read the chart: %s"
 
-#: src/dialogs.c:1541
+#: src/dialogs.c:1556
 #, c-format
 msgid "Checksums: %s"
 msgstr "Cargo seals: %s"
 
-#: src/dialogs.c:1544
+#: src/dialogs.c:1559
 msgid "_Close"
 msgstr "_Shut it"
 
-#: src/dialogs.c:1556
+#: src/dialogs.c:1571
 msgid "reading…"
 msgstr "inspecting the seals…"
 
-#: src/dialogs.c:1564 src/window.c:1831 src/window.c:1911
+#: src/dialogs.c:1579 src/window.c:1845 src/window.c:1925
 msgid "Copy"
 msgstr "Copy"
 
-#: src/dialogs.c:1571 src/window.c:1859 src/window.c:1921
+#: src/dialogs.c:1586 src/window.c:1873 src/window.c:1935
 msgid "Compare"
 msgstr "Compare"
 
-#: src/dialogs.c:1574
+#: src/dialogs.c:1589
 msgid "paste the checksum you were given"
 msgstr "paste the cargo seal ye were given"
 
@@ -1077,7 +1111,7 @@ msgstr "%s: safe to pull free. Off ye fuck."
 msgid "%s unmounted"
 msgstr "%s has cast off"
 
-#: src/places.c:765 src/window.c:1815
+#: src/places.c:765 src/window.c:1829
 msgid "Open in new window"
 msgstr "Open in a fresh window"
 
@@ -1234,22 +1268,22 @@ msgstr "Back to the columns (Escape)"
 msgid "Search in “%s” and the folders in it"
 msgstr "Ransack “%s” and every hold within"
 
-#: src/settings.c:233
+#: src/settings.c:237
 msgid "Pick a language file: a .po or .mo file."
 msgstr "Pick a tongue scroll: a .po or .mo file, not any old shite."
 
-#: src/settings.c:240
+#: src/settings.c:244
 msgid ""
 "A .po file needs msgfmt (gettext) to be checked, and it isn't installed."
 msgstr ""
 "A .po scroll needs msgfmt (gettext) to be checked, and some genius never "
 "installed it."
 
-#: src/settings.c:249
+#: src/settings.c:253
 msgid "Couldn't make a temporary file."
 msgstr "Couldn't find a bloody scrap o' paper."
 
-#: src/settings.c:536
+#: src/settings.c:540
 msgid "Drag to resize, double-click for the default width"
 msgstr "Drag to resize. Double-click for the usual width."
 
@@ -1341,7 +1375,7 @@ msgstr "Emptying the brig…"
 msgid "Put back"
 msgstr "Haul back"
 
-#: src/trash.c:224 src/window.c:1844 src/window.c:1915
+#: src/trash.c:224 src/window.c:1858 src/window.c:1929
 msgid "Delete permanently…"
 msgstr "Sink for good…"
 
@@ -1349,17 +1383,17 @@ msgstr "Sink for good…"
 msgid "Empty trash…"
 msgstr "Empty the brig…"
 
-#: src/util.c:45
+#: src/util.c:47
 #, c-format
 msgid "%s (copy)%s"
 msgstr "%s (copy)%s"
 
-#: src/util.c:46
+#: src/util.c:48
 #, c-format
 msgid "%s (copy %d)%s"
 msgstr "%s (copy %d)%s"
 
-#: src/util.c:96
+#: src/util.c:98
 #, c-format
 msgid "%s (%s bytes)"
 msgstr "%s (%s bytes)"
@@ -1443,7 +1477,7 @@ msgstr ""
 "This needs the Captain's authority. Keep yer grubby hands where I can see "
 "'em."
 
-#: src/window.c:165 src/window.c:1862
+#: src/window.c:165 src/window.c:1876
 msgid "Open as root…"
 msgstr "Open as Captain…"
 
@@ -1483,34 +1517,34 @@ msgstr "Stashed charts revealed"
 msgid "Hidden files hidden"
 msgstr "Stashed charts concealed again"
 
-#: src/window.c:698
+#: src/window.c:712
 #, c-format
 msgid "“%s” is a script"
 msgstr "“%s” be a set o' orders"
 
-#: src/window.c:700
+#: src/window.c:714
 msgid "Run it, or open it to read what it does?"
 msgstr "Execute the orders, or read what the bastard wrote first?"
 
-#: src/window.c:702 src/window.c:1814 src/window.c:1817 src/window.c:1894
-#: src/window.c:1896
+#: src/window.c:716 src/window.c:1828 src/window.c:1831 src/window.c:1908
+#: src/window.c:1910
 msgid "Open"
 msgstr "Open"
 
-#: src/window.c:703
+#: src/window.c:717
 msgid "Run in terminal"
 msgstr "Run on the quarterdeck"
 
-#: src/window.c:704 src/window.c:731 src/window.c:770
+#: src/window.c:718 src/window.c:745 src/window.c:784
 msgid "Run"
 msgstr "Execute"
 
-#: src/window.c:726
+#: src/window.c:740
 #, c-format
 msgid "“%s” is a program"
 msgstr "“%s” be a loaded cannon"
 
-#: src/window.c:728
+#: src/window.c:742
 msgid ""
 "Whatever its name says, this file is a program. It runs with your rights and "
 "can do anything you can. Run it only if you trust where it came from."
@@ -1519,16 +1553,16 @@ msgstr ""
 "powder and can blow up anythin' ye own. Fire it only if ye know the bastard "
 "who loaded it."
 
-#: src/window.c:747
+#: src/window.c:761
 msgid "No program for text files is set."
 msgstr "No bloody scribe aboard for readin' words."
 
-#: src/window.c:764
+#: src/window.c:778
 #, c-format
 msgid "“%s” is a launcher"
 msgstr "“%s” be a forged letter o' marque"
 
-#: src/window.c:766
+#: src/window.c:780
 #, c-format
 msgid ""
 "It calls itself “%s” and runs:\n"
@@ -1543,23 +1577,23 @@ msgstr ""
 "\n"
 "Follow it only if ye know the bastard who wrote it."
 
-#: src/window.c:767
+#: src/window.c:781
 msgid "(no command given)"
 msgstr "(no orders, just a blank bloody page)"
 
-#: src/window.c:769
+#: src/window.c:783
 msgid "Open as text"
 msgstr "Read the damn thing"
 
-#: src/window.c:853
+#: src/window.c:867
 msgid "Couldn't run it"
 msgstr "The orders failed. Who wrote this shite?"
 
-#: src/window.c:907 src/window.c:966 src/window.c:1024
+#: src/window.c:921 src/window.c:980 src/window.c:1038
 msgid "No terminal found"
 msgstr "No terminal found. Who fitted this ship, a fucking turnip?"
 
-#: src/window.c:908 src/window.c:967 src/window.c:1025
+#: src/window.c:922 src/window.c:981 src/window.c:1039
 msgid ""
 "Install a terminal (xterm, xfce4-terminal, konsole, …) or set the TERMINAL "
 "environment variable to the one you use."
@@ -1567,59 +1601,59 @@ msgstr ""
 "Install a terminal (xterm, xfce4-terminal, konsole, …) for the quarterdeck, "
 "or put yer preferred one in the TERMINAL environment variable."
 
-#: src/window.c:1032
+#: src/window.c:1046
 msgid "New folder"
 msgstr "New hold"
 
-#: src/window.c:1032
+#: src/window.c:1046
 msgid "New Folder"
 msgstr "New hold"
 
-#: src/window.c:1039 src/window.c:1041
+#: src/window.c:1053 src/window.c:1055
 msgid "Couldn't create the folder"
 msgstr "Can't build the hold. Shoddy bloody workmanship."
 
-#: src/window.c:1055
+#: src/window.c:1069
 msgid "New file"
 msgstr "New chart"
 
-#: src/window.c:1055
+#: src/window.c:1069
 msgid "New File"
 msgstr "New Chart"
 
-#: src/window.c:1063 src/window.c:1065
+#: src/window.c:1077 src/window.c:1079
 msgid "Couldn't create the file"
 msgstr "Can't draw the chart. Some swab drank the ink."
 
-#: src/window.c:1085
+#: src/window.c:1099
 msgid "Rename"
 msgstr "Rechristen"
 
-#: src/window.c:1089
+#: src/window.c:1103
 #, c-format
 msgid "“%s” already exists."
 msgstr "“%s” be aboard already."
 
-#: src/window.c:1090 src/window.c:1096
+#: src/window.c:1104 src/window.c:1110
 msgid "Couldn't rename"
 msgstr "Can't rechristen it. The old name won't fucking budge."
 
-#: src/window.c:1152
+#: src/window.c:1166
 msgid "Some items couldn't be deleted"
 msgstr "Some prizes refused to sink. Stubborn little shits."
 
-#: src/window.c:1156
+#: src/window.c:1170
 #, c-format
 msgid "%u item deleted"
 msgid_plural "%u items deleted"
 msgstr[0] "%u prize sunk for good"
 msgstr[1] "%u prizes sunk for good"
 
-#: src/window.c:1230 src/window.c:1238
+#: src/window.c:1244 src/window.c:1252
 msgid "Can't move to trash"
 msgstr "Can't clap it in the brig"
 
-#: src/window.c:1237
+#: src/window.c:1251
 #, c-format
 msgid ""
 "%s: %s\n"
@@ -1630,25 +1664,25 @@ msgstr ""
 "\n"
 "Sink it for good instead?"
 
-#: src/window.c:1238
+#: src/window.c:1252
 msgid "Delete permanently"
 msgstr "Sink for good"
 
-#: src/window.c:1245
+#: src/window.c:1259
 #, c-format
 msgid "%u item moved to the trash"
 msgid_plural "%u items moved to the trash"
 msgstr[0] "%u prize clapped in the brig"
 msgstr[1] "%u prizes clapped in the brig"
 
-#: src/window.c:1256
+#: src/window.c:1270
 #, c-format
 msgid "Delete %u item permanently?"
 msgid_plural "Delete %u items permanently?"
 msgstr[0] "Sink %u prize for good?"
 msgstr[1] "Sink %u prizes for good?"
 
-#: src/window.c:1257
+#: src/window.c:1271
 #, c-format
 msgid ""
 "%s\n"
@@ -1659,224 +1693,224 @@ msgstr ""
 "\n"
 "Gone for good. Ye can't undo this, ye reckless bastard."
 
-#: src/window.c:1258
+#: src/window.c:1272
 msgid "Delete"
 msgstr "Sink"
 
-#: src/window.c:1325
+#: src/window.c:1339
 #, c-format
 msgid "%u item cut"
 msgid_plural "%u items cut"
 msgstr[0] "%u prize cut"
 msgstr[1] "%u prizes cut"
 
-#: src/window.c:1327
+#: src/window.c:1341
 #, c-format
 msgid "%u item copied"
 msgid_plural "%u items copied"
 msgstr[0] "%u prize copied"
 msgstr[1] "%u prizes copied"
 
-#: src/window.c:1373
+#: src/window.c:1387
 msgid "Nothing to paste"
 msgstr "Nothing to unload. Empty-handed again?"
 
-#: src/window.c:1402
+#: src/window.c:1416
 msgid "Extract to"
 msgstr "Unpack into which hold?"
 
-#: src/window.c:1404
+#: src/window.c:1418
 msgid "Extract"
 msgstr "Unpack"
 
-#: src/window.c:1430 src/window.c:1431
+#: src/window.c:1444 src/window.c:1445
 msgid "Compress"
 msgstr "Pack"
 
-#: src/window.c:1438
+#: src/window.c:1452
 #, c-format
 msgid "Pack “%s” into an archive in the same folder:"
 msgstr "Pack “%s” into a chest in the same hold:"
 
-#: src/window.c:1465
+#: src/window.c:1479
 #, c-format
 msgid "“%s” already exists. Pick another name."
 msgstr "“%s” be aboard already. Pick another name, ye unimaginative bastard."
 
-#: src/window.c:1466
+#: src/window.c:1480
 msgid "Couldn't compress"
 msgstr "Can't pack the chest. Bloody useless."
 
-#: src/window.c:1516
+#: src/window.c:1530
 msgid "Couldn't tell what kind of file this is"
 msgstr "Fuck knows what kind o' chart this is"
 
-#: src/window.c:1518
+#: src/window.c:1532
 msgid "Couldn't set the default program"
 msgstr "Can't set the default program. Mutinous bastard."
 
-#: src/window.c:1522
+#: src/window.c:1536
 #, c-format
 msgid "%s opens with %s now"
 msgstr "%s now answers to %s"
 
-#: src/window.c:1699
+#: src/window.c:1713
 msgid "Date modified (newest first)"
 msgstr "Last meddled with (freshest first)"
 
-#: src/window.c:1718
+#: src/window.c:1732
 msgid "Back to name"
 msgstr "Back to names"
 
-#: src/window.c:1724
+#: src/window.c:1738
 #, c-format
 msgid "Sort “%s”"
 msgstr "Order “%s”"
 
-#: src/window.c:1769
+#: src/window.c:1783
 msgid "Set default"
 msgstr "Make default"
 
-#: src/window.c:1779
+#: src/window.c:1793
 msgid "Other application…"
 msgstr "Some other swab…"
 
-#: src/window.c:1782
+#: src/window.c:1796
 msgid "Check file type"
 msgstr "Sniff the barrel"
 
-#: src/window.c:1785
+#: src/window.c:1799
 msgid "Open with"
 msgstr "Open with"
 
-#: src/window.c:1825 src/window.c:1905
+#: src/window.c:1839 src/window.c:1919
 msgid "Extract here"
 msgstr "Unpack here"
 
-#: src/window.c:1826 src/window.c:1906
+#: src/window.c:1840 src/window.c:1920
 msgid "Extract to…"
 msgstr "Unpack into…"
 
-#: src/window.c:1828 src/window.c:1908
+#: src/window.c:1842 src/window.c:1922
 msgid "Compress…"
 msgstr "Pack into a chest…"
 
-#: src/window.c:1830 src/window.c:1910
+#: src/window.c:1844 src/window.c:1924
 msgid "Cut"
 msgstr "Cut"
 
-#: src/window.c:1834
+#: src/window.c:1848
 #, c-format
 msgid "Paste into “%s”"
 msgstr "Unload into “%s”"
 
-#: src/window.c:1839 src/window.c:1847
+#: src/window.c:1853 src/window.c:1861
 msgid "Paste"
 msgstr "Unload here"
 
-#: src/window.c:1842 src/window.c:1913
+#: src/window.c:1856 src/window.c:1927
 msgid "Rename…"
 msgstr "Rechristen…"
 
-#: src/window.c:1843 src/window.c:1914
+#: src/window.c:1857 src/window.c:1928
 msgid "Move to trash"
 msgstr "Clap in the brig"
 
-#: src/window.c:1850
+#: src/window.c:1864
 msgid "New folder…"
 msgstr "New hold…"
 
-#: src/window.c:1851
+#: src/window.c:1865
 msgid "New file…"
 msgstr "New chart…"
 
 #. the highlighted folder, else this column's own
-#: src/window.c:1853
+#: src/window.c:1867
 msgid "Open terminal here"
 msgstr "Open the quarterdeck here"
 
-#: src/window.c:1855 src/window.c:1917
+#: src/window.c:1869 src/window.c:1931
 msgid "Copy path"
 msgstr "Copy path"
 
-#: src/window.c:1857 src/window.c:1919
+#: src/window.c:1871 src/window.c:1933
 msgid "Checksums…"
 msgstr "Inspect cargo seals…"
 
-#: src/window.c:1860
+#: src/window.c:1874
 msgid "Add to bookmarks"
 msgstr "Mark this port"
 
-#: src/window.c:1864 src/window.c:1922
+#: src/window.c:1878 src/window.c:1936
 msgid "Properties…"
 msgstr "Inspect…"
 
-#: src/window.c:1866
+#: src/window.c:1880
 msgid "Show hidden files"
 msgstr "Reveal stashed charts"
 
-#: src/window.c:1900
+#: src/window.c:1914
 msgid "Show in column"
 msgstr "Show in column"
 
-#: src/window.c:1917
+#: src/window.c:1931
 msgid "Copy paths"
 msgstr "Copy paths"
 
-#: src/window.c:2202
+#: src/window.c:2216
 msgid "Parent folder (Backspace, Alt+Up)"
 msgstr "Up to the parent hold (Backspace, Alt+Up)"
 
-#: src/window.c:2204
+#: src/window.c:2218
 msgid "Home (Alt+Home)"
 msgstr "Home port (Alt+Home)"
 
-#: src/window.c:2206
+#: src/window.c:2220
 msgid "Computer: disks, USB sticks, network (Alt+/)"
 msgstr "The fleet: disks, USB sticks, network (Alt+/)"
 
-#: src/window.c:2210
+#: src/window.c:2224
 msgid "Bookmarks (Ctrl+D adds this folder)"
 msgstr "Marked ports (Ctrl+D marks this hold)"
 
-#: src/window.c:2214
+#: src/window.c:2228
 msgid "New window"
 msgstr "Fresh window"
 
-#: src/window.c:2220
+#: src/window.c:2234
 msgid "Open this folder as root…"
 msgstr "Open this hold as Captain…"
 
-#: src/window.c:2226
+#: src/window.c:2240
 msgid "Search here…"
 msgstr "Ransack here…"
 
-#: src/window.c:2230
+#: src/window.c:2244
 msgid "Settings…"
 msgstr "Captain's orders…"
 
-#: src/window.c:2233
+#: src/window.c:2247
 msgid "About millerX"
 msgstr "The tale o' millerX"
 
-#: src/window.c:2283
+#: src/window.c:2297
 msgid ""
 "<b>You are root:</b> every change here is made as administrator. Be careful."
 msgstr ""
 "<b>Ye be the Captain:</b> every change here uses administrator powers. Mind "
 "what ye're doing, ye reckless bastard."
 
-#: src/window.c:2360
+#: src/window.c:2374
 msgid "Not now"
 msgstr "Not now, ye impatient sod"
 
-#: src/window.c:2360
+#: src/window.c:2374
 msgid ""
 "Files are still being copied, moved or packed. Restart when that is done."
 msgstr ""
 "Cargo's still bein' copied, hauled or packed. Set sail again when the lazy "
 "bastards are done."
 
-#: src/window.c:2392
+#: src/window.c:2406
 msgid "Couldn't restart millerX"
 msgstr "millerX won't set sail again. Bloody mutiny."

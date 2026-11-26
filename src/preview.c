@@ -1737,7 +1737,7 @@ void preview_show_file(Preview *p, GFile *f)
     preview_clear(p);
     p->current = g_object_ref(f);
     GError *err = NULL;
-    GFileInfo *info = g_file_query_info(f, ATTRS, G_FILE_QUERY_INFO_NONE, NULL, &err);
+    GFileInfo *info = mx_query_info(f, ATTRS, G_FILE_QUERY_INFO_NONE, NULL, &err);   /* the gate */
     if (!info) {
         gtk_label_set_text(GTK_LABEL(p->title), err->message);
         g_error_free(err);

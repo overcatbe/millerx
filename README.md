@@ -147,7 +147,8 @@ What changed in each version: [CHANGELOG](CHANGELOG.md).
 
 ## Security in 0.8.6
 
-Thanks to rizitis for the security review. What changed:
+**Thanks to rizitis** for a thorough security review ([#5](https://github.com/overcatbe/millerx/issues/5)).
+Everything he found is fixed in 0.8.6:
 
 - A double-click on a program asks first (Cancel is the default), whatever the file is called.
 - A launcher (`.desktop`) shows the command it would run and asks first (Open as text is the default).
@@ -158,6 +159,14 @@ Thanks to rizitis for the security review. What changed:
 - Built with hardening (PIE, full RELRO, stack protector, FORTIFY).
 - What a file really is, whatever its name: right-click → Open with → Check file type.
 
+**Thanks to SCerovec** for the idea of recognising files by their content. Other file managers don't
+do this, so it's off by default, for those who want to be extra careful:
+
+- Settings → Folders → Recognise files → **By content, when you open a file**. millerX then reads
+  the start of the file you select or open: the preview, Properties, Open with and a double-click
+  go by what it really is (a "holiday.jpg" that is text opens in the text editor). The icons in
+  the lists stay by name, nothing is read in the background. Not a virus scanner.
+
 Tested on 2026-11-26 with a small program that only creates a marker file:
 
 | | "holiday.jpg" that is a program | a program with no extension |
@@ -165,7 +174,7 @@ Tested on 2026-11-26 with a small program that only creates a marker file:
 | **Thunar 4.20.10** | picture icon, opens in the image viewer | runs it at once |
 | **Dolphin 26.08.3** | picture icon, opens in the image viewer | asks, Cancel is the default |
 | **millerX 0.8.5** | picture icon, **ran it** | ran it |
-| **millerX 0.8.6** | picture icon, asks first | asks, Cancel is the default |
+| **millerX 0.8.6** | picture icon, asks first (by content: the preview says "Executable") | asks, Cancel is the default |
 
 Nautilus wasn't tested.
 
@@ -282,6 +291,7 @@ preview_width = 340      # 200-900, the least the preview gets; it takes the res
 gallery_names = true     # a line with the name under each thumbnail
 highlight_color = auto   # auto = the theme's, or #rrggbb
 column_width = 230       # 120-600, where new folder columns start
+recognise = name         # name (like other file managers) | content (the file you select or open)
 
 [browse]
 folders_first = true

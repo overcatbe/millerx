@@ -26,6 +26,7 @@
 #endif
 
 enum { THUMBS_ALWAYS, THUMBS_LOCAL, THUMBS_NEVER };
+enum { DETECT_NAME, DETECT_CONTENT };   /* Recognise files: by name (default) / by content, when you open a file */
 enum { TSIZE_SMALL, TSIZE_MEDIUM, TSIZE_LARGE, TSIZE_TINY };  /* gallery tiles: about 100, 200, 400, 64 px */
 #define COL_DEFAULT 230      /* the start width of a column, unless set in Settings */
 #define COL_MIN 120
@@ -57,6 +58,7 @@ typedef struct {
     gboolean cache_auto;    /* clean once a day when millerX starts */
     int column_width;       /* start width of folder columns, 120-600 */
     int thumbs;             /* gallery thumbnails: THUMBS_ALWAYS, _LOCAL (not on network folders), _NEVER */
+    int detect;             /* DETECT_NAME (default, like other file managers) or DETECT_CONTENT */
     gboolean use_ffmpeg;    /* optional helpers, when installed: switched off here */
     gboolean use_pdftoppm;
     gboolean use_pkexec;    /* off: no "Open as root" anywhere */
@@ -105,6 +107,8 @@ GFile *unique_child(GFile *folder, const char *name);
 gboolean delete_tree(GFile *f, GCancellable *cancel, GError **err);
 char *format_size_full(guint64 n);              /* "1.2 MB (1 234 567 bytes)" */
 gboolean is_archive_type(const char *ct);
+/* the gate: g_file_query_info, with the type corrected by the content when Recognise files says so */
+GFileInfo *mx_query_info(GFile *f, const char *attrs, GFileQueryInfoFlags flags, GCancellable *cancel, GError **err);
 GtkWidget *menu_item_new(const char *label, GIcon *gicon, const char *icon_name);
 gpointer obj_copy(gconstpointer src, gpointer data);   /* GCopyFunc for g_list_copy_deep */
 

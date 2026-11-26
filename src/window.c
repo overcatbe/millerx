@@ -652,8 +652,23 @@ static gboolean spawn_child(const char *dir, char **argv, GSpawnFlags flags, GEr
     return ok;
 }
 
+static void open_with(Win *w, GAppInfo *app, GList *files);
+
 static void open_by_type(Win *w, GFile *f)
 {
+    if (LOOK.detect == DETECT_CONTENT) {       /* the program for what it really is, not its name */
+        GFileInfo *fi = mx_query_info(f, "standard::content-type", G_FILE_QUERY_INFO_NONE, NULL, NULL);
+        const char *ct = fi ? g_file_info_get_content_type(fi) : NULL;
+        GAppInfo *app = ct ? g_app_info_get_default_for_type(ct, FALSE) : NULL;
+        g_clear_object(&fi);
+        if (app) {
+            GList *files = g_list_append(NULL, f);
+            open_with(w, app, files);
+            g_list_free(files);
+            g_object_unref(app);
+            return;
+        }
+    }
     char *uri = g_file_get_uri(f);
     GError *err = NULL;
     GAppLaunchContext *ctx = child_launch_context();
@@ -666,7 +681,6 @@ static void open_by_type(Win *w, GFile *f)
     g_free(uri);
 }
 
-static void open_with(Win *w, GAppInfo *app, GList *files);
 static void run_in_terminal(Win *w, const char *path);
 static void run_program(Win *w, const char *path);
 
@@ -1509,7 +1523,7 @@ static void act_free(gpointer data, GClosure *cl)
  * Thunar, file dialogs and the rest read too */
 static void set_default_app(Win *w, GAppInfo *app, GFile *f)
 {
-    GFileInfo *fi = g_file_query_info(f, "standard::content-type", G_FILE_QUERY_INFO_NONE, NULL, NULL);
+    GFileInfo *fi = mx_query_info(f, "standard::content-type", G_FILE_QUERY_INFO_NONE, NULL, NULL);
     const char *ct = fi ? g_file_info_get_content_type(fi) : NULL;
     GError *err = NULL;
     if (!ct)
@@ -1815,7 +1829,7 @@ void win_context_menu(Win *w, Column *c, GdkEventButton *ev)
             item(menu, w, c, NULL, files->data, A_NEW_WINDOW, _("Open in new window"), NULL, TRUE);
         } else if (n == 1)
             item(menu, w, c, files, NULL, A_OPEN, _("Open"), "Return", TRUE);
-        GFileInfo *info = g_file_query_info(files->data, "standard::content-type", G_FILE_QUERY_INFO_NONE,
+        GFileInfo *info = mx_query_info(files->data, "standard::content-type", G_FILE_QUERY_INFO_NONE,
                                             NULL, NULL);
         const char *ct = info ? g_file_info_get_content_type(info) : NULL;
         open_with_menu(menu, w, c, files, ct, !single_dir);
@@ -1885,7 +1899,7 @@ void win_file_menu(Win *w, GList *files, GdkEventButton *ev, GtkWidget *attach)
         return;
     GFile *f = files->data;
     gboolean one = !files->next;
-    GFileInfo *info = g_file_query_info(f, "standard::content-type,standard::type", G_FILE_QUERY_INFO_NONE,
+    GFileInfo *info = mx_query_info(f, "standard::content-type,standard::type", G_FILE_QUERY_INFO_NONE,
                                         NULL, NULL);
     gboolean isdir = info && g_file_info_get_file_type(info) == G_FILE_TYPE_DIRECTORY;
     GtkWidget *menu = gtk_menu_new();
@@ -2307,7 +2321,7 @@ Win *win_new(GtkApplication *app, GFile *start)
 void app_apply_look(GtkApplication *app, const Look *nl)
 {
     gboolean resort = nl->folders_first != LOOK.folders_first;
-    gboolean names = nl->gallery_names != LOOK.gallery_names || nl->thumbs != LOOK.thumbs ||
+    gboolean names = nl->detect != LOOK.detect || nl->gallery_names != LOOK.gallery_names || nl->thumbs != LOOK.thumbs ||
                      nl->use_ffmpeg != LOOK.use_ffmpeg || nl->use_pdftoppm != LOOK.use_pdftoppm ||
                      nl->use_blender != LOOK.use_blender || nl->thumb_size != LOOK.thumb_size;
     char *cmp = g_strdup(nl->compare && *nl->compare ? nl->compare : "auto");

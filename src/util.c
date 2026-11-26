@@ -4,6 +4,8 @@
 #include "millerx.h"
 #include <string.h>
 #include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 char *file_path(GFile *f)
 {
@@ -113,6 +115,94 @@ gboolean is_archive_type(const char *ct)
         if (g_content_type_is_a(ct, ARCHIVES[i]))
             return TRUE;
     return FALSE;
+}
+
+/* ---- Recognise files by content (SCerovec's idea, LinuxQuestions) -------------------------------
+ * Settings → Folders → Recognise files. By name (the default) millerX is like other file managers:
+ * GIO goes by the name and only looks inside when the name says nothing. By content, the file you
+ * select or open is read too (its first 4 KB, once): where the content is of another *family* than
+ * the name says (a "holiday.jpg" that is a program, text or an archive; a "notes.txt" that is a
+ * picture), the content wins in the preview, Properties, Open with and on a double-click. Inside a
+ * family the name stays: magic guesses between text kinds are weak, office files are zips inside.
+ * Lists (columns, gallery, search) stay by name: nothing is read in the background. Not a virus
+ * scanner. */
+enum { F_OTHER, F_EXEC, F_TEXT, F_MEDIA, F_DOC, F_ARCHIVE };
+
+static int family(const char *ct)
+{
+    static const char *const EXE[] = { "application/x-executable", "application/x-sharedlib",
+        "application/x-pie-executable", "application/x-ms-dos-executable",
+        "application/vnd.microsoft.portable-executable", NULL };
+    for (int i = 0; EXE[i]; i++)
+        if (g_content_type_is_a(ct, EXE[i]))
+            return F_EXEC;
+    if (g_content_type_is_a(ct, "text/plain"))
+        return F_TEXT;
+    /* pictures that are text inside (XBM and XPM are C code, PNM can be ASCII) */
+    if (g_content_type_is_a(ct, "image/x-xbitmap") || g_content_type_is_a(ct, "image/x-xpixmap")
+        || g_content_type_is_a(ct, "image/x-portable-anymap"))
+        return F_TEXT;
+    if (g_str_has_prefix(ct, "image/") || g_str_has_prefix(ct, "audio/") || g_str_has_prefix(ct, "video/"))
+        return F_MEDIA;
+    if (g_content_type_is_a(ct, "application/pdf") || g_content_type_is_a(ct, "application/postscript")
+        || g_str_has_prefix(ct, "application/vnd.oasis.opendocument") || g_str_has_prefix(ct, "application/vnd.openxmlformats")
+        || g_str_has_prefix(ct, "application/vnd.ms-") || g_content_type_is_a(ct, "application/msword")
+        || g_content_type_is_a(ct, "application/rtf") || g_content_type_is_a(ct, "application/epub+zip"))
+        return F_DOC;
+    if (is_archive_type(ct))
+        return F_ARCHIVE;
+    return F_OTHER;
+}
+
+/* the content's type where it is of another family than NAME_CT, else NULL */
+static char *type_by_content(const char *path, const char *name_ct)
+{
+    if (!path || !name_ct || g_content_type_is_unknown(name_ct))
+        return NULL;                    /* no name type: GIO looked inside already */
+    int fd = open(path, O_RDONLY | O_NONBLOCK | O_CLOEXEC);
+    if (fd < 0)
+        return NULL;
+    struct stat st;
+    char buf[4096];
+    ssize_t n = -1;
+    if (!fstat(fd, &st) && S_ISREG(st.st_mode))
+        n = read(fd, buf, sizeof buf);
+    close(fd);
+    if (n <= 0)
+        return NULL;
+    gboolean unsure = FALSE;
+    char *g = g_content_type_guess(NULL, (const guchar *) buf, (gsize) n, &unsure);
+    int nf = family(name_ct), cf = family(g);
+    gboolean flip = !unsure && !g_content_type_is_unknown(g) && cf != nf && !g_content_type_is_a(name_ct, g)
+                    && (cf == F_EXEC                        /* a program is always shown as one */
+                        || ((nf == F_MEDIA || nf == F_DOC || nf == F_ARCHIVE || nf == F_TEXT)
+                            && cf != F_OTHER && !(nf == F_DOC && cf == F_ARCHIVE)));
+    if (!flip) {
+        g_free(g);
+        return NULL;
+    }
+    return g;
+}
+
+GFileInfo *mx_query_info(GFile *f, const char *attrs, GFileQueryInfoFlags flags, GCancellable *cancel, GError **err)
+{
+    GFileInfo *info = g_file_query_info(f, attrs, flags, cancel, err);
+    const char *ct = info && LOOK.detect == DETECT_CONTENT ? g_file_info_get_content_type(info) : NULL;
+    if (!ct)
+        return info;
+    char *path = g_file_get_path(f);
+    char *real = type_by_content(path, ct);
+    g_free(path);
+    if (real) {
+        g_file_info_set_content_type(info, real);
+        if (g_file_info_has_attribute(info, G_FILE_ATTRIBUTE_STANDARD_ICON)) {
+            GIcon *ic = g_content_type_get_icon(real);
+            g_file_info_set_icon(info, ic);
+            g_object_unref(ic);
+        }
+        g_free(real);
+    }
+    return info;
 }
 
 /* a menu item with a small icon in front */
