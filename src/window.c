@@ -2147,18 +2147,18 @@ void app_apply_look(GtkApplication *app, const Look *nl)
                      nl->use_ffmpeg != LOOK.use_ffmpeg || nl->use_pdftoppm != LOOK.use_pdftoppm ||
                      nl->use_blender != LOOK.use_blender || nl->thumb_size != LOOK.thumb_size;
     char *cmp = g_strdup(nl->compare && *nl->compare ? nl->compare : "auto");
-    g_free(LOOK.compare);
-    LOOK.compare = cmp;
     char *col = g_strdup(nl->divider_color), *hl = g_strdup(nl->highlight);
     char *lang = g_strdup(nl->language ? nl->language : "system");
     gboolean hl_changed = g_strcmp0(nl->highlight, LOOK.highlight);
     g_free(LOOK.divider_color);
     g_free(LOOK.highlight);
     g_free(LOOK.language);
-    LOOK = *nl;
+    g_free(LOOK.compare);
+    LOOK = *nl;                      /* the strings in nl aren't ours (entry text, old LOOK): own copies */
     LOOK.divider_color = col;
     LOOK.highlight = hl;
     LOOK.language = lang;
+    LOOK.compare = cmp;
     if (hl_changed)
         highlight_apply();           /* live: the open windows change at once */
     for (GList *l = gtk_application_get_windows(app); l; l = l->next) {
