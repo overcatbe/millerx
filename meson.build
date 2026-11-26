@@ -2,7 +2,16 @@ project('millerx', 'c',
   version : '0.8.5',
   license : 'GPL-2.0-or-later',
   meson_version : '>= 0.60',
-  default_options : ['c_std=gnu11', 'warning_level=2', 'buildtype=release'])
+  default_options : ['c_std=gnu11', 'warning_level=2', 'buildtype=release', 'b_pie=true'])
+
+# Hardening, the same for every build (rizitis, issue #5): stack protector, FORTIFY, PIE (above),
+# full RELRO. Only flags the compiler knows; FORTIFY only if the builder's CFLAGS don't set it.
+cc = meson.get_compiler('c')
+add_project_arguments(cc.get_supported_arguments('-fstack-protector-strong'), language : 'c')
+if not ' '.join(get_option('c_args')).contains('_FORTIFY_SOURCE')
+  add_project_arguments('-D_FORTIFY_SOURCE=2', language : 'c')
+endif
+add_project_link_arguments(cc.get_supported_link_arguments('-Wl,-z,relro', '-Wl,-z,now'), language : 'c')
 
 gtk = dependency('gtk+-3.0', version : '>= 3.22')
 giounix = dependency('gio-unix-2.0')    # launchers (.desktop files) on a double-click
@@ -39,7 +48,7 @@ add_project_arguments(
 executable('millerx',
   'src/main.c', 'src/settings.c', 'src/util.c', 'src/column.c', 'src/preview.c',
   'src/job.c', 'src/window.c', 'src/places.c', 'src/dialogs.c', 'src/thumbcache.c', 'src/sorting.c', 'src/highlight.c', 'src/trash.c', 'src/search.c',
-  'src/archive.c',
+  'src/archive.c', 'src/mocheck.c',
   dependencies : deps,
   install : true)
 

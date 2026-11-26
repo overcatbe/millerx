@@ -145,6 +145,30 @@ The languages: Wizard, German and Greek.
 
 What changed in each version: [CHANGELOG](CHANGELOG.md).
 
+## Security in 0.8.6
+
+Thanks to rizitis for the security review. What changed:
+
+- A double-click on a program asks first (Cancel is the default), whatever the file is called.
+- A launcher (`.desktop`) shows the command it would run and asks first (Open as text is the default).
+- Language files are checked before use; a broken one can't crash millerX any more.
+- The root window shows no previews (no pictures, video, PDFs or archive contents read as root).
+- Folders extracted from archives get normal permissions.
+- Compare runs in the background and can be stopped.
+- Built with hardening (PIE, full RELRO, stack protector, FORTIFY).
+- What a file really is, whatever its name: right-click → Open with → Check file type.
+
+Tested on 2026-11-26 with a small program that only creates a marker file:
+
+| | "holiday.jpg" that is a program | a program with no extension |
+|---|---|---|
+| **Thunar 4.20.10** | picture icon, opens in the image viewer | runs it at once |
+| **Dolphin 26.08.3** | picture icon, opens in the image viewer | asks, Cancel is the default |
+| **millerX 0.8.5** | picture icon, **ran it** | ran it |
+| **millerX 0.8.6** | picture icon, asks first | asks, Cancel is the default |
+
+Nautilus wasn't tested.
+
 ## What millerX isn't
 
 millerX is a lightweight but fully functional file manager, built around Miller columns. To stay

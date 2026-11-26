@@ -717,8 +717,71 @@ static void ask_script(Win *w, const char *path)
     }
 }
 
-/* A double-click: a program you may run is started, a script asks first, a launcher (.desktop)
- * starts what it describes; everything else opens in the program for its type. */
+/* A program (ELF): never started without asking. Its name can say "holiday.jpg" and the x bit
+ * says nothing (FAT sticks, archives), so the dialog says what it really is; Cancel is the default. */
+static void ask_program(Win *w, const char *path)
+{
+    char *base = g_path_get_basename(path);
+    GtkWidget *d = gtk_message_dialog_new(GTK_WINDOW(w->window), GTK_DIALOG_MODAL, GTK_MESSAGE_WARNING,
+                                          GTK_BUTTONS_NONE, _("“%s” is a program"), base);
+    gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(d),
+        _("Whatever its name says, this file is a program. It runs with your rights and can do "
+          "anything you can. Run it only if you trust where it came from."));
+    gtk_dialog_add_button(GTK_DIALOG(d), _("Cancel"), 0);
+    gtk_dialog_add_button(GTK_DIALOG(d), _("Run"), 1);
+    gtk_dialog_set_default_response(GTK_DIALOG(d), 0);
+    win_ref(w);                                 /* the window may be closed behind the dialog */
+    int r = gtk_dialog_run(GTK_DIALOG(d));
+    gtk_widget_destroy(d);
+    g_free(base);
+    if (r == 1 && !w->dead)
+        run_program(w, path);
+    win_unref(w);
+}
+
+/* the file in the program for plain text, whatever its own type: to read a launcher */
+static void open_as_text(Win *w, GFile *f)
+{
+    GAppInfo *app = g_app_info_get_default_for_type("text/plain", FALSE);
+    if (!app) {
+        win_status(w, "%s", _("No program for text files is set."));
+        return;
+    }
+    GList *files = g_list_append(NULL, f);
+    open_with(w, app, files);
+    g_list_free(files);
+    g_object_unref(app);
+}
+
+/* A launcher (.desktop) with the x bit: its Name= and Icon= can look like anything, and the x bit
+ * survives extraction, so it says what it would run and asks. Open (as text) is the default. */
+static void ask_launcher(Win *w, GFile *f, GDesktopAppInfo *app)
+{
+    char *base = g_file_get_basename(f);
+    const char *name = g_app_info_get_name(G_APP_INFO(app));
+    const char *cmd = g_app_info_get_commandline(G_APP_INFO(app));
+    GtkWidget *d = gtk_message_dialog_new(GTK_WINDOW(w->window), GTK_DIALOG_MODAL, GTK_MESSAGE_WARNING,
+                                          GTK_BUTTONS_NONE, _("“%s” is a launcher"), base);
+    gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(d),
+        _("It calls itself “%s” and runs:\n\n%s\n\nRun it only if you trust where it came from."),
+        name ? name : "", cmd ? cmd : _("(no command given)"));
+    gtk_dialog_add_button(GTK_DIALOG(d), _("Cancel"), 0);
+    gtk_dialog_add_button(GTK_DIALOG(d), _("Open as text"), 1);
+    gtk_dialog_add_button(GTK_DIALOG(d), _("Run"), 2);
+    gtk_dialog_set_default_response(GTK_DIALOG(d), 1);
+    win_ref(w);                                 /* the window may be closed behind the dialog */
+    int r = gtk_dialog_run(GTK_DIALOG(d));
+    gtk_widget_destroy(d);
+    g_free(base);
+    if (!w->dead && r == 1)
+        open_as_text(w, f);
+    else if (!w->dead && r == 2)
+        open_with(w, G_APP_INFO(app), NULL);
+    win_unref(w);
+}
+
+/* A double-click: nothing runs without asking. A program or a launcher (.desktop with the x bit)
+ * says what it is and asks, a script asks too; everything else opens in the program for its type. */
 void win_open_default(Win *w, GFile *f)
 {
     char *path = g_file_get_path(f);            /* NULL in sftp:// and other remote places */
@@ -726,7 +789,9 @@ void win_open_default(Win *w, GFile *f)
         /* only a launcher with the x bit, like Thunar: one you just downloaded opens as text */
         GDesktopAppInfo *app = g_desktop_app_info_new_from_filename(path);
         if (app) {
-            open_with(w, G_APP_INFO(app), NULL);
+            g_object_ref(f);                    /* the dialog's main loop may drop the row */
+            ask_launcher(w, f, app);
+            g_object_unref(f);
             g_object_unref(app);
             g_free(path);
             return;
@@ -734,7 +799,7 @@ void win_open_default(Win *w, GFile *f)
     }
     int kind = path ? exec_kind(path) : EXEC_NO;
     if (kind == EXEC_PROGRAM)
-        run_program(w, path);
+        ask_program(w, path);
     else if (kind == EXEC_SCRIPT)
         ask_script(w, path);
     else

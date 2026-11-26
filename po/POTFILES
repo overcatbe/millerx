@@ -4,6 +4,7 @@ src/dialogs.c
 src/highlight.c
 src/job.c
 src/main.c
+src/mocheck.c
 src/places.c
 src/preview.c
 src/search.c

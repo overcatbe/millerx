@@ -358,8 +358,18 @@ static gboolean extract_one(Job *j, GFile *archive, double base, double span, GE
             j->dest = saved;
             j->move = saved_move;
         } else {
+            /* a new folder (the umask applies, not the temporary folder's 0700), the items moved in */
             GFile *target = free_child(dest, stem);
-            ok = g_file_move(tmp, target, G_FILE_COPY_NOFOLLOW_SYMLINKS, NULL, NULL, NULL, err);
+            ok = g_file_make_directory(target, NULL, err);
+            for (GList *l = kids; ok && l; l = l->next) {
+                char *kn = g_file_get_basename(l->data);
+                GFile *to = g_file_get_child(target, kn);
+                ok = g_file_move(l->data, to, G_FILE_COPY_NOFOLLOW_SYMLINKS, NULL, NULL, NULL, err);
+                g_object_unref(to);
+                g_free(kn);
+            }
+            if (!ok && g_file_query_exists(target, NULL))   /* nothing half-done is left behind */
+                delete_tree(target, NULL, NULL);
             g_object_unref(target);
         }
         g_list_free_full(kids, g_object_unref);

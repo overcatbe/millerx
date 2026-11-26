@@ -373,47 +373,110 @@ void dialog_properties(Win *w, GFile *f)
 }
 
 /* ---- compare two files ------------------------------------------------------------------------- */
-static void compare_text(Win *w, const char *a, const char *b)
+/* diff runs in the background: two big folders took minutes and froze the window (rizitis, #5).
+ * The window shows "Comparing…" at once; Close stops diff. */
+typedef struct {
+    GtkWidget *d, *area, *wait;         /* d is NULL once the window is closed */
+    GCancellable *cancel;
+} Cmp;
+
+static void cmp_free(Cmp *c)
 {
-    gboolean dirs = g_file_test(a, G_FILE_TEST_IS_DIR) && g_file_test(b, G_FILE_TEST_IS_DIR);
-    const char *argv[] = { "diff", dirs ? "-ru" : "-u", a, b, NULL };
-    char *out = NULL, *err = NULL;
-    int status = 0;
+    g_object_unref(c->cancel);
+    g_free(c);
+}
+
+static void cmp_closed(GtkWidget *d, Cmp *c)
+{
+    c->d = NULL;
+    g_cancellable_cancel(c->cancel);    /* diff is stopped (see cmp_done) */
+}
+
+static void cmp_done(GObject *src, GAsyncResult *res, gpointer data)
+{
+    Cmp *c = data;
+    GSubprocess *proc = G_SUBPROCESS(src);
+    GBytes *ob = NULL, *eb = NULL;
     GError *e = NULL;
-    if (!g_spawn_sync(NULL, (char **) argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &out, &err, &status, &e)) {
-        win_error(w, _("Couldn't compare"), e->message);
-        g_error_free(e);
-        return;
+    gboolean ok = g_subprocess_communicate_finish(proc, res, &ob, &eb, &e);
+    if (!ok)
+        g_subprocess_force_exit(proc);
+    if (!c->d) {                        /* closed while it ran */
+        g_clear_error(&e);
+        goto out;
     }
-    char *ta = g_path_get_basename(a), *tb = g_path_get_basename(b);
-    char *title = g_strdup_printf(_("%s and %s"), ta, tb);
-    GtkWidget *d = gtk_dialog_new_with_buttons(title, GTK_WINDOW(w->window), 0, _("Close"), GTK_RESPONSE_CLOSE, NULL);
-    g_free(title);
-    g_free(ta);
-    g_free(tb);
-    gtk_window_set_default_size(GTK_WINDOW(d), 760, 520);
-    GtkWidget *area = gtk_dialog_get_content_area(GTK_DIALOG(d));
-    if (out && *out) {                  /* the differences, as diff writes them */
+    g_signal_handlers_disconnect_by_data(c->d, c);     /* c is freed below; the window stays */
+    gtk_widget_destroy(c->wait);
+    gsize olen = 0, elen = 0;
+    const char *out = ob ? g_bytes_get_data(ob, &olen) : NULL;
+    const char *err = eb ? g_bytes_get_data(eb, &elen) : NULL;
+    if (ok && olen) {                   /* the differences, as diff writes them */
         GtkWidget *sc = gtk_scrolled_window_new(NULL, NULL);
         GtkWidget *tv = gtk_text_view_new();
         gtk_text_view_set_editable(GTK_TEXT_VIEW(tv), FALSE);
         gtk_text_view_set_monospace(GTK_TEXT_VIEW(tv), TRUE);
-        char *valid = g_utf8_make_valid(out, -1);
+        char *valid = g_utf8_make_valid(out, (gssize) olen);
         gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(tv)), valid, -1);
         g_free(valid);
         gtk_container_add(GTK_CONTAINER(sc), tv);
-        gtk_box_pack_start(GTK_BOX(area), sc, TRUE, TRUE, 0);
+        gtk_box_pack_start(GTK_BOX(c->area), sc, TRUE, TRUE, 0);
     } else {
-        GtkWidget *l = gtk_label_new(WIFEXITED(status) && WEXITSTATUS(status) == 0 ? _("The two are the same.")
-                                                                                   : (err && *err ? err : _("diff found nothing to show.")));
+        char *msg = !ok ? g_strdup(e->message)
+                  : g_subprocess_get_if_exited(proc) && g_subprocess_get_exit_status(proc) == 0
+                  ? g_strdup(_("The two are the same."))
+                  : elen ? g_utf8_make_valid(err, (gssize) elen) : g_strdup(_("diff found nothing to show."));
+        GtkWidget *l = gtk_label_new(msg);
+        g_free(msg);
+        gtk_label_set_line_wrap(GTK_LABEL(l), TRUE);
         g_object_set(l, "margin", 20, NULL);
-        gtk_box_pack_start(GTK_BOX(area), l, TRUE, TRUE, 0);
-        gtk_window_set_default_size(GTK_WINDOW(d), 360, -1);
+        gtk_box_pack_start(GTK_BOX(c->area), l, TRUE, TRUE, 0);
+        gtk_window_resize(GTK_WINDOW(c->d), 360, 120);
     }
-    g_signal_connect(d, "response", G_CALLBACK(gtk_widget_destroy), NULL);
-    gtk_widget_show_all(d);
-    g_free(out);
-    g_free(err);
+    gtk_widget_show_all(c->area);
+    g_clear_error(&e);
+out:
+    if (ob)
+        g_bytes_unref(ob);
+    if (eb)
+        g_bytes_unref(eb);
+    g_object_unref(proc);
+    cmp_free(c);
+}
+
+static void compare_text(Win *w, const char *a, const char *b)
+{
+    gboolean dirs = g_file_test(a, G_FILE_TEST_IS_DIR) && g_file_test(b, G_FILE_TEST_IS_DIR);
+    GError *e = NULL;
+    /* a and b are absolute paths, so neither can look like an option */
+    GSubprocess *proc = g_subprocess_new(G_SUBPROCESS_FLAGS_STDOUT_PIPE | G_SUBPROCESS_FLAGS_STDERR_PIPE, &e,
+                                         "diff", dirs ? "-ru" : "-u", a, b, NULL);
+    if (!proc) {
+        win_error(w, _("Couldn't compare"), e->message);
+        g_error_free(e);
+        return;
+    }
+    Cmp *c = g_new0(Cmp, 1);
+    c->cancel = g_cancellable_new();
+    char *ta = g_path_get_basename(a), *tb = g_path_get_basename(b);
+    char *title = g_strdup_printf(_("%s and %s"), ta, tb);
+    c->d = gtk_dialog_new_with_buttons(title, GTK_WINDOW(w->window), 0, _("Close"), GTK_RESPONSE_CLOSE, NULL);
+    g_free(title);
+    g_free(ta);
+    g_free(tb);
+    gtk_window_set_default_size(GTK_WINDOW(c->d), 760, 520);
+    c->area = gtk_dialog_get_content_area(GTK_DIALOG(c->d));
+    c->wait = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+    gtk_widget_set_halign(c->wait, GTK_ALIGN_CENTER);
+    gtk_widget_set_valign(c->wait, GTK_ALIGN_CENTER);
+    GtkWidget *spin = gtk_spinner_new();
+    gtk_spinner_start(GTK_SPINNER(spin));
+    gtk_box_pack_start(GTK_BOX(c->wait), spin, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(c->wait), gtk_label_new(_("Comparing…")), FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(c->area), c->wait, TRUE, TRUE, 0);
+    g_signal_connect(c->d, "response", G_CALLBACK(gtk_widget_destroy), NULL);
+    g_signal_connect(c->d, "destroy", G_CALLBACK(cmp_closed), c);
+    gtk_widget_show_all(c->d);
+    g_subprocess_communicate_async(proc, NULL, c->cancel, cmp_done, c);
 }
 
 void compare_files(Win *w, GFile *fa, GFile *fb)

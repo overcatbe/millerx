@@ -827,6 +827,8 @@ static gboolean start_grid(gpointer data)
 {
     Preview *p = data;
     p->grid_timer = 0;
+    if (is_root())                  /* no gallery as root: no thumbnails made by root (rizitis, #5) */
+        return G_SOURCE_REMOVE;
     char *dir = p->current ? g_file_get_path(p->current) : NULL;
     if (!dir)
         return G_SOURCE_REMOVE;
@@ -1826,6 +1828,10 @@ void preview_show_file(Preview *p, GFile *f)
             l->size_l = g_object_ref(size_l);
             l->count_l = g_object_ref(count_l);
             p->grid_timer = g_timeout_add_full(G_PRIORITY_DEFAULT, 250, folder_ready, l, later_free);
+        } else if (is_root() && !(g_content_type_is_a(ct, "text/plain") || g_str_has_prefix(ct, "text/"))) {
+            /* As root, pictures, video, PDFs and archive listings would be read with uid 0 by big
+             * parsers of outside data (gdk-pixbuf, ffmpeg, pdftoppm, libarchive): only the details
+             * and the type icon. Text stays: our own code reads it (rizitis, #5). */
         } else if (media_kind(ct) != MEDIA_NONE) {
             p->image_path = g_strdup(path);
             p->image_kind = media_kind(ct);

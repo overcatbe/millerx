@@ -4,6 +4,7 @@
 #include "millerx.h"
 #include <string.h>
 #include <glib/gstdio.h>
+#include <unistd.h>
 
 Look LOOK = { NULL, 2, FALSE, PREVIEW_DEFAULT, TRUE, FALSE, .column_width = COL_DEFAULT,
               .use_ffmpeg = TRUE, .use_pdftoppm = TRUE, .use_pkexec = TRUE, .use_blender = TRUE,
@@ -239,15 +240,34 @@ char *own_language_add(const char *path, char **err)
             *err = g_strdup(_("A .po file needs msgfmt (gettext) to be checked, and it isn't installed."));
             goto fail;
         }
-        char *argv[] = { msgfmt, (char *) "--check-format", (char *) "-o", (char *) "/dev/null", (char *) path, NULL };
+        /* compiled to a temporary .mo, which is then checked like a .mo: --check-format alone
+         * skips every entry without a c-format flag */
+        char *tmp = NULL;
+        int fd = g_file_open_tmp("millerx-lang-XXXXXX.mo", &tmp, NULL);
+        if (fd < 0) {
+            g_free(msgfmt);
+            *err = g_strdup(_("Couldn't make a temporary file."));
+            goto fail;
+        }
+        close(fd);
+        char *argv[] = { msgfmt, (char *) "--check-format", (char *) "-o", tmp, (char *) path, NULL };
         gboolean ok = g_spawn_sync(NULL, argv, NULL, G_SPAWN_STDOUT_TO_DEV_NULL, NULL, NULL, NULL, &out, &status, NULL)
                       && g_spawn_check_wait_status(status, NULL);
         g_free(msgfmt);
         if (!ok) {
+            g_unlink(tmp);
+            g_free(tmp);
             *err = out ? out : g_strdup("msgfmt");          /* msgfmt says which line is wrong */
             goto fail;
         }
         g_free(out);
+        ok = mo_check_file(tmp, err);
+        g_unlink(tmp);
+        g_free(tmp);
+        if (!ok)
+            goto fail;
+    } else if (!mo_check_file(path, err)) {
+        goto fail;
     }
     dir = own_languages_dir();
     g_mkdir_with_parents(dir, 0755);
@@ -314,6 +334,13 @@ char *own_language_prepare(const char *name)
         if (ok)
             g_free(data);
     }
+    char *why = NULL;
+    if (ok && !mo_check_file(out, &why)) {     /* also files put there by hand: checked before every use */
+        g_printerr("millerX: own language %s can't be used, using English: %s\n", name, why);
+        g_unlink(out);
+        ok = FALSE;
+    }
+    g_free(why);
     g_free(dir);
     g_free(po);
     g_free(mo);

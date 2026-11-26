@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: millerx\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 09:58+0200\n"
+"POT-Creation-Date: 2026-11-26 19:44+0200\n"
 "PO-Revision-Date: 2026-11-23 08:30+0200\n"
 "Last-Translator: overcatbe\n"
 "Language-Team: LOLCAT\n"
@@ -46,74 +46,74 @@ msgstr "CANT WRITE DIS FORMAT. TRY ASKIN NICELY."
 msgid "Finishing the archive"
 msgstr "CLOSIN TEH TREAT TIN"
 
-#: src/column.c:93
+#: src/column.c:93 src/column.c:246
 #, c-format
 msgid "%s: %d item"
 msgid_plural "%s: %d items"
 msgstr[0] "%s: %d FING"
 msgstr[1] "%s: %d FINGZ"
 
-#: src/column.c:607
+#: src/column.c:632
 #, c-format
 msgid "Jump: %s"
 msgstr "POUNCIN TO: %s"
 
-#: src/column.c:609
+#: src/column.c:634
 #, c-format
 msgid "Jump: %s (no match)"
 msgstr "POUNCIN TO: %s (NOTHIN DERE. BAP AIR.)"
 
-#: src/column.c:655
+#: src/column.c:680
 msgid "Inside a trashed folder: delete the whole folder, or put it back first"
 msgstr ""
 "DIS BOX IZ IN TEH LITTERBOX. DELETE TEH WHOLE BOX FUREVER, OR BRING IT BACK "
 "FURST."
 
-#: src/column.c:774
+#: src/column.c:799
 msgid "Couldn't make the link"
 msgstr "CANT MAEK TEH SHORTCUT. IT RAN AWAY."
 
-#: src/column.c:800
+#: src/column.c:825
 msgid "Copy here"
 msgstr "COPY HERE PLZ"
 
-#: src/column.c:800
+#: src/column.c:825
 msgid "Move here"
 msgstr "MOOV HERE"
 
-#: src/column.c:800
+#: src/column.c:825
 msgid "Link here"
 msgstr "SHORTCUT HERE"
 
-#: src/column.c:808 src/dialogs.c:27 src/dialogs.c:791 src/window.c:178
-#: src/window.c:189 src/window.c:701 src/window.c:1338 src/window.c:1366
-#: src/window.c:2205
+#: src/column.c:833 src/dialogs.c:27 src/dialogs.c:854 src/window.c:178
+#: src/window.c:189 src/window.c:701 src/window.c:730 src/window.c:768
+#: src/window.c:1403 src/window.c:1431 src/window.c:2270
 msgid "Cancel"
 msgstr "DO NOT WANT"
 
-#: src/column.c:932 src/sorting.c:114
+#: src/column.c:957 src/sorting.c:114
 msgid "name"
 msgstr "name"
 
-#: src/column.c:933
+#: src/column.c:958
 msgid "size"
 msgstr "chonk"
 
 #. largest first
-#: src/column.c:934
+#: src/column.c:959
 msgid "newest"
 msgstr "newest"
 
 #. deleted last first
-#: src/column.c:935
+#: src/column.c:960
 msgid "oldest"
 msgstr "oldest"
 
-#: src/column.c:963
+#: src/column.c:988
 msgid "Sort:"
 msgstr "LINE UP BY:"
 
-#: src/column.c:1106 src/dialogs.c:986
+#: src/column.c:1131 src/dialogs.c:1049
 msgid "Sort by name again"
 msgstr "BACK TO NAMEZ"
 
@@ -152,14 +152,14 @@ msgstr "IGNORE DIS ONE"
 msgid "Keep both"
 msgstr "I WANT BOTH"
 
-#: src/dialogs.c:87 src/dialogs.c:605
+#: src/dialogs.c:87 src/dialogs.c:668
 #, c-format
 msgid "%llu file"
 msgid_plural "%llu files"
 msgstr[0] "%llu FILE"
 msgstr[1] "%llu FILEZ"
 
-#: src/dialogs.c:89 src/dialogs.c:606
+#: src/dialogs.c:89 src/dialogs.c:669
 #, c-format
 msgid "%llu folder"
 msgid_plural "%llu folders"
@@ -170,7 +170,7 @@ msgstr[1] "%llu BOXEZ"
 msgid "   (not yours, read only)"
 msgstr "   (NOT URS. LOOK, NO TOUCHY.)"
 
-#: src/dialogs.c:199 src/dialogs.c:521
+#: src/dialogs.c:199 src/dialogs.c:584
 msgid "Couldn't change permissions"
 msgstr "CANT CHANGE PERMISSIONZ. IT DISOBEYED."
 
@@ -183,7 +183,7 @@ msgstr "NO SNIFFABLE INFO"
 msgid "Properties: %s"
 msgstr "SNIFFIN %s"
 
-#: src/dialogs.c:237 src/dialogs.c:390 src/dialogs.c:581 src/dialogs.c:1077
+#: src/dialogs.c:237 src/dialogs.c:462 src/dialogs.c:644 src/dialogs.c:1140
 #: src/window.c:164
 msgid "Close"
 msgstr "KTHXBYE"
@@ -193,12 +193,12 @@ msgid "Link to"
 msgstr "DOOR TO"
 
 #. the folders' contents counted in the background, the files' added
-#: src/dialogs.c:281 src/dialogs.c:617 src/dialogs.c:629 src/dialogs.c:1244
-#: src/preview.c:1621 src/preview.c:1756
+#: src/dialogs.c:281 src/dialogs.c:680 src/dialogs.c:692 src/dialogs.c:1307
+#: src/preview.c:1623 src/preview.c:1758
 msgid "Size"
 msgstr "CHONK"
 
-#: src/dialogs.c:281 src/dialogs.c:617
+#: src/dialogs.c:281 src/dialogs.c:680
 msgid "counting …"
 msgstr "COUNTIN TEH FINGZ …"
 
@@ -206,178 +206,182 @@ msgstr "COUNTIN TEH FINGZ …"
 msgid "Free space"
 msgstr "ROOM LEFT FOR MOAR"
 
-#: src/dialogs.c:384 src/dialogs.c:423 src/dialogs.c:434 src/dialogs.c:463
+#: src/dialogs.c:426
+msgid "The two are the same."
+msgstr "TEH TWO R TWINZ."
+
+#: src/dialogs.c:427
+msgid "diff found nothing to show."
+msgstr "DIFF FOUND NOTHIN. SAD."
+
+#: src/dialogs.c:454 src/dialogs.c:486 src/dialogs.c:497 src/dialogs.c:526
 msgid "Couldn't compare"
 msgstr "CANT KOMPAR. TOO CONFUZD."
 
-#: src/dialogs.c:389
+#: src/dialogs.c:461
 #, c-format
 msgid "%s and %s"
 msgstr "%s AN %s"
 
-#: src/dialogs.c:407
-msgid "The two are the same."
-msgstr "TEH TWO R TWINZ."
+#: src/dialogs.c:474
+msgid "Comparing…"
+msgstr "KOMPARIN…"
 
-#: src/dialogs.c:408
-msgid "diff found nothing to show."
-msgstr "DIFF FOUND NOTHIN. SAD."
-
-#: src/dialogs.c:423
+#: src/dialogs.c:486
 msgid "Only files on this computer can be compared."
 msgstr "ONLY FILEZ ON DIS COMPUTR CAN BE KOMPARD."
 
-#: src/dialogs.c:519
+#: src/dialogs.c:582
 #, c-format
 msgid "%d item wasn't changed: %s"
 msgid_plural "%d items weren't changed: %s"
 msgstr[0] "%d THING NO CHANGE: %s"
 msgstr[1] "%d THINGZ NO CHANGE: %s"
 
-#: src/dialogs.c:580
+#: src/dialogs.c:643
 #, c-format
 msgid "Properties: %u item"
 msgid_plural "Properties: %u items"
 msgstr[0] "SNIFFIN %u THING"
 msgstr[1] "SNIFFIN %u THINGZ"
 
-#: src/dialogs.c:595 src/places.c:236 src/window.c:1372
+#: src/dialogs.c:658 src/places.c:236 src/window.c:1437
 #, c-format
 msgid "%u item"
 msgid_plural "%u items"
 msgstr[0] "%u ABANDONED FING"
 msgstr[1] "%u ABANDONED FINGZ"
 
-#: src/dialogs.c:608
+#: src/dialogs.c:671
 msgid "Kind"
 msgstr "WUT IZ"
 
-#: src/dialogs.c:613
+#: src/dialogs.c:676
 msgid "Location"
 msgstr "WHERE"
 
-#: src/dialogs.c:613
+#: src/dialogs.c:676
 msgid "several folders"
 msgstr "MANY BOXEZ"
 
-#: src/dialogs.c:633 src/dialogs.c:641
+#: src/dialogs.c:696 src/dialogs.c:704
 msgid "Owner"
 msgstr "HOOMAN"
 
-#: src/dialogs.c:633
+#: src/dialogs.c:696
 msgid "mixed"
 msgstr "SUM YES SUM NO"
 
-#: src/dialogs.c:639
+#: src/dialogs.c:702
 msgid "Enter"
 msgstr "GO IN"
 
-#: src/dialogs.c:639
+#: src/dialogs.c:702
 msgid "Exec"
 msgstr "RUN"
 
-#: src/dialogs.c:639
+#: src/dialogs.c:702
 msgid "Exec / Enter"
 msgstr "RUN / GO IN"
 
-#: src/dialogs.c:640
+#: src/dialogs.c:703
 msgid "Read"
 msgstr "READ"
 
-#: src/dialogs.c:640
+#: src/dialogs.c:703
 msgid "Write"
 msgstr "SCRIBBL"
 
-#: src/dialogs.c:641
+#: src/dialogs.c:704
 msgid "Group"
 msgstr "CLOWDER"
 
-#: src/dialogs.c:641
+#: src/dialogs.c:704
 msgid "Others"
 msgstr "STRANGR CATZ"
 
-#: src/dialogs.c:662
+#: src/dialogs.c:725
 msgid "A dash: some have it, some don't. A click sets it for all of them."
 msgstr "A DASH: SUM HAZ IT, SUM DONT. ONE CLICK AN ALL HAZ IT (OR NONE)."
 
-#: src/dialogs.c:663
+#: src/dialogs.c:726
 msgid "Not all of them are yours: read only."
 msgstr "NOT ALL URS. LOOK, NO TOUCHY."
 
-#: src/dialogs.c:668 src/preview.c:1780
+#: src/dialogs.c:731 src/preview.c:1782
 msgid "Permissions"
 msgstr "WHO CAN HAZ"
 
-#: src/dialogs.c:745
+#: src/dialogs.c:808
 msgid "Couldn't save the settings"
 msgstr "CANT SAVE CAT RULEZ. MANAGEMENT IZ UPSET."
 
-#: src/dialogs.c:790
+#: src/dialogs.c:853
 msgid "Add a language file"
 msgstr "ADD A SPEEKIN FILE"
 
-#: src/dialogs.c:791
+#: src/dialogs.c:854
 msgid "Add"
 msgstr "ADD"
 
-#: src/dialogs.c:793
+#: src/dialogs.c:856
 msgid "Language files (.po, .mo)"
 msgstr "SPEEKIN FILEZ (.po, .mo)"
 
-#: src/dialogs.c:811
+#: src/dialogs.c:874
 #, c-format
 msgid "Couldn't add “%s”"
 msgstr "CANT ADD “%s”. IT HISSED AT ME."
 
-#: src/dialogs.c:865
+#: src/dialogs.c:928
 msgid "video frames, music covers, AVIF and HEIC pictures"
 msgstr "VIDEO FRAMES, MUSIC COVERS, AVIF AND HEIC PIX"
 
-#: src/dialogs.c:866
+#: src/dialogs.c:929
 msgid "videos and music show their icon, AVIF/HEIC too"
 msgstr "VIDEOS AND MUSIC SHOW ICONZ, AVIF/HEIC TOO"
 
-#: src/dialogs.c:866
+#: src/dialogs.c:929
 msgid "ffmpeg (Slackware: l/ffmpeg)"
 msgstr "ffmpeg (Slackware: l/ffmpeg)"
 
-#: src/dialogs.c:867
+#: src/dialogs.c:930
 msgid "the first page of PDFs"
 msgstr "TEH FURST PAGE OF PDF FILEZ"
 
-#: src/dialogs.c:868
+#: src/dialogs.c:931
 msgid "PDFs show their icon"
 msgstr "PDF FILEZ SHOW ICONZ"
 
-#: src/dialogs.c:868
+#: src/dialogs.c:931
 msgid "poppler (Debian/Ubuntu: poppler-utils)"
 msgstr "poppler (Debian/Ubuntu: poppler-utils)"
 
-#: src/dialogs.c:869
+#: src/dialogs.c:932
 msgid "“Open as root”"
 msgstr "“OPEN AS BOSS CAT”"
 
-#: src/dialogs.c:870
+#: src/dialogs.c:933
 msgid "no root window"
 msgstr "NO BOSS CAT WINDOW"
 
-#: src/dialogs.c:870
+#: src/dialogs.c:933
 msgid "polkit, plus an authentication agent"
 msgstr "polkit, PLUS A PASSWORD HELPUR"
 
-#: src/dialogs.c:871
+#: src/dialogs.c:934
 msgid "the pictures saved in Blender (.blend) files"
 msgstr "TEH PIX STASHED IN Blender (.blend) FILEZ"
 
-#: src/dialogs.c:872
+#: src/dialogs.c:935
 msgid ".blend files show their icon"
 msgstr ".blend FILEZ SHOW ICONZ"
 
-#: src/dialogs.c:872
+#: src/dialogs.c:935
 msgid "Blender (it comes with it; also found in /opt/blender*)"
 msgstr "Blender (HAZ ONE INSIDE, ALSO FOUND IN /opt/blender*)"
 
-#: src/dialogs.c:892
+#: src/dialogs.c:955
 #, c-format
 msgid ""
 "✗ not installed: %s.\n"
@@ -388,25 +392,25 @@ msgstr ""
 "<small>INSTALL %s\n"
 "FOR %s.</small>"
 
-#: src/dialogs.c:910
+#: src/dialogs.c:973
 #, c-format
 msgid "%s in %u thumbnail (%u deleted)"
 msgid_plural "%s in %u thumbnails (%u deleted)"
 msgstr[0] "%s IN %u TINY PIC (%u SCOOPED)"
 msgstr[1] "%s IN %u TINY PIX (%u SCOOPED)"
 
-#: src/dialogs.c:912
+#: src/dialogs.c:975
 #, c-format
 msgid "%s in %u thumbnail"
 msgid_plural "%s in %u thumbnails"
 msgstr[0] "%s IN %u TINY PIC"
 msgstr[1] "%s IN %u TINY PIX"
 
-#: src/dialogs.c:922
+#: src/dialogs.c:985
 msgid "Clear the thumbnail cache?"
 msgstr "EMPTY TEH TINY PIX STASH?"
 
-#: src/dialogs.c:923
+#: src/dialogs.c:986
 msgid ""
 "All thumbnails in ~/.cache/thumbnails are deleted. Thunar and file dialogs "
 "use them too; everything is made again when it's needed."
@@ -414,39 +418,39 @@ msgstr ""
 "ALL TINY PIX IN ~/.cache/thumbnails GET DELETED. Thunar AND FILE DIALOGZ USE "
 "DEM TOO. DEY GET MADE AGAIN WHEN NEEDED. HOOMAN CAN DO TEH WORK."
 
-#: src/dialogs.c:924
+#: src/dialogs.c:987
 msgid "Clear"
 msgstr "SCOOP DEM"
 
-#: src/dialogs.c:926
+#: src/dialogs.c:989
 msgid "clearing…"
 msgstr "SCOOPIN…"
 
-#: src/dialogs.c:961
+#: src/dialogs.c:1024
 msgid "None. Right-click a folder → Sort … to give it its own order."
 msgstr "NONE YET. RIGHT-CLICK A BOX → LINE UP … TO GIVE IT ITS OWN ORDER."
 
-#: src/dialogs.c:977 src/window.c:1634
+#: src/dialogs.c:1040 src/window.c:1699
 msgid "Name"
 msgstr "NAME"
 
-#: src/dialogs.c:978
+#: src/dialogs.c:1041
 msgid "Date (newest first)"
 msgstr "DATE (NEWEST FURST)"
 
-#: src/dialogs.c:979 src/window.c:1634
+#: src/dialogs.c:1042 src/window.c:1699
 msgid "Size (largest first)"
 msgstr "CHONK (BIGGEST FURST)"
 
-#: src/dialogs.c:980 src/preview.c:1753 src/window.c:1635
+#: src/dialogs.c:1043 src/preview.c:1755 src/window.c:1700
 msgid "Type"
 msgstr "KIND"
 
-#: src/dialogs.c:982 src/window.c:1647
+#: src/dialogs.c:1045 src/window.c:1712
 msgid "Reversed"
 msgstr "BACKWARDZ"
 
-#: src/dialogs.c:1056
+#: src/dialogs.c:1119
 #, c-format
 msgid ""
 "%s goes into ~/.config/gtk-3.0/gtk.css, in a block marked as millerX's; the "
@@ -457,7 +461,7 @@ msgstr ""
 "REST OF TEH FILE IZ LEFT ALONE. GTK 3 PROGRAMZ USE IT NEXT TIEM DEY START. U "
 "CAN REMOVE IT HERE AGAIN."
 
-#: src/dialogs.c:1060
+#: src/dialogs.c:1123
 msgid ""
 "millerX's block is taken out of ~/.config/gtk-3.0/gtk.css; the rest of that "
 "file stays. GTK 3 programs use the theme's colour again the next time they "
@@ -467,103 +471,103 @@ msgstr ""
 "TEH FILE STAYS. GTK 3 PROGRAMZ USE TEH THEME COLOUR AGAIN NEXT TIEM DEY "
 "START."
 
-#: src/dialogs.c:1063
+#: src/dialogs.c:1126
 msgid "Use this highlight in all GTK programs?"
 msgstr "I CAN HAZ DIS HIGHLIGHT IN ALL GTK PROGRAMZ?"
 
-#: src/dialogs.c:1063
+#: src/dialogs.c:1126
 msgid "Remove it from all GTK programs?"
 msgstr "REMOVE IT FROM ALL GTK PROGRAMZ?"
 
-#: src/dialogs.c:1064
+#: src/dialogs.c:1127
 msgid "Use it"
 msgstr "GIMME"
 
-#: src/dialogs.c:1064
+#: src/dialogs.c:1127
 msgid "Remove"
 msgstr "TAKE AWAY"
 
-#: src/dialogs.c:1067
+#: src/dialogs.c:1130
 msgid "Couldn't write ~/.config/gtk-3.0/gtk.css"
 msgstr "CANT WRITE ~/.config/gtk-3.0/gtk.css. FILE HAZ ATTITUDE."
 
-#: src/dialogs.c:1077
+#: src/dialogs.c:1140
 msgid "millerX settings"
 msgstr "millerX CAT RULEZ"
 
-#: src/dialogs.c:1088
+#: src/dialogs.c:1151
 msgid "Look"
 msgstr "LOOKZ"
 
-#: src/dialogs.c:1095 src/dialogs.c:1223
+#: src/dialogs.c:1158 src/dialogs.c:1286
 msgid "Thumbnails"
 msgstr "TINY PIX"
 
-#: src/dialogs.c:1096
+#: src/dialogs.c:1159
 msgid "Folders"
 msgstr "BOXEZ"
 
-#: src/dialogs.c:1104
+#: src/dialogs.c:1167
 msgid "Column dividers"
 msgstr "COLUMN FENCEZ"
 
-#: src/dialogs.c:1105
+#: src/dialogs.c:1168
 msgid "Follow the theme (20 % lighter / darker)"
 msgstr "FOLLOW TEH THEME (20 % LIGHTER / DARKER)"
 
-#: src/dialogs.c:1106 src/dialogs.c:1134
+#: src/dialogs.c:1169 src/dialogs.c:1197
 msgid "Own colour"
 msgstr "MAH OWN COLOUR"
 
-#: src/dialogs.c:1123
+#: src/dialogs.c:1186
 msgid "Colour"
 msgstr "COLOUR"
 
-#: src/dialogs.c:1126
+#: src/dialogs.c:1189
 msgid "Width (px)"
 msgstr "THICKNESS (px)"
 
-#: src/dialogs.c:1128
+#: src/dialogs.c:1191
 msgid "Solid"
 msgstr "SOLID. CANT FIT THRU."
 
-#: src/dialogs.c:1129
+#: src/dialogs.c:1192
 msgid "Fading at the ends"
 msgstr "FADIN AT TEH ENDZ"
 
-#: src/dialogs.c:1131
+#: src/dialogs.c:1194
 msgid "Style"
 msgstr "STYLE"
 
-#: src/dialogs.c:1132
+#: src/dialogs.c:1195
 msgid "Highlight colour"
 msgstr "HIGHLIGHT COLOUR"
 
-#: src/dialogs.c:1133
+#: src/dialogs.c:1196
 msgid "Follow the theme"
 msgstr "FOLLOW TEH THEME"
 
-#: src/dialogs.c:1150 src/window.c:2128
+#: src/dialogs.c:1213 src/window.c:2193
 msgid "millerX"
 msgstr "millerX"
 
-#: src/dialogs.c:1151
+#: src/dialogs.c:1214
 msgid "Use for all GTK programs…"
 msgstr "GIVE TO ALL GTK PROGRAMZ…"
 
-#: src/dialogs.c:1152
+#: src/dialogs.c:1215
 msgid "Remove from all"
 msgstr "TAKE FROM ALL"
 
-#: src/dialogs.c:1158 src/dialogs.c:1173
+#: src/dialogs.c:1221 src/dialogs.c:1236
 msgid "System"
 msgstr "TEH WHOLE COMPUTR"
 
-#: src/dialogs.c:1160
+#: src/dialogs.c:1223
 msgid "Browsing"
 msgstr "PROWLIN"
 
-#: src/dialogs.c:1163
+#: src/dialogs.c:1226
 msgid ""
 "Where new columns start. A column you drag keeps its own width; double-click "
 "its divider to bring it back to this one."
@@ -571,40 +575,40 @@ msgstr ""
 "WIDTH FOR NEW COLUMNZ. A COLUMN U DRAG KEEPS ITS OWN WIDTH. DOUBLE-CLICK ITS "
 "FENCE TO RESET IT TO DIS ONE."
 
-#: src/dialogs.c:1165
+#: src/dialogs.c:1228
 msgid "Column width (px)"
 msgstr "COLUMN WIDTH (px)"
 
-#: src/dialogs.c:1166
+#: src/dialogs.c:1229
 msgid "Folders first"
 msgstr "BOXEZ FURST"
 
-#: src/dialogs.c:1168
+#: src/dialogs.c:1231
 msgid "Sort by name"
 msgstr "LINE UP BY NAME"
 
-#: src/dialogs.c:1169
+#: src/dialogs.c:1232
 msgid "Show hidden files when millerX starts"
 msgstr "SHOW SECRET FILEZ WHEN millerX WAKES UP"
 
-#: src/dialogs.c:1171
+#: src/dialogs.c:1234
 msgid "Hidden files"
 msgstr "SECRET FILEZ"
 
-#: src/dialogs.c:1174
+#: src/dialogs.c:1237
 msgid "English"
 msgstr "BORING HOOMAN ENGLISH"
 
-#: src/dialogs.c:1175
+#: src/dialogs.c:1238
 msgid "Wizard (English, of a sort)"
 msgstr "WIZARD (OLD BEARDED HOOMAN)"
 
-#: src/dialogs.c:1176
+#: src/dialogs.c:1239
 msgid "Wienerisch (Viennese slang)"
 msgstr "WIENERISCH (CATZ FROM VIENNA)"
 
 #. its file is gone
-#: src/dialogs.c:1188
+#: src/dialogs.c:1251
 msgid ""
 "System: the language your computer is set to (English where there is no "
 "translation). Takes effect the next time millerX starts."
@@ -612,11 +616,11 @@ msgstr ""
 "SYSTEM: WATEVR SPEEKIN UR COMPUTR USES (ENGLISH WEN NO TRANSLASHUN). WERKS "
 "NEXT TIEM millerX WAKES UP."
 
-#: src/dialogs.c:1193
+#: src/dialogs.c:1256
 msgid "Your own…"
 msgstr "UR OWN…"
 
-#: src/dialogs.c:1194
+#: src/dialogs.c:1257
 #, c-format
 msgid ""
 "Add a language file (.po or .mo), for example one from millerX's extras on "
@@ -627,48 +631,48 @@ msgstr ""
 "MAEK UR OWN, COPY %s AN FILL IN TEH msgstr LINEZ. EMPTY LINEZ STAY BORING "
 "ENGLISH."
 
-#: src/dialogs.c:1202 src/dialogs.c:1204
+#: src/dialogs.c:1265 src/dialogs.c:1267
 msgid "Language"
 msgstr "SPEEKIN"
 
-#: src/dialogs.c:1208
+#: src/dialogs.c:1271
 msgid "Takes effect after a restart."
 msgstr "WERKS AFTR SNAK TIEM."
 
-#: src/dialogs.c:1210
+#: src/dialogs.c:1273
 msgid "Restart now"
 msgstr "NOM NOM NAO"
 
-#: src/dialogs.c:1215
+#: src/dialogs.c:1278
 msgid "Preview"
 msgstr "PEEK"
 
-#: src/dialogs.c:1218
+#: src/dialogs.c:1281
 msgid "Minimum width (px)"
 msgstr "SMALLEST WIDTH (px)"
 
 #. it takes the rest of the window
-#: src/dialogs.c:1219
+#: src/dialogs.c:1282
 msgid "Show names under thumbnails"
 msgstr "PUT NAMEZ UNDER TEH TINY PIX"
 
-#: src/dialogs.c:1221
+#: src/dialogs.c:1284
 msgid "Gallery"
 msgstr "PIX PARADE"
 
-#: src/dialogs.c:1225
+#: src/dialogs.c:1288
 msgid "Always"
 msgstr "ALWAYZ"
 
-#: src/dialogs.c:1226
+#: src/dialogs.c:1289
 msgid "Not in network folders"
 msgstr "NOT IN FARAWAY NETWORK BOXEZ"
 
-#: src/dialogs.c:1227
+#: src/dialogs.c:1290
 msgid "Never (plain icons)"
 msgstr "NEVAR (JUST ICONZ)"
 
-#: src/dialogs.c:1230
+#: src/dialogs.c:1293
 msgid ""
 "Pictures in the gallery under a folder. A file you click is always shown "
 "big. Network folders (NFS, Samba, sshfs) can be slow with them."
@@ -676,27 +680,27 @@ msgstr ""
 "PIX IN TEH PARADE UNDER A BOX. CLICK A FILE AND IT ALWAYS SHOWS BIG. NETWORK "
 "BOXEZ (NFS, Samba, sshfs) CAN BE SLOW WIF DEM. CAT HAZ LIMITED PATIENCE."
 
-#: src/dialogs.c:1232
+#: src/dialogs.c:1295
 msgid "Show"
 msgstr "SHOW"
 
-#: src/dialogs.c:1234
+#: src/dialogs.c:1297
 msgid "Tiny (about 64 px)"
 msgstr "TEENSY (ABOUT 64 px)"
 
-#: src/dialogs.c:1235
+#: src/dialogs.c:1298
 msgid "Small (about 100 px)"
 msgstr "SMOL (ABOUT 100 px)"
 
-#: src/dialogs.c:1236
+#: src/dialogs.c:1299
 msgid "Medium (about 200 px)"
 msgstr "MEDIUM (ABOUT 200 px)"
 
-#: src/dialogs.c:1237
+#: src/dialogs.c:1300
 msgid "Large (about 400 px)"
 msgstr "BIG (ABOUT 400 px)"
 
-#: src/dialogs.c:1241
+#: src/dialogs.c:1304
 msgid ""
 "How big the gallery's pictures are. Large ones are made again the first time "
 "(bigger thumbnails, a bigger cache); a wide pane gets more of them per row, "
@@ -706,43 +710,43 @@ msgstr ""
 "BIGGER TINY PIX AND A BIGGER STASH. A WIDER PANE FITS MOAR PER ROW. EACH PIC "
 "STAYS TEH SAME SIZE. PHYSICS IZ RUDE."
 
-#: src/dialogs.c:1245
+#: src/dialogs.c:1308
 msgid "Cache (shared with Thunar)"
 msgstr "PIX STASH (SHARED WIF Thunar)"
 
-#: src/dialogs.c:1246
+#: src/dialogs.c:1309
 msgid "measuring…"
 msgstr "MEASURIN TEH STASH…"
 
-#: src/dialogs.c:1248
+#: src/dialogs.c:1311
 msgid "Clear…"
 msgstr "SCOOP…"
 
-#: src/dialogs.c:1252
+#: src/dialogs.c:1315
 msgid "Now"
 msgstr "NAO"
 
-#: src/dialogs.c:1255
+#: src/dialogs.c:1318
 msgid "Keep at most (MB)"
 msgstr "KEEP NO MOAR THAN (MB)"
 
-#: src/dialogs.c:1258
+#: src/dialogs.c:1321
 msgid "Forget unused after (days)"
 msgstr "FORGET UNUSED AFTER (DAYS)"
 
-#: src/dialogs.c:1259
+#: src/dialogs.c:1322
 msgid "Once a day when millerX starts"
 msgstr "ONCE A DAY WHEN millerX WAKES UP"
 
-#: src/dialogs.c:1261
+#: src/dialogs.c:1324
 msgid "Clean up"
 msgstr "CLEANUP DUTY"
 
-#: src/dialogs.c:1263
+#: src/dialogs.c:1326
 msgid "Optional helpers (millerX works without them; untick to not use one)"
 msgstr "OPTIONAL HELPURZ (millerX WORKS WIFOUT DEM. UNTICK TO FIRE ONE.)"
 
-#: src/dialogs.c:1267
+#: src/dialogs.c:1330
 msgid ""
 "Two files selected → Compare. \"auto\": meld, kdiff3, kompare or diffuse, "
 "whichever is there; none: the differences as text. Or your own command (the "
@@ -752,58 +756,58 @@ msgstr ""
 "WHATEVER IZ HERE; NONE: TEH DIFFERENTS AS TEXT. OR UR OWN COMMAND (TEH TWO "
 "FILEZ GO AT TEH END)."
 
-#: src/dialogs.c:1270
+#: src/dialogs.c:1333
 msgid "Compare with"
 msgstr "KOMPAR WIF"
 
-#: src/dialogs.c:1272
+#: src/dialogs.c:1335
 msgid "Folders sorted their own way (all others: by name)"
 msgstr "BOXEZ WIF THEIR OWN ORDER (ALL OTHERS: BY NAME)"
 
-#: src/dialogs.c:1318
+#: src/dialogs.c:1381
 msgid "Files in Miller columns, from / to where you are."
 msgstr "FILEZ IN Miller COLUMNZ, FROM / TO WHERE U IZ."
 
-#: src/dialogs.c:1405
+#: src/dialogs.c:1468
 msgid "✗ matches none of them"
 msgstr "✗ NO MATCH WIF ANY OF DEM. DO NOT TRUST."
 
-#: src/dialogs.c:1408
+#: src/dialogs.c:1471
 #, c-format
 msgid "✓ matches %s"
 msgstr "✓ MATCH WIF %s. KTHX."
 
-#: src/dialogs.c:1412
+#: src/dialogs.c:1475
 msgid "…when the file is read"
 msgstr "…WHEN TEH FILE IZ READ"
 
-#: src/dialogs.c:1435
+#: src/dialogs.c:1498
 #, c-format
 msgid "✗ couldn't read the file: %s"
 msgstr "✗ CANT READ TEH FILE: %s"
 
-#: src/dialogs.c:1478
+#: src/dialogs.c:1541
 #, c-format
 msgid "Checksums: %s"
 msgstr "CHECKSUMZ: %s"
 
-#: src/dialogs.c:1481
+#: src/dialogs.c:1544
 msgid "_Close"
 msgstr "_KTHXBYE"
 
-#: src/dialogs.c:1493
+#: src/dialogs.c:1556
 msgid "reading…"
 msgstr "READIN… NO BAP TEH KEYBOARD"
 
-#: src/dialogs.c:1501 src/window.c:1766 src/window.c:1846
+#: src/dialogs.c:1564 src/window.c:1831 src/window.c:1911
 msgid "Copy"
 msgstr "COPY"
 
-#: src/dialogs.c:1508 src/window.c:1794 src/window.c:1856
+#: src/dialogs.c:1571 src/window.c:1859 src/window.c:1921
 msgid "Compare"
 msgstr "KOMPAR"
 
-#: src/dialogs.c:1511
+#: src/dialogs.c:1574
 msgid "paste the checksum you were given"
 msgstr "PASTE TEH CHECKSUM U GOT"
 
@@ -860,9 +864,89 @@ msgstr "ONLY LOCAL TREAT TINZ CAN BE UNPACKED"
 msgid "the archive is empty"
 msgstr "TEH TREAT TIN IZ EMPTY. SOMEONE WILL ANSWER FOR DIS."
 
-#: src/job.c:395
+#: src/job.c:405
 msgid "only local files can be packed"
 msgstr "ONLY LOCAL FILEZ CAN BE PACKED"
+
+#: src/mocheck.c:32
+msgid "too many arguments"
+msgstr "2 MANY ARGUMENTZ"
+
+#: src/mocheck.c:36
+#, c-format
+msgid "argument %d is used as two different kinds"
+msgstr "ARGUMENT %d IZ TWO DIFFRENT THINGZ"
+
+#: src/mocheck.c:86
+msgid "a numbered * width"
+msgstr "A NUMBERD * WIDTH"
+
+#: src/mocheck.c:129
+#, c-format
+msgid "a numbered %s"
+msgstr "A NUMBERD %s"
+
+#: src/mocheck.c:134
+#, c-format
+msgid "%s is not allowed"
+msgstr "%s IZ NOT ALLOWED. BAD."
+
+#: src/mocheck.c:137
+msgid "an unfinished directive at the end"
+msgstr "UNFINISHD THING AT TEH END"
+
+#: src/mocheck.c:140
+#, c-format
+msgid "an unknown directive “%s%c”"
+msgstr "UNKNOWN THING “%s%c”"
+
+#: src/mocheck.c:144
+msgid "an unknown directive"
+msgstr "UNKNOWN THING"
+
+#: src/mocheck.c:151
+msgid "numbered and plain arguments mixed"
+msgstr "NUMBERD AN PLAIN ARGUMENTZ MIXD"
+
+#: src/mocheck.c:156
+#, c-format
+msgid "argument %d is skipped"
+msgstr "ARGUMENT %d IZ SKIPPD"
+
+#: src/mocheck.c:170
+#, c-format
+msgid "argument %d isn't in the original"
+msgstr "ARGUMENT %d IZ NOT IN TEH ORIGINAL"
+
+#: src/mocheck.c:174
+#, c-format
+msgid "argument %d is of another kind than in the original"
+msgstr "ARGUMENT %d IZ DIFFRENT FROM TEH ORIGINAL"
+
+#: src/mocheck.c:206
+msgid "not a language file (too short)"
+msgstr "NOT A SPEEKIN FILE (2 SHORT)"
+
+#: src/mocheck.c:217
+msgid "not a language file (.mo)"
+msgstr "NOT A SPEEKIN FILE (.mo). PROBABLY HAIRBALL."
+
+#: src/mocheck.c:222
+msgid "a .mo version millerX doesn't know"
+msgstr "A .mo VERSHUN MILLERX NO KNOW"
+
+#: src/mocheck.c:226
+msgid "system-dependent strings, which millerX can't check"
+msgstr "SYSTEM-DEPENDENT STUFF. MILLERX CANNOT CHECK."
+
+#: src/mocheck.c:233
+msgid "the file is damaged"
+msgstr "FILE IZ BROKEN. NOT CAT'S FAULT."
+
+#: src/mocheck.c:251
+#, c-format
+msgid "the translation of “%s”: %s"
+msgstr "TEH TRANSLAYSHUN OF “%s”: %s"
 
 #. writes a temp file, then renames
 #: src/places.c:59
@@ -987,7 +1071,7 @@ msgstr "%s: SAFE TO UNPLUG. U IZ DISMISSED."
 msgid "%s unmounted"
 msgstr "%s IZ UNMOUNTED"
 
-#: src/places.c:765 src/window.c:1750
+#: src/places.c:765 src/window.c:1815
 msgid "Open in new window"
 msgstr "OPEN IN NEW WINDOW"
 
@@ -1000,7 +1084,7 @@ msgstr "LOOK AGAIN (F5)"
 msgid "Drive connected: %s (drive button to open)"
 msgstr "DRIVE ARRIVED: %s (DRIVE BUTTON OPENS IT)"
 
-#: src/preview.c:1474
+#: src/preview.c:1476
 #, c-format
 msgid ""
 "%llu entry:\n"
@@ -1015,7 +1099,7 @@ msgstr[1] ""
 "%llu FINGZ INSIDE:\n"
 "%s… AND %llu MOAR"
 
-#: src/preview.c:1478
+#: src/preview.c:1480
 #, c-format
 msgid ""
 "%llu entry:\n"
@@ -1030,69 +1114,69 @@ msgstr[1] ""
 "%llu FINGZ INSIDE:\n"
 "%s"
 
-#: src/preview.c:1500
+#: src/preview.c:1502
 #, c-format
 msgid "%llu here, %llu file in total%s"
 msgid_plural "%llu here, %llu files in total%s"
 msgstr[0] "%llu HERE, %llu FILE TOTAL%s"
 msgstr[1] "%llu HERE, %llu FILEZ TOTAL%s"
 
-#: src/preview.c:1503
+#: src/preview.c:1505
 #, c-format
 msgid "%llu file in total%s"
 msgid_plural "%llu files in total%s"
 msgstr[0] "%llu FILE TOTAL%s"
 msgstr[1] "%llu FILEZ TOTAL%s"
 
-#: src/preview.c:1617
+#: src/preview.c:1619
 #, c-format
 msgid "<b>%u item selected</b>"
 msgid_plural "<b>%u items selected</b>"
 msgstr[0] "<b>%u FING CLAIMED</b>"
 msgstr[1] "<b>%u FINGZ CLAIMED</b>"
 
-#: src/preview.c:1622
+#: src/preview.c:1624
 msgid "Files"
 msgstr "FILEZ"
 
-#: src/preview.c:1673 src/preview.c:1800
+#: src/preview.c:1675 src/preview.c:1802
 msgid "Where"
 msgstr "WHERE IT HIDES"
 
-#: src/preview.c:1675
+#: src/preview.c:1677
 msgid "Device"
 msgstr "DEVICE"
 
-#: src/preview.c:1677
+#: src/preview.c:1679
 msgid "File system"
 msgstr "FILE SYSTEM"
 
-#: src/preview.c:1686
+#: src/preview.c:1688
 #, c-format
 msgid "%s free of %s"
 msgstr "%s FREE OF %s"
 
-#: src/preview.c:1687
+#: src/preview.c:1689
 msgid "Space"
 msgstr "ROOM"
 
-#: src/preview.c:1690
+#: src/preview.c:1692
 msgid "Used"
 msgstr "TAKEN"
 
-#: src/preview.c:1758
+#: src/preview.c:1760
 msgid "Items"
 msgstr "FINGZ"
 
-#: src/preview.c:1763
+#: src/preview.c:1765
 msgid "Modified"
 msgstr "LAST POKED"
 
-#: src/preview.c:1788
+#: src/preview.c:1790
 msgid "Deleted from"
 msgstr "DUMPED FROM"
 
-#: src/preview.c:1793
+#: src/preview.c:1795
 msgid "Deleted"
 msgstr "DUMPED ON"
 
@@ -1144,16 +1228,20 @@ msgstr "BACK TO TEH COLUMNZ (Escape)"
 msgid "Search in “%s” and the folders in it"
 msgstr "SNIFF IN “%s” AND ALL TEH BOXEZ INSIDE"
 
-#: src/settings.c:232
+#: src/settings.c:233
 msgid "Pick a language file: a .po or .mo file."
 msgstr "PICK A SPEEKIN FILE: A .po OR .mo FILE. NOT A HAIRBALL."
 
-#: src/settings.c:239
+#: src/settings.c:240
 msgid ""
 "A .po file needs msgfmt (gettext) to be checked, and it isn't installed."
 msgstr "A .po FILE NEEDZ msgfmt (gettext) TO SNIFF IT, AN IT IZ NOT HERE."
 
-#: src/settings.c:509
+#: src/settings.c:249
+msgid "Couldn't make a temporary file."
+msgstr "CANNOT HAZ TEMPORARY FILE."
+
+#: src/settings.c:536
 msgid "Drag to resize, double-click for the default width"
 msgstr "DRAG TO RESIZE. DOUBLE-CLICK FOR TEH USUAL WIDTH."
 
@@ -1245,7 +1333,7 @@ msgstr "SCOOPIN TEH LITTERBOX…"
 msgid "Put back"
 msgstr "BRING BACK"
 
-#: src/trash.c:224 src/window.c:1779 src/window.c:1850
+#: src/trash.c:224 src/window.c:1844 src/window.c:1915
 msgid "Delete permanently…"
 msgstr "DELETE FUREVER…"
 
@@ -1346,7 +1434,7 @@ msgstr ""
 "\n"
 "DIS NEEDS BOSS CAT POWERZ."
 
-#: src/window.c:165 src/window.c:1797
+#: src/window.c:165 src/window.c:1862
 msgid "Open as root…"
 msgstr "OPEN AS BOSS CAT…"
 
@@ -1395,8 +1483,8 @@ msgstr "“%s” IZ A SCRIPT"
 msgid "Run it, or open it to read what it does?"
 msgstr "RUN IT, OR READ WHAT IT DOES FURST? CAT SUGGESTS SNIFFIN."
 
-#: src/window.c:702 src/window.c:1749 src/window.c:1752 src/window.c:1829
-#: src/window.c:1831
+#: src/window.c:702 src/window.c:1814 src/window.c:1817 src/window.c:1894
+#: src/window.c:1896
 msgid "Open"
 msgstr "OPEN"
 
@@ -1404,19 +1492,64 @@ msgstr "OPEN"
 msgid "Run in terminal"
 msgstr "RUN IN YELLBOX"
 
-#: src/window.c:704
+#: src/window.c:704 src/window.c:731 src/window.c:770
 msgid "Run"
 msgstr "DO IT"
 
-#: src/window.c:788
+#: src/window.c:726
+#, c-format
+msgid "“%s” is a program"
+msgstr "“%s” IZ A PROGRAM"
+
+#: src/window.c:728
+msgid ""
+"Whatever its name says, this file is a program. It runs with your rights and "
+"can do anything you can. Run it only if you trust where it came from."
+msgstr ""
+"NO MATTER WUT TEH NAME SEZ, DIS IZ A PROGRAM. IT CAN DO EVERYTHIN U CAN. "
+"ONLY RUN IT IF U TRUST WHERE IT CAME FROM. CAT IZ SUSPICIOUS."
+
+#: src/window.c:747
+msgid "No program for text files is set."
+msgstr "NO PROGRAM FOR WORDZ. CAT CANNOT READ EITHER."
+
+#: src/window.c:764
+#, c-format
+msgid "“%s” is a launcher"
+msgstr "“%s” IZ A LAUNCHR"
+
+#: src/window.c:766
+#, c-format
+msgid ""
+"It calls itself “%s” and runs:\n"
+"\n"
+"%s\n"
+"\n"
+"Run it only if you trust where it came from."
+msgstr ""
+"IT CALLZ ITSELF “%s” AND DOEZ:\n"
+"\n"
+"%s\n"
+"\n"
+"ONLY RUN IT IF U TRUST WHERE IT CAME FROM."
+
+#: src/window.c:767
+msgid "(no command given)"
+msgstr "(NO COMMAND. JUST VOID.)"
+
+#: src/window.c:769
+msgid "Open as text"
+msgstr "READ IT AS WORDZ"
+
+#: src/window.c:853
 msgid "Couldn't run it"
 msgstr "IT DID NOT RUN. CAT IZ UNIMPRESSED."
 
-#: src/window.c:842 src/window.c:901 src/window.c:959
+#: src/window.c:907 src/window.c:966 src/window.c:1024
 msgid "No terminal found"
 msgstr "NO YELLBOX. HOW I YELL AT COMPUTR NAO?"
 
-#: src/window.c:843 src/window.c:902 src/window.c:960
+#: src/window.c:908 src/window.c:967 src/window.c:1025
 msgid ""
 "Install a terminal (xterm, xfce4-terminal, konsole, …) or set the TERMINAL "
 "environment variable to the one you use."
@@ -1424,59 +1557,59 @@ msgstr ""
 "INSTALL A TERMINAL (xterm, xfce4-terminal, konsole, …) FOR TEH YELLBOX, OR "
 "SET TEH TERMINAL ENVIRONMENT VARIABLE TO TEH ONE U USE."
 
-#: src/window.c:967
+#: src/window.c:1032
 msgid "New folder"
 msgstr "NU BOX"
 
-#: src/window.c:967
+#: src/window.c:1032
 msgid "New Folder"
 msgstr "NU BOX"
 
-#: src/window.c:974 src/window.c:976
+#: src/window.c:1039 src/window.c:1041
 msgid "Couldn't create the folder"
 msgstr "CANT MAKE BOX. BASIC CAT NEEDS HAZ BEEN NEGLECTED."
 
-#: src/window.c:990
+#: src/window.c:1055
 msgid "New file"
 msgstr "NU FILE"
 
-#: src/window.c:990
+#: src/window.c:1055
 msgid "New File"
 msgstr "NU FILE"
 
-#: src/window.c:998 src/window.c:1000
+#: src/window.c:1063 src/window.c:1065
 msgid "Couldn't create the file"
 msgstr "CANT MAKE FILE. CAT IZ DISAPPOINT."
 
-#: src/window.c:1020
+#: src/window.c:1085
 msgid "Rename"
 msgstr "NU NAME"
 
-#: src/window.c:1024
+#: src/window.c:1089
 #, c-format
 msgid "“%s” already exists."
 msgstr "“%s” IZ ALREADY HERE."
 
-#: src/window.c:1025 src/window.c:1031
+#: src/window.c:1090 src/window.c:1096
 msgid "Couldn't rename"
 msgstr "CANT CHANGE TEH NAME. FILE LIKES ITS OLD ONE."
 
-#: src/window.c:1087
+#: src/window.c:1152
 msgid "Some items couldn't be deleted"
 msgstr "SOME FINGZ WUDNT DELETE. SMALL REBELLION."
 
-#: src/window.c:1091
+#: src/window.c:1156
 #, c-format
 msgid "%u item deleted"
 msgid_plural "%u items deleted"
 msgstr[0] "%u FING DELETED FUREVER"
 msgstr[1] "%u FINGZ DELETED FUREVER"
 
-#: src/window.c:1165 src/window.c:1173
+#: src/window.c:1230 src/window.c:1238
 msgid "Can't move to trash"
 msgstr "CANT PUT IT IN TEH LITTERBOX"
 
-#: src/window.c:1172
+#: src/window.c:1237
 #, c-format
 msgid ""
 "%s: %s\n"
@@ -1487,25 +1620,25 @@ msgstr ""
 "\n"
 "DELETE FUREVER INSTEAD?"
 
-#: src/window.c:1173
+#: src/window.c:1238
 msgid "Delete permanently"
 msgstr "DELETE FUREVER"
 
-#: src/window.c:1180
+#: src/window.c:1245
 #, c-format
 msgid "%u item moved to the trash"
 msgid_plural "%u items moved to the trash"
 msgstr[0] "%u FING SENT TO TEH LITTERBOX"
 msgstr[1] "%u FINGZ SENT TO TEH LITTERBOX"
 
-#: src/window.c:1191
+#: src/window.c:1256
 #, c-format
 msgid "Delete %u item permanently?"
 msgid_plural "Delete %u items permanently?"
 msgstr[0] "DELETE %u FING FUREVER?"
 msgstr[1] "DELETE %u FINGZ FUREVER?"
 
-#: src/window.c:1192
+#: src/window.c:1257
 #, c-format
 msgid ""
 "%s\n"
@@ -1516,222 +1649,222 @@ msgstr ""
 "\n"
 "GONE FUREVER. NO UNDO. SRS BSNS."
 
-#: src/window.c:1193
+#: src/window.c:1258
 msgid "Delete"
 msgstr "DELETE"
 
-#: src/window.c:1260
+#: src/window.c:1325
 #, c-format
 msgid "%u item cut"
 msgid_plural "%u items cut"
 msgstr[0] "%u FING CUT"
 msgstr[1] "%u FINGZ CUT"
 
-#: src/window.c:1262
+#: src/window.c:1327
 #, c-format
 msgid "%u item copied"
 msgid_plural "%u items copied"
 msgstr[0] "%u FING COPIED"
 msgstr[1] "%u FINGZ COPIED"
 
-#: src/window.c:1308
+#: src/window.c:1373
 msgid "Nothing to paste"
 msgstr "NOTHIN TO PASTE. U BROUGHT ME AIR."
 
-#: src/window.c:1337
+#: src/window.c:1402
 msgid "Extract to"
 msgstr "UNPACK TO WHERE?"
 
-#: src/window.c:1339
+#: src/window.c:1404
 msgid "Extract"
 msgstr "UNPACK"
 
-#: src/window.c:1365 src/window.c:1366
+#: src/window.c:1430 src/window.c:1431
 msgid "Compress"
 msgstr "PACK TIN"
 
-#: src/window.c:1373
+#: src/window.c:1438
 #, c-format
 msgid "Pack “%s” into an archive in the same folder:"
 msgstr "PACK “%s” INTO A TREAT TIN IN TEH SAME BOX:"
 
-#: src/window.c:1400
+#: src/window.c:1465
 #, c-format
 msgid "“%s” already exists. Pick another name."
 msgstr "“%s” IZ ALREADY HERE. PICK ANOTHER NAME, HOOMAN."
 
-#: src/window.c:1401
+#: src/window.c:1466
 msgid "Couldn't compress"
 msgstr "CANT PACK TEH TIN. LID WONT GO ON."
 
-#: src/window.c:1451
+#: src/window.c:1516
 msgid "Couldn't tell what kind of file this is"
 msgstr "WUT KIND OF FILE IZ DIS? CAT HAZ NO IDEA."
 
-#: src/window.c:1453
+#: src/window.c:1518
 msgid "Couldn't set the default program"
 msgstr "CANT SET DEFAULT PROGRAM. IT REJECTED MAH AUTHORITY."
 
-#: src/window.c:1457
+#: src/window.c:1522
 #, c-format
 msgid "%s opens with %s now"
 msgstr "%s OPENS WIF %s NAO"
 
-#: src/window.c:1634
+#: src/window.c:1699
 msgid "Date modified (newest first)"
 msgstr "LAST POKED (NEWEST FURST)"
 
-#: src/window.c:1653
+#: src/window.c:1718
 msgid "Back to name"
 msgstr "BACK TO NAMEZ"
 
-#: src/window.c:1659
+#: src/window.c:1724
 #, c-format
 msgid "Sort “%s”"
 msgstr "LINE UP “%s”"
 
-#: src/window.c:1704
+#: src/window.c:1769
 msgid "Set default"
 msgstr "MAKE DEFAULT"
 
-#: src/window.c:1714
+#: src/window.c:1779
 msgid "Other application…"
 msgstr "OTHR PROGRAM…"
 
-#: src/window.c:1717
+#: src/window.c:1782
 msgid "Check file type"
 msgstr "WAT IS DIS FILE REALLY"
 
-#: src/window.c:1720
+#: src/window.c:1785
 msgid "Open with"
 msgstr "OPEN WIF"
 
-#: src/window.c:1760 src/window.c:1840
+#: src/window.c:1825 src/window.c:1905
 msgid "Extract here"
 msgstr "UNPACK HERE"
 
-#: src/window.c:1761 src/window.c:1841
+#: src/window.c:1826 src/window.c:1906
 msgid "Extract to…"
 msgstr "UNPACK TO…"
 
-#: src/window.c:1763 src/window.c:1843
+#: src/window.c:1828 src/window.c:1908
 msgid "Compress…"
 msgstr "PACK A TREAT TIN…"
 
-#: src/window.c:1765 src/window.c:1845
+#: src/window.c:1830 src/window.c:1910
 msgid "Cut"
 msgstr "CUT"
 
-#: src/window.c:1769
+#: src/window.c:1834
 #, c-format
 msgid "Paste into “%s”"
 msgstr "PUT INTO “%s”"
 
-#: src/window.c:1774 src/window.c:1782
+#: src/window.c:1839 src/window.c:1847
 msgid "Paste"
 msgstr "PUT HERE"
 
-#: src/window.c:1777 src/window.c:1848
+#: src/window.c:1842 src/window.c:1913
 msgid "Rename…"
 msgstr "NU NAME…"
 
-#: src/window.c:1778 src/window.c:1849
+#: src/window.c:1843 src/window.c:1914
 msgid "Move to trash"
 msgstr "TO TEH LITTERBOX"
 
-#: src/window.c:1785
+#: src/window.c:1850
 msgid "New folder…"
 msgstr "NU BOX…"
 
-#: src/window.c:1786
+#: src/window.c:1851
 msgid "New file…"
 msgstr "NU FILE…"
 
 #. the highlighted folder, else this column's own
-#: src/window.c:1788
+#: src/window.c:1853
 msgid "Open terminal here"
 msgstr "OPEN YELLBOX HERE"
 
-#: src/window.c:1790 src/window.c:1852
+#: src/window.c:1855 src/window.c:1917
 msgid "Copy path"
 msgstr "COPY PATH"
 
-#: src/window.c:1792 src/window.c:1854
+#: src/window.c:1857 src/window.c:1919
 msgid "Checksums…"
 msgstr "CHECKSUMZ…"
 
-#: src/window.c:1795
+#: src/window.c:1860
 msgid "Add to bookmarks"
 msgstr "MARK FAVRIT SPOT"
 
-#: src/window.c:1799 src/window.c:1857
+#: src/window.c:1864 src/window.c:1922
 msgid "Properties…"
 msgstr "SNIFF…"
 
-#: src/window.c:1801
+#: src/window.c:1866
 msgid "Show hidden files"
 msgstr "SHOW SECRET FILEZ"
 
-#: src/window.c:1835
+#: src/window.c:1900
 msgid "Show in column"
 msgstr "SHOW IN COLUMN"
 
-#: src/window.c:1852
+#: src/window.c:1917
 msgid "Copy paths"
 msgstr "COPY PATHS"
 
-#: src/window.c:2137
+#: src/window.c:2202
 msgid "Parent folder (Backspace, Alt+Up)"
 msgstr "UP TO TEH PARENT BOX (Backspace, Alt+Up)"
 
-#: src/window.c:2139
+#: src/window.c:2204
 msgid "Home (Alt+Home)"
 msgstr "HOME. MAH TERRITORY. (Alt+Home)"
 
-#: src/window.c:2141
+#: src/window.c:2206
 msgid "Computer: disks, USB sticks, network (Alt+/)"
 msgstr "TEH COMPUTR: DISKS, USB STICKS, NETWORK (Alt+/)"
 
-#: src/window.c:2145
+#: src/window.c:2210
 msgid "Bookmarks (Ctrl+D adds this folder)"
 msgstr "FAVRIT SPOTZ (Ctrl+D MARKS DIS BOX)"
 
-#: src/window.c:2149
+#: src/window.c:2214
 msgid "New window"
 msgstr "NU WINDOW"
 
-#: src/window.c:2155
+#: src/window.c:2220
 msgid "Open this folder as root…"
 msgstr "OPEN DIS BOX AS BOSS CAT…"
 
-#: src/window.c:2161
+#: src/window.c:2226
 msgid "Search here…"
 msgstr "SNIFF HERE…"
 
-#: src/window.c:2165
+#: src/window.c:2230
 msgid "Settings…"
 msgstr "CAT RULEZ…"
 
-#: src/window.c:2168
+#: src/window.c:2233
 msgid "About millerX"
 msgstr "ABOUT millerX"
 
-#: src/window.c:2218
+#: src/window.c:2283
 msgid ""
 "<b>You are root:</b> every change here is made as administrator. Be careful."
 msgstr ""
 "<b>U IZ BOSS CAT:</b> EVERY CHANGE HERE HAZ ADMINISTRATOR POWERZ. WATCH UR "
 "PAWZ."
 
-#: src/window.c:2295
+#: src/window.c:2360
 msgid "Not now"
 msgstr "NOT NAO"
 
-#: src/window.c:2295
+#: src/window.c:2360
 msgid ""
 "Files are still being copied, moved or packed. Restart when that is done."
 msgstr "FILEZ STILL BEIN COPIED, MOVED OR PACKED. NOM NOM WEN DAT IZ DUN."
 
-#: src/window.c:2327
+#: src/window.c:2392
 msgid "Couldn't restart millerX"
 msgstr "millerX NO COME BAK. FOOD BOWL EMPTY."

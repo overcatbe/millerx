@@ -152,12 +152,18 @@ int main(int argc, char **argv)
         setenv("LANGUAGE", "en@wizard:en", 1);
     else if (!strcmp(lang, "wienerisch"))           /* Viennese; what it lacks (GTK's own words) in German */
         setenv("LANGUAGE", "de@wienerisch:de", 1);
+    gtk_disable_setlocale();                    /* we set it here; GTK would undo the switch below */
     setlocale(LC_ALL, "");
     if (strcmp(lang, "system")) {
-        /* with messages in the C locale LANGUAGE is ignored: the choices above need a real one */
+        /* With messages in the C locale LANGUAGE is ignored, and glibc does that for C.UTF-8 too
+         * (rizitis, #5): the choices above need a real locale. Only the messages switch; dates,
+         * numbers and sorting stay as the session has them. */
         const char *m = setlocale(LC_MESSAGES, NULL);
-        if (m && (!strcmp(m, "C") || !strcmp(m, "POSIX")))
-            setlocale(LC_MESSAGES, "C.UTF-8");
+        if (m && (!strcmp(m, "C") || !strcmp(m, "POSIX") || !g_ascii_strncasecmp(m, "C.", 2))) {
+            static const char *const real[] = { "en_US.UTF-8", "en_GB.UTF-8", "C.UTF-8" };
+            for (guint i = 0; i < G_N_ELEMENTS(real) && !setlocale(LC_MESSAGES, real[i]); i++)
+                ;
+        }
     }
     g_free(lang);
     (void) localedir;

@@ -74,6 +74,8 @@ char *own_languages_dir(void);         /* ~/.local/share/millerx/languages: peop
 GPtrArray *own_languages_list(void);   /* the NAMEs found there, sorted */
 char *own_language_prepare(const char *name);   /* a folder to bind the text domain to, or NULL */
 char *own_language_add(const char *path, char **err);   /* checked and copied there: its NAME */
+gboolean mo_check(const guchar *data, gsize size, char **why);   /* a .mo safe for printf? (mocheck.c) */
+gboolean mo_check_file(const char *path, char **why);
 extern char *LANGUAGE_AT_START;        /* the language this run started with */
 char **child_envp(void);               /* our environment, LANGUAGE as the session had it */
 GAppLaunchContext *child_launch_context(void);
