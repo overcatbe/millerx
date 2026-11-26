@@ -65,6 +65,11 @@
   </keywords>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="0.8.6" date="2026-11-26">
+      <description>
+        <p>Security fixes: a program or launcher asks before it runs, language files are checked before use, the root window shows no previews, hardened build. New optional setting to recognise files by their content. After moving or trashing a folder, millerX stays on the parent folder.</p>
+      </description>
+    </release>
     <release version="0.8.5" date="2026-11-26">
       <description>
         <p>Fixes a crash in Settings (since 0.8.3). Extract to… picks any folder to unpack into. Open with offers Other application… (every installed program) and Check file type (what the file really is). Greek translation complete again.</p>

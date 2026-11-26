@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.8.6 (2026-11-26)
+
+Security fixes from a review by rizitis (issue #5). Nothing here was ever a problem if you only
+open files you trust. Most of it guards against the old Windows trick of a "holiday.jpg" that is
+really a program. Edge cases, but now millerX asks before anything runs. Thanks, rizitis!
+
+- **A program asks before it runs.** A double-click on a program (whatever its name, e.g. a
+  "holiday.jpg" from a USB stick or an archive) shows a dialog first; Cancel is the default.
+- **A launcher shows what it runs.** A double-click on a `.desktop` file with the x bit shows its
+  name and the command it would run: Cancel / Open as text (the default) / Run.
+- **Language files are checked** before use, on import and at every start: a translation may only
+  use the `%s`, `%d`… of the original. A broken one could crash millerX; now it is refused and
+  English is used.
+- **The root window shows no previews:** no pictures, video, PDFs or archive contents are read as
+  root. Text still shows.
+- **Folders extracted from archives** (several items) get normal permissions instead of 0700.
+- **Compare** without a diff tool installed runs in the background and can be stopped with Close;
+  two big folders no longer freeze the window.
+- **Hardened build:** PIE, full RELRO, stack protector and FORTIFY, for every package.
+- **Recognise files by content** (Settings → Folders, off by default): millerX also reads the start
+  of the file you select or open, and where the content says something else than the name (a
+  program, text, a picture, an archive), the content wins in the preview, Properties, Open with
+  and on a double-click. Other file managers go by the name; the icons in the lists stay by name
+  here too. Not a virus scanner. Thanks, SCerovec!
+- **Fixed:** after moving or trashing the folder a column showed, millerX opened the next folder
+  on its own. It now stays on the parent folder.
+- **Fixed:** your own language (and Wizard, Wienerisch) was ignored with `LANG=C.UTF-8`.
+
 ## 0.8.5 (2026-11-26)
 
 - **Fixed a crash in Settings:** after changing a setting, closing Settings and changing another

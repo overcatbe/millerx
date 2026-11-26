@@ -1,3 +1,13 @@
+millerx (0.8.6) unstable; urgency=medium
+
+  * Security fixes from rizitis' review: programs and launchers ask before
+    they run, language files are checked, no previews as root, hardened build.
+  * New setting: recognise files by content (off by default).
+  * Stay on the parent folder after a move or trash.
+  * Own languages work with LANG=C.UTF-8.
+
+ -- overcatbe <1771834+overcatbe@users.noreply.github.com>  Thu, 26 Nov 2026 20:30:00 +0200
+
 millerx (0.8.5) unstable; urgency=medium
 
   * Fix a crash after changing a setting twice (since 0.8.3).

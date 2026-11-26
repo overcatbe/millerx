@@ -4,7 +4,12 @@ A small, native file browser with **Miller columns**: every folder from `/` down
 where you are sits in its own column, and the selected file is previewed on the right.
 Like a mind map of your disk. Written in C with GTK 3 and GIO.
 
-> **New in 0.8.5:** fixes a **crash in Settings** (since 0.8.3) · **Extract to…** picks any folder
+> **New in 0.8.6:** security fixes from rizitis' review: a program or launcher **asks before it
+> runs** · language files are checked · no previews as root · hardened build · optional
+> **Recognise files by content** (thanks, SCerovec) · after a move or trash millerX stays on the
+> parent folder. See [Security in 0.8.6](#security-in-086).
+>
+> **0.8.5:** fixes a **crash in Settings** (since 0.8.3) · **Extract to…** picks any folder
 > to unpack into · Open with → **Other application…** (every installed program) and **Check file
 > type** (what the file really is, whatever its name says) · Greek complete again.
 >
