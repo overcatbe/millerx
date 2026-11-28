@@ -1,5 +1,52 @@
 # Changelog
 
+## 0.8.8 (2026-11-28)
+
+Wishes from the LinuxQuestions thread. (There is no millerX 0.8.7: that number went to millerX
+Unleashed's fix, and both are 0.8.8 now.)
+
+- **Trusted programs.** The question before a program, script or launcher runs has a **Trusted**
+  button: it runs it, and from then on without asking, as long as it is the same file (its
+  SHA-256 is remembered; changed, it asks again and says so). Settings → Programs lists them,
+  ✕ forgets one, and an open Settings window shows a newly trusted one at once. Thanks, SCerovec!
+- **Trust system programs (owned by root)**, on by default: what your distribution installed
+  (owned by root, in folders only root can change, on Linux's own disk file systems) runs without
+  asking, also after updates. Your own files still ask, and so do sticks, ISOs and network shares
+  mounted by root, and links whose own folder isn't root's.
+- **Ask before running programs, scripts and launchers**, a setting in the same place, on by
+  default. Off, everything runs at once without a question.
+- **Settings has two new tabs.** **Programs**: Recognise files, Run (the switches above and the
+  trusted list) and Compare with. **Tools**: parts of millerX that are off until you switch them
+  on; Git is the first.
+- **Middle-click a file to open it**, the same as a double-click (questions included). A folder
+  still opens in a new window. Thanks, SCerovec!
+- **The status line counts right.** After a multi-select it no longer keeps "3 items selected"
+  when you click one item; several selected reads "/boot: 28 items, 3 selected". Thanks,
+  random_guy!
+- **Esc unselects** everything in the column; the columns to the right close and the status line
+  shows the folder's count again. Thanks, random_guy!
+- **Git actions** (a tool, off by default: Settings → Tools → Git). Inside a
+  repository the right-click menu gets **Git ▸** Status, Log and Diff (in your terminal), Add,
+  Commit… and Revert…. **Commit…** is a small window: the message (empty, the first line is the
+  title) and exactly which files go in, plus "Also add the other changed files". Revert asks
+  first, and keeps a file that was only added (it is just taken out of Git again). git runs with an argument list and the message goes in a file, so no file name or
+  message can do anything odd. Thanks, random_guy!
+- **Git colours** (a second switch there, off by default): new files green, changed ones red, a
+  folder shows what's in it. millerX asks git about the shown folder only and again a moment after
+  a change or a commit; a repository whose own config has filters or includes stays uncoloured,
+  so browsing into a strange repository can't make git run anything. Thanks, random_guy!
+- **Your `$TERMINAL` is understood.** Running a script, Check file type and Git's Status, Log and
+  Diff used xterm's `-e` for every `$TERMINAL`; xfce4-terminal (`-x`), gnome-terminal, GNOME
+  Console and Ptyxis (`--`), kitty and foot (the command just follows) and WezTerm (`start --`)
+  now get their own way, from their manuals. One function does it for all three now.
+- **Clearer messages in a root window** (thanks, brobr). Trash there goes to root's own trash
+  (/root/.local/share/Trash), and the status line now says so; where root has no trash at all
+  (/home, /boot, /var or another disk: GLib refuses), the question explains it before offering to
+  delete. A copy GLib stops with "Cannot retrieve attribute standard::type" now says why: the file
+  is on a mount only its own user may open (sshfs, a phone, a network share).
+- German and Greek for all of it.
+- README: a list of the testers. Thank you all!
+
 ## 0.8.6 (2026-11-26)
 
 Security fixes from a review by rizitis (issue #5). Nothing here was ever a problem if you only

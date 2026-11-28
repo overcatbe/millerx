@@ -1,6 +1,6 @@
 .\" SPDX-License-Identifier: GPL-2.0-or-later
 .\" Copyright (C) 2026 overcatbe
-.TH MILLERX 1 "2026-11-26" "millerX 0.8.6" "User Commands"
+.TH MILLERX 1 "2026-11-28" "millerX 0.8.8" "User Commands"
 .SH NAME
 millerx \- a small file browser with Miller columns
 .SH SYNOPSIS
@@ -83,6 +83,9 @@ new folder
 .B Ctrl+F
 search names in this folder and every folder below it; Escape goes back
 .TP
+.B Escape
+unselect everything in this column
+.TP
 .B Ctrl+D
 bookmark this folder
 .TP
@@ -108,8 +111,15 @@ reload
 close the window
 .PP
 Typing letters jumps to the first name starting with them; the same letter again goes
-to the next one. Middle\-click a folder to open it in a new window. The trash is the
-last line of the bookmarks menu.
+to the next one. Middle\-click a folder to open it in a new window, a file to open it.
+The trash is the last line of the bookmarks menu.
+.PP
+A program, script or launcher asks before it runs; \fBTrusted\fR runs it and, from then on,
+without asking while it stays the same file. What belongs to root in folders only root can
+change (what your distribution installed) runs without asking, also after updates; Settings
+\(-> Programs can switch that off. Inside a git repository the right\-click menu can have
+\fBGit\fR (Status, Log, Diff, Add, Commit, Revert): Settings \(-> Tools \(-> Git, off by default;
+a second switch there colours new files green and changed ones red.
 .SH FILES
 .TP
 .I ~/.config/millerx/millerx.conf
@@ -117,6 +127,9 @@ settings (also changed from Menu \(-> Settings)
 .TP
 .I ~/.config/millerx/sorting.conf
 folders sorted their own way, one per line
+.TP
+.I ~/.config/millerx/trusted
+programs you trusted: size, SHA\-256 and path, one per line
 .TP
 .I ~/.config/gtk\-3.0/bookmarks
 bookmarks, shared with Thunar and the GTK file dialogs
@@ -147,8 +160,9 @@ is running.
 .SH ENVIRONMENT
 .TP
 .B TERMINAL
-the terminal for "Open terminal here" (may include arguments); otherwise the first
-of 17 known terminals that is installed.
+the terminal for "Open terminal here", scripts and Git (may include arguments);
+otherwise the first of 17 known terminals that is installed. A known one is told to run a
+command its own way (xfce4\-terminal \-x, gnome\-terminal \-\-, ...), any other gets \-e.
 .SH SEE ALSO
 .BR thunar (1),
 .BR xdg\-mime (1)

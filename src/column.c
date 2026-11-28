@@ -35,6 +35,7 @@ void column_close(Column *c)
         return;
     c->closed = TRUE;
     g_cancellable_cancel(c->cancel);
+    git_colours_stop(c);
     if (c->monitor) {
         g_signal_handlers_disconnect_by_data(c->monitor, c);
         g_file_monitor_cancel(c->monitor);
@@ -50,8 +51,17 @@ static void name_func(GtkTreeViewColumn *col, GtkCellRenderer *r, GtkTreeModel *
     (void) col;
     (void) d;
     gboolean link = FALSE;
-    gtk_tree_model_get(m, it, C_LINK, &link, -1);
+    int git = GIT_CLEAN;
+    gtk_tree_model_get(m, it, C_LINK, &link, C_GIT, &git, -1);
     g_object_set(r, "style", link ? PANGO_STYLE_ITALIC : PANGO_STYLE_NORMAL, NULL);
+    /* Git colours (git.c): green new, red changed; readable on light and dark themes */
+    static const GdkRGBA green = { 0.22, 0.66, 0.30, 1 }, red = { 0.88, 0.30, 0.27, 1 };
+    if (git == GIT_NEW)
+        g_object_set(r, "foreground-rgba", &green, NULL);
+    else if (git == GIT_CHANGED)
+        g_object_set(r, "foreground-rgba", &red, NULL);
+    else
+        g_object_set(r, "foreground-set", FALSE, NULL);
 }
 
 /* ---- loading ------------------------------------------------------------- */
@@ -86,6 +96,7 @@ static GtkTreeIter *append_info(Column *c, GFileInfo *info, GFile *child, GtkTre
 static void loading_done(Column *c)
 {
     c->loaded = TRUE;
+    git_colours_schedule(c);
     column_continue_chain(c);
     if (c == win_last_column(c->win)) {
         char *p = file_path(c->gfile);
@@ -300,6 +311,7 @@ static void on_changed(GFileMonitor *mon, GFile *f, GFile *other, GFileMonitorEv
     default:
         break;
     }
+    git_colours_schedule(c);          /* a file changed: its colour may too */
 }
 
 /* ---- selection ------------------------------------------------------------------ */
@@ -465,7 +477,15 @@ static gboolean on_focus(GtkWidget *w, GdkEvent *ev, Column *c)
 static gboolean on_button(GtkWidget *view, GdkEventButton *ev, Column *c)
 {
     GtkTreePath *p = NULL;
-    if (ev->type == GDK_BUTTON_PRESS && ev->button == 2) {      /* middle-click a folder: new window */
+    if (ev->type == GDK_BUTTON_PRESS && ev->button == 2) {      /* middle-click: a folder in a new window, a file opens */
+        /* a double middle-click is two presses: the second one doesn't open it again */
+        static guint32 last_middle;
+        int dbl = 400;
+        g_object_get(gtk_widget_get_settings(view), "gtk-double-click-time", &dbl, NULL);
+        gboolean again = last_middle && ev->time - last_middle < (guint32) dbl;
+        last_middle = ev->time;
+        if (again)
+            return TRUE;
         gboolean done = FALSE;
         if (gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(view), ev->x, ev->y, &p, NULL, NULL, NULL)) {
             GtkTreeModel *m = gtk_tree_view_get_model(GTK_TREE_VIEW(view));
@@ -476,6 +496,11 @@ static gboolean on_button(GtkWidget *view, GdkEventButton *ev, Column *c)
                 gtk_tree_model_get(m, &it, C_FILE, &f, C_ISDIR, &isdir, -1);
             if (f && isdir) {
                 win_new(c->win->app, f);
+                done = TRUE;
+            } else if (f && !c->computer && !c->trash) {   /* a file: opened, as a double-click would (SCerovec) */
+                g_object_ref(f);
+                win_open_default(c->win, f);
+                g_object_unref(f);
                 done = TRUE;
             }
             g_clear_object(&f);
@@ -642,6 +667,16 @@ static gboolean on_key(GtkWidget *view, GdkEventKey *ev, Column *c)
     gboolean ctrl = ev->state & GDK_CONTROL_MASK, shift = ev->state & GDK_SHIFT_MASK;
     gboolean alt = ev->state & GDK_MOD1_MASK;
     Win *w = c->win;
+    if (k == GDK_KEY_Escape && !ctrl && !shift && !alt && !c->computer) {
+        /* Esc: nothing selected here any more; the columns to the right close, the status line
+         * shows the folder's count again (random_guy) */
+        g_string_truncate(c->typed, 0);
+        GtkTreeSelection *sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(c->view));
+        if (gtk_tree_selection_count_selected_rows(sel) == 0)
+            return FALSE;
+        gtk_tree_selection_unselect_all(sel);
+        return TRUE;
+    }
     if (k == GDK_KEY_Right && !ctrl) {
         win_focus_next(w, c);
         return TRUE;
@@ -1078,7 +1113,8 @@ Column *column_new(Win *w, GFile *gfile, GPtrArray *chain)
     c->typed = g_string_new(NULL);
     c->drag_start = -1;
     c->store = gtk_list_store_new(C_N, G_TYPE_ICON, G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_FILE,
-                                  G_TYPE_STRING, G_TYPE_INT64, G_TYPE_UINT64, G_TYPE_STRING, G_TYPE_BOOLEAN);
+                                  G_TYPE_STRING, G_TYPE_INT64, G_TYPE_UINT64, G_TYPE_STRING, G_TYPE_BOOLEAN,
+                                  G_TYPE_INT);
     char *own = g_file_get_path(gfile);
     c->custom = sorting_get(own, &c->sort);
     g_free(own);

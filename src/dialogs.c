@@ -741,8 +741,10 @@ typedef struct {
     GtkWidget *auto_rb, *own_rb, *colour, *width, *style, *pw, *cw, *ff, *sh;
     GtkWidget *cache_size, *cache_clear, *cache_mb, *cache_days, *cache_auto;
     GtkWidget *sort_list, *names, *thumbs, *tsize, *lang, *lang_note, *detect;
-    GtkWidget *use[4];         /* the optional helpers, when installed; NULL when not */
+    GtkWidget *ask, *trust_sys, *trust_list;    /* Ask before running programs, root's own, the trusted ones */
+    GtkWidget *use[5];         /* the optional helpers, when installed; NULL when not */
     GtkWidget *compare;        /* what compares two files */
+    GtkWidget *git_col;        /* Git colours; NULL when git isn't installed */
     GtkWidget *hl_auto, *hl_own, *hl_colour, *hl_sys, *hl_unsys;
 } Set;
 
@@ -783,12 +785,20 @@ static void settings_changed(GtkWidget *any, Set *s)
     gtk_widget_set_visible(s->lang_note, g_strcmp0(nl.language, LANGUAGE_AT_START ? LANGUAGE_AT_START : "system"));
     nl.gallery_names = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->names));
     nl.compare = (char *) gtk_entry_get_text(GTK_ENTRY(s->compare));   /* copied by app_apply_look */
-    gboolean *uses[] = { &nl.use_ffmpeg, &nl.use_pdftoppm, &nl.use_pkexec, &nl.use_blender };
-    for (int i = 0; i < 4; i++)
+    gboolean *uses[] = { &nl.use_ffmpeg, &nl.use_pdftoppm, &nl.use_pkexec, &nl.use_blender, &nl.use_git };
+    for (int i = 0; i < 5; i++)
         if (s->use[i])
             *uses[i] = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->use[i]));
+    if (s->git_col) {
+        nl.git_colours = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->git_col));
+        gtk_widget_set_sensitive(s->git_col, nl.use_git);
+    }
     nl.detect = !g_strcmp0(gtk_combo_box_get_active_id(GTK_COMBO_BOX(s->detect)), "content") ? DETECT_CONTENT
                                                                                               : DETECT_NAME;
+    nl.ask_programs = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->ask));
+    nl.trust_system = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->trust_sys));
+    gtk_widget_set_sensitive(s->trust_sys, nl.ask_programs);
+    gtk_widget_set_sensitive(s->trust_list, nl.ask_programs);
     const char *tid = gtk_combo_box_get_active_id(GTK_COMBO_BOX(s->thumbs));
     nl.thumbs = !g_strcmp0(tid, "local") ? THUMBS_LOCAL : !g_strcmp0(tid, "never") ? THUMBS_NEVER : THUMBS_ALWAYS;
     const char *zid = gtk_combo_box_get_active_id(GTK_COMBO_BOX(s->tsize));
@@ -926,6 +936,7 @@ static void section(GtkWidget **grid, int *r, const char *text)
 
 /* Optional programs millerX uses if they are there: what each one gives, and what to install
  * if it is missing. Looked up when the settings open, so a fresh install shows up next time. */
+enum { HELPER_GIT = 4 };              /* HELPERS[] index of git: on the Tools tab */
 static const struct { const char *prog, *gives, *without, *package; } HELPERS[] = {
     { "ffmpeg", N_("video frames, music covers, AVIF and HEIC pictures"),
       N_("videos and music show their icon, AVIF/HEIC too"), N_("ffmpeg (Slackware: l/ffmpeg)") },
@@ -935,14 +946,17 @@ static const struct { const char *prog, *gives, *without, *package; } HELPERS[] 
       N_("no root window"), N_("polkit, plus an authentication agent") },
     { "blender-thumbnailer", N_("the pictures saved in Blender (.blend) files"),
       N_(".blend files show their icon"), N_("Blender (it comes with it; also found in /opt/blender*)") },
+    { "git", N_("Git actions in the right-click menu (inside a repository)"),
+      N_("no Git actions"), N_("git") },
 };
 
-/* found: a tick box to use it or not; missing: what it would give and where to get it */
-static void helper_rows(GtkWidget *grid, int *r, Set *s)
+/* found: a tick box to use it or not; missing: what it would give and where to get it.
+ * HELPERS[from, to): the helpers go on the Thumbnails tab, git on the Tools tab */
+static void helper_rows(GtkWidget *grid, int *r, Set *s, guint from, guint to)
 {
-    const gboolean on[] = { LOOK.use_ffmpeg, LOOK.use_pdftoppm, LOOK.use_pkexec, LOOK.use_blender };
+    const gboolean on[] = { LOOK.use_ffmpeg, LOOK.use_pdftoppm, LOOK.use_pkexec, LOOK.use_blender, LOOK.use_git };
     G_STATIC_ASSERT(G_N_ELEMENTS(on) == G_N_ELEMENTS(HELPERS));
-    for (guint i = 0; i < G_N_ELEMENTS(HELPERS); i++) {
+    for (guint i = from; i < to && i < G_N_ELEMENTS(HELPERS); i++) {
         char *found = !strcmp(HELPERS[i].prog, "blender-thumbnailer") ? blender_thumbnailer()
                                                                        : g_find_program_in_path(HELPERS[i].prog);
         if (found) {
@@ -1067,6 +1081,62 @@ static void fill_sort_list(Set *s)
     gtk_widget_show_all(s->sort_list);
 }
 
+/* ---- trusted programs: one row each, ✕ forgets one ---------------------------------------- */
+static void fill_trust_list(Set *s);
+static GList *OPEN_SETS;               /* the open Settings windows, to show a newly trusted one */
+
+void settings_trust_changed(void)
+{
+    for (GList *l = OPEN_SETS; l; l = l->next)
+        fill_trust_list(l->data);
+}
+
+static void set_gone(GtkWidget *d, Set *s)
+{
+    (void) d;
+    OPEN_SETS = g_list_remove(OPEN_SETS, s);
+}
+
+static void trustrow_remove(GtkButton *b, Set *s)
+{
+    (void) s;
+    trust_remove(g_object_get_data(G_OBJECT(b), "path"));
+    settings_trust_changed();              /* every open Settings window, this one too */
+}
+
+static void fill_trust_list(Set *s)
+{
+    GList *kids = gtk_container_get_children(GTK_CONTAINER(s->trust_list));
+    for (GList *l = kids; l; l = l->next)
+        gtk_widget_destroy(l->data);
+    g_list_free(kids);
+    GList *paths = trust_paths();
+    if (!paths) {
+        GtkWidget *l = gtk_label_new(_("None. When millerX asks before running something, “Trusted” adds it here."));
+        gtk_label_set_xalign(GTK_LABEL(l), 0);
+        gtk_widget_set_opacity(l, 0.7);
+        gtk_box_pack_start(GTK_BOX(s->trust_list), l, FALSE, FALSE, 0);
+    }
+    for (GList *p = paths; p; p = p->next) {
+        GtkWidget *row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+        GtkWidget *name = gtk_label_new(p->data);
+        gtk_label_set_xalign(GTK_LABEL(name), 0);
+        gtk_label_set_ellipsize(GTK_LABEL(name), PANGO_ELLIPSIZE_MIDDLE);
+        gtk_label_set_width_chars(GTK_LABEL(name), 24);
+        gtk_widget_set_tooltip_text(name, p->data);
+        GtkWidget *x = gtk_button_new_from_icon_name("window-close-symbolic", GTK_ICON_SIZE_MENU);
+        gtk_button_set_relief(GTK_BUTTON(x), GTK_RELIEF_NONE);
+        gtk_widget_set_tooltip_text(x, _("Not trusted any more: it asks again"));
+        g_object_set_data_full(G_OBJECT(x), "path", g_strdup(p->data), g_free);
+        g_signal_connect(x, "clicked", G_CALLBACK(trustrow_remove), s);
+        gtk_box_pack_start(GTK_BOX(row), name, TRUE, TRUE, 0);
+        gtk_box_pack_start(GTK_BOX(row), x, FALSE, FALSE, 0);
+        gtk_box_pack_start(GTK_BOX(s->trust_list), row, FALSE, FALSE, 0);
+    }
+    g_list_free_full(paths, g_free);
+    gtk_widget_show_all(s->trust_list);
+}
+
 /* ---- highlight swatches: one click and the window shows it --------------------------------- */
 static const char *SWATCHES[] = { "#d4ff02", "#4c566a", "#6c5a9c", "#2a9d8f", "#e9a23b", "#d1495b",
                                   "#5b8c5a", "#d16ba5", "#8a8a8a" };
@@ -1159,6 +1229,8 @@ void dialog_settings(Win *w)
     gtk_box_pack_start(GTK_BOX(look), cols, FALSE, FALSE, 0);
     GtkWidget *thumbs_tab = tab(nb, _("Thumbnails"), max_h);
     GtkWidget *folders_tab = tab(nb, _("Folders"), max_h);
+    GtkWidget *programs_tab = tab(nb, _("Programs"), max_h);
+    GtkWidget *tools_tab = tab(nb, _("Tools"), max_h);
     GtkWidget *grid = NULL;
     Set *s = g_new0(Set, 1);
     s->w = w;
@@ -1326,14 +1398,18 @@ void dialog_settings(Win *w)
     srow(grid, &r, _("Clean up"), s->cache_auto);
     thumbcache_measure(cache_measured, g_object_ref(s->cache_size));
     section(&grid, &r, _("Optional helpers (millerX works without them; untick to not use one)"));
-    helper_rows(grid, &r, s);
-    s->compare = gtk_entry_new();
-    gtk_entry_set_text(GTK_ENTRY(s->compare), LOOK.compare ? LOOK.compare : "auto");
-    gtk_widget_set_tooltip_text(s->compare, _("Two files selected → Compare. \"auto\": meld, kdiff3, kompare or diffuse, "
-                                              "whichever is there; none: the differences as text. Or your own command "
-                                              "(the two files are added at the end)."));
-    srow(grid, &r, _("Compare with"), s->compare);
+    helper_rows(grid, &r, s, 0, HELPER_GIT);
     new_column(folders_tab);
+    section(&grid, &r, _("Folders sorted their own way (all others: by name)"));
+    s->sort_list = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
+    GtkWidget *sl_scroll = gtk_scrolled_window_new(NULL, NULL);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sl_scroll), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+    gtk_scrolled_window_set_propagate_natural_height(GTK_SCROLLED_WINDOW(sl_scroll), TRUE);
+    gtk_scrolled_window_set_max_content_height(GTK_SCROLLED_WINDOW(sl_scroll), MAX(220, max_h - 120));
+    gtk_container_add(GTK_CONTAINER(sl_scroll), s->sort_list);
+    gtk_grid_attach(GTK_GRID(grid), sl_scroll, 0, r++, 2, 1);
+    fill_sort_list(s);
+    new_column(programs_tab);
     section(&grid, &r, _("Recognise files"));
     s->detect = gtk_combo_box_text_new();
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->detect), "name", _("By name, like other file managers"));
@@ -1346,15 +1422,59 @@ void dialog_settings(Win *w)
           "an archive), the content wins: preview, Properties and the program that opens it. The icons in "
           "the lists stay by name. Not a virus scanner: it catches files in disguise, not every trick."));
     srow(grid, &r, _("Recognise"), s->detect);
-    section(&grid, &r, _("Folders sorted their own way (all others: by name)"));
-    s->sort_list = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
-    GtkWidget *sl_scroll = gtk_scrolled_window_new(NULL, NULL);
-    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sl_scroll), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-    gtk_scrolled_window_set_propagate_natural_height(GTK_SCROLLED_WINDOW(sl_scroll), TRUE);
-    gtk_scrolled_window_set_max_content_height(GTK_SCROLLED_WINDOW(sl_scroll), MAX(220, max_h - 120));
-    gtk_container_add(GTK_CONTAINER(sl_scroll), s->sort_list);
-    gtk_grid_attach(GTK_GRID(grid), sl_scroll, 0, r++, 2, 1);
-    fill_sort_list(s);
+    section(&grid, &r, _("Run"));
+    s->ask = gtk_check_button_new_with_label(_("Ask before running programs, scripts and launchers"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(s->ask), LOOK.ask_programs);
+    gtk_widget_set_tooltip_text(s->ask,
+        _("On: a double-click on a program, a script or a launcher (.desktop) says what it is and asks "
+          "first; what you trusted runs at once. Off: everything runs at once, without a question, "
+          "also a “holiday.jpg” that is really a program."));
+    srow(grid, &r, _("Run"), s->ask);
+    s->trust_sys = gtk_check_button_new_with_label(_("Trust system programs (owned by root)"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(s->trust_sys), LOOK.trust_system);
+    gtk_widget_set_tooltip_text(s->trust_sys,
+        _("On: what your distribution installed runs without asking, also after updates: a program, "
+          "script or launcher that belongs to root, in folders that belong to root, which only root can "
+          "change (/usr, /opt…), on Linux's own disk file systems. Whoever can change those owns the machine already, so asking protects "
+          "nothing there. Your own files (your home, downloads, USB sticks) still ask. "
+          "Off: those ask too, and “Trusted” remembers them while they stay the same file."));
+    srow(grid, &r, "", s->trust_sys);
+    gtk_widget_set_sensitive(s->trust_sys, LOOK.ask_programs);
+    s->trust_list = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
+    GtkWidget *tl_title = gtk_label_new(_("Trusted (they run without asking while they stay the same file):"));
+    gtk_label_set_xalign(GTK_LABEL(tl_title), 0);
+    gtk_grid_attach(GTK_GRID(grid), tl_title, 0, r++, 2, 1);
+    gtk_grid_attach(GTK_GRID(grid), s->trust_list, 0, r++, 2, 1);
+    fill_trust_list(s);
+    gtk_widget_set_sensitive(s->trust_list, LOOK.ask_programs);
+    section(&grid, &r, _("Compare"));
+    s->compare = gtk_entry_new();
+    gtk_entry_set_text(GTK_ENTRY(s->compare), LOOK.compare ? LOOK.compare : "auto");
+    gtk_widget_set_tooltip_text(s->compare, _("Two files selected → Compare. \"auto\": meld, kdiff3, kompare or diffuse, "
+                                              "whichever is there; none: the differences as text. Or your own command "
+                                              "(the two files are added at the end)."));
+    srow(grid, &r, _("Compare with"), s->compare);
+    new_column(tools_tab);
+    GtkWidget *tools_note = gtk_label_new(_("Tools are part of millerX, not something added from outside. "
+                                            "Each is off until you switch it on."));
+    gtk_label_set_xalign(GTK_LABEL(tools_note), 0);
+    gtk_widget_set_opacity(tools_note, 0.75);
+    gtk_box_pack_start(GTK_BOX(tools_tab), tools_note, FALSE, FALSE, 0);
+    gtk_box_reorder_child(GTK_BOX(tools_tab), tools_note, 0);
+    section(&grid, &r, _("Git"));
+    helper_rows(grid, &r, s, HELPER_GIT, HELPER_GIT + 1);
+    if (s->use[HELPER_GIT]) {
+        s->git_col = gtk_check_button_new_with_label(_("Colour file names by their Git state"));
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(s->git_col), LOOK.git_colours);
+        gtk_widget_set_sensitive(s->git_col, LOOK.use_git);
+        gtk_widget_set_tooltip_text(s->git_col,
+            _("Inside a repository: green for new files, red for changed ones; a folder shows what's in it. "
+              "millerX asks git about the folder you look at, and again a moment after something changes. "
+              "Fast in small repositories, noticeable in very big ones. A repository whose own settings "
+              "could make git run programs (filters, includes) stays uncoloured."));
+        srow(grid, &r, "", s->git_col);
+        g_signal_connect(s->git_col, "toggled", G_CALLBACK(settings_changed), s);
+    }
 
     g_signal_connect(s->auto_rb, "toggled", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->colour, "color-set", G_CALLBACK(settings_changed), s);
@@ -1368,9 +1488,13 @@ void dialog_settings(Win *w)
     g_signal_connect(s->compare, "changed", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->thumbs, "changed", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->detect, "changed", G_CALLBACK(settings_changed), s);
+    g_signal_connect(s->ask, "toggled", G_CALLBACK(settings_changed), s);
+    g_signal_connect(s->trust_sys, "toggled", G_CALLBACK(settings_changed), s);
+    OPEN_SETS = g_list_prepend(OPEN_SETS, s);
+    g_signal_connect(d, "destroy", G_CALLBACK(set_gone), s);
     g_signal_connect(s->tsize, "changed", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->lang, "changed", G_CALLBACK(settings_changed), s);
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 5; i++)
         if (s->use[i])
             g_signal_connect(s->use[i], "toggled", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->hl_auto, "toggled", G_CALLBACK(settings_changed), s);

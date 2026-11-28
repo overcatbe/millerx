@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: millerx\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 20:00+0200\n"
+"POT-Creation-Date: 2026-11-28 07:30+0200\n"
 "PO-Revision-Date: 2026-11-23 10:15+0200\n"
 "Last-Translator: rizitis <elahistos@yahoo.gr>\n"
 "Language-Team: Greek\n"
@@ -47,74 +47,74 @@ msgstr "Δεν είναι δυνατή η εγγραφή σε αυτή τη μο
 msgid "Finishing the archive"
 msgstr "Ολοκλήρωση συμπίεσης του αρχείου"
 
-#: src/column.c:93 src/column.c:246
+#: src/column.c:104 src/column.c:257 src/window.c:450
 #, c-format
 msgid "%s: %d item"
 msgid_plural "%s: %d items"
 msgstr[0] "%s: %d στοιχείο"
 msgstr[1] "%s: %d στοιχεία"
 
-#: src/column.c:632
+#: src/column.c:657
 #, c-format
 msgid "Jump: %s"
 msgstr "Μετάβαση: %s"
 
-#: src/column.c:634
+#: src/column.c:659
 #, c-format
 msgid "Jump: %s (no match)"
 msgstr "Μετάβαση: %s (χωρίς αποτέλεσμα)"
 
-#: src/column.c:680
+#: src/column.c:715
 msgid "Inside a trashed folder: delete the whole folder, or put it back first"
 msgstr ""
 "Μέσα σε φάκελο του κάδου: διαγράψτε ολόκληρο τον φάκελο ή επαναφέρετέ τον "
 "πρώτα"
 
-#: src/column.c:799
+#: src/column.c:834
 msgid "Couldn't make the link"
 msgstr "Δεν ήταν δυνατή η δημιουργία του συνδέσμου"
 
-#: src/column.c:825
+#: src/column.c:860
 msgid "Copy here"
 msgstr "Αντιγραφή εδώ"
 
-#: src/column.c:825
+#: src/column.c:860
 msgid "Move here"
 msgstr "Μετακίνηση εδώ"
 
-#: src/column.c:825
+#: src/column.c:860
 msgid "Link here"
 msgstr "Σύνδεσμος εδώ"
 
-#: src/column.c:833 src/dialogs.c:27 src/dialogs.c:856 src/window.c:178
-#: src/window.c:189 src/window.c:715 src/window.c:744 src/window.c:782
-#: src/window.c:1417 src/window.c:1445 src/window.c:2284
+#: src/column.c:868 src/dialogs.c:27 src/dialogs.c:866 src/git.c:182
+#: src/window.c:178 src/window.c:189 src/window.c:771 src/window.c:814
+#: src/window.c:863 src/window.c:1578 src/window.c:1606 src/window.c:2446
 msgid "Cancel"
 msgstr "Ακύρωση"
 
-#: src/column.c:957 src/sorting.c:114
+#: src/column.c:992 src/sorting.c:114
 msgid "name"
 msgstr "όνομα"
 
-#: src/column.c:958
+#: src/column.c:993
 msgid "size"
 msgstr "μέγεθος"
 
 #. largest first
-#: src/column.c:959
+#: src/column.c:994
 msgid "newest"
 msgstr "νεότερα"
 
 #. deleted last first
-#: src/column.c:960
+#: src/column.c:995
 msgid "oldest"
 msgstr "παλαιότερα"
 
-#: src/column.c:988
+#: src/column.c:1023
 msgid "Sort:"
 msgstr "Ταξινόμηση:"
 
-#: src/column.c:1131 src/dialogs.c:1051
+#: src/column.c:1167 src/dialogs.c:1065
 msgid "Sort by name again"
 msgstr "Ξανά ταξινόμηση κατά όνομα"
 
@@ -185,7 +185,7 @@ msgstr "Χωρίς ιδιότητες"
 msgid "Properties: %s"
 msgstr "Ιδιότητες: %s"
 
-#: src/dialogs.c:237 src/dialogs.c:462 src/dialogs.c:644 src/dialogs.c:1142
+#: src/dialogs.c:237 src/dialogs.c:462 src/dialogs.c:644 src/dialogs.c:1212
 #: src/window.c:164
 msgid "Close"
 msgstr "Κλείσιμο"
@@ -195,7 +195,7 @@ msgid "Link to"
 msgstr "Σύνδεσμος προς"
 
 #. the folders' contents counted in the background, the files' added
-#: src/dialogs.c:281 src/dialogs.c:680 src/dialogs.c:692 src/dialogs.c:1309
+#: src/dialogs.c:281 src/dialogs.c:680 src/dialogs.c:692 src/dialogs.c:1381
 #: src/preview.c:1623 src/preview.c:1758
 msgid "Size"
 msgstr "Μέγεθος"
@@ -247,7 +247,7 @@ msgid_plural "Properties: %u items"
 msgstr[0] "Ιδιότητες: %u στοιχείο"
 msgstr[1] "Ιδιότητες: %u στοιχεία"
 
-#: src/dialogs.c:658 src/places.c:236 src/window.c:1451
+#: src/dialogs.c:658 src/places.c:236 src/window.c:1612
 #, c-format
 msgid "%u item"
 msgid_plural "%u items"
@@ -314,77 +314,89 @@ msgstr "Δεν σας ανήκουν όλα: μόνο για ανάγνωση."
 msgid "Permissions"
 msgstr "Δικαιώματα"
 
-#: src/dialogs.c:810
+#: src/dialogs.c:820
 msgid "Couldn't save the settings"
 msgstr "Δεν ήταν δυνατή η αποθήκευση των ρυθμίσεων"
 
-#: src/dialogs.c:855
+#: src/dialogs.c:865
 msgid "Add a language file"
 msgstr "Προσθήκη αρχείου γλώσσας"
 
-#: src/dialogs.c:856
+#: src/dialogs.c:866 src/git.c:467
 msgid "Add"
 msgstr "Προσθήκη"
 
-#: src/dialogs.c:858
+#: src/dialogs.c:868
 msgid "Language files (.po, .mo)"
 msgstr "Αρχεία γλώσσας (.po, .mo)"
 
-#: src/dialogs.c:876
+#: src/dialogs.c:886
 #, c-format
 msgid "Couldn't add “%s”"
 msgstr "Δεν ήταν δυνατή η προσθήκη του «%s»"
 
-#: src/dialogs.c:930
+#: src/dialogs.c:941
 msgid "video frames, music covers, AVIF and HEIC pictures"
 msgstr "καρέ βίντεο, εξώφυλλα μουσικής, εικόνες AVIF και HEIC"
 
-#: src/dialogs.c:931
+#: src/dialogs.c:942
 msgid "videos and music show their icon, AVIF/HEIC too"
 msgstr ""
 "τα βίντεο και η μουσική δείχνουν το εικονίδιό τους, το ίδιο και τα AVIF/HEIC"
 
-#: src/dialogs.c:931
+#: src/dialogs.c:942
 msgid "ffmpeg (Slackware: l/ffmpeg)"
 msgstr "ffmpeg (Slackware: l/ffmpeg)"
 
-#: src/dialogs.c:932
+#: src/dialogs.c:943
 msgid "the first page of PDFs"
 msgstr "η πρώτη σελίδα των PDF"
 
-#: src/dialogs.c:933
+#: src/dialogs.c:944
 msgid "PDFs show their icon"
 msgstr "τα PDF δείχνουν το εικονίδιό τους"
 
-#: src/dialogs.c:933
+#: src/dialogs.c:944
 msgid "poppler (Debian/Ubuntu: poppler-utils)"
 msgstr "poppler (Debian/Ubuntu: poppler-utils)"
 
-#: src/dialogs.c:934
+#: src/dialogs.c:945
 msgid "“Open as root”"
 msgstr "«Άνοιγμα ως root»"
 
-#: src/dialogs.c:935
+#: src/dialogs.c:946
 msgid "no root window"
 msgstr "χωρίς παράθυρο root"
 
-#: src/dialogs.c:935
+#: src/dialogs.c:946
 msgid "polkit, plus an authentication agent"
 msgstr "polkit, μαζί με έναν πράκτορα πιστοποίησης"
 
-#: src/dialogs.c:936
+#: src/dialogs.c:947
 msgid "the pictures saved in Blender (.blend) files"
 msgstr "οι εικόνες που είναι αποθηκευμένες σε αρχεία Blender (.blend)"
 
-#: src/dialogs.c:937
+#: src/dialogs.c:948
 msgid ".blend files show their icon"
 msgstr "τα αρχεία .blend δείχνουν το εικονίδιό τους"
 
-#: src/dialogs.c:937
+#: src/dialogs.c:948
 msgid "Blender (it comes with it; also found in /opt/blender*)"
 msgstr "Blender (το περιέχει· αναζητείται και στο /opt/blender*)"
 
-#: src/dialogs.c:957
+#: src/dialogs.c:949
+msgid "Git actions in the right-click menu (inside a repository)"
+msgstr "Ενέργειες Git στο μενού δεξιού κλικ (μέσα σε αποθετήριο)"
+
+#: src/dialogs.c:950
+msgid "no Git actions"
+msgstr "χωρίς ενέργειες Git"
+
+#: src/dialogs.c:950
+msgid "git"
+msgstr "git"
+
+#: src/dialogs.c:971
 #, c-format
 msgid ""
 "✗ not installed: %s.\n"
@@ -395,25 +407,25 @@ msgstr ""
 "<small>Εγκαταστήστε το %s\n"
 "για %s.</small>"
 
-#: src/dialogs.c:975
+#: src/dialogs.c:989
 #, c-format
 msgid "%s in %u thumbnail (%u deleted)"
 msgid_plural "%s in %u thumbnails (%u deleted)"
 msgstr[0] "%s σε %u μικρογραφία (%u διαγράφηκαν)"
 msgstr[1] "%s σε %u μικρογραφίες (%u διαγράφηκαν)"
 
-#: src/dialogs.c:977
+#: src/dialogs.c:991
 #, c-format
 msgid "%s in %u thumbnail"
 msgid_plural "%s in %u thumbnails"
 msgstr[0] "%s σε %u μικρογραφία"
 msgstr[1] "%s σε %u μικρογραφίες"
 
-#: src/dialogs.c:987
+#: src/dialogs.c:1001
 msgid "Clear the thumbnail cache?"
 msgstr "Εκκαθάριση της προσωρινής μνήμης μικρογραφιών;"
 
-#: src/dialogs.c:988
+#: src/dialogs.c:1002
 msgid ""
 "All thumbnails in ~/.cache/thumbnails are deleted. Thunar and file dialogs "
 "use them too; everything is made again when it's needed."
@@ -422,40 +434,51 @@ msgstr ""
 "διάλογοι αρχείων τις χρησιμοποιούν επίσης· όλες δημιουργούνται ξανά όταν "
 "χρειαστούν."
 
-#: src/dialogs.c:989
+#: src/dialogs.c:1003
 msgid "Clear"
 msgstr "Εκκαθάριση"
 
-#: src/dialogs.c:991
+#: src/dialogs.c:1005
 msgid "clearing…"
 msgstr "εκκαθάριση…"
 
-#: src/dialogs.c:1026
+#: src/dialogs.c:1040
 msgid "None. Right-click a folder → Sort … to give it its own order."
 msgstr ""
 "Κανένας. Δεξί κλικ σε φάκελο → Ταξινόμηση … για να έχει τη δική του σειρά."
 
-#: src/dialogs.c:1042 src/window.c:1713
+#: src/dialogs.c:1056 src/window.c:1874
 msgid "Name"
 msgstr "Όνομα"
 
-#: src/dialogs.c:1043
+#: src/dialogs.c:1057
 msgid "Date (newest first)"
 msgstr "Ημερομηνία (νεότερα πρώτα)"
 
-#: src/dialogs.c:1044 src/window.c:1713
+#: src/dialogs.c:1058 src/window.c:1874
 msgid "Size (largest first)"
 msgstr "Μέγεθος (μεγαλύτερα πρώτα)"
 
-#: src/dialogs.c:1045 src/preview.c:1755 src/window.c:1714
+#: src/dialogs.c:1059 src/preview.c:1755 src/window.c:1875
 msgid "Type"
 msgstr "Τύπος"
 
-#: src/dialogs.c:1047 src/window.c:1726
+#: src/dialogs.c:1061 src/window.c:1887
 msgid "Reversed"
 msgstr "Αντίστροφα"
 
-#: src/dialogs.c:1121
+#: src/dialogs.c:1115
+msgid ""
+"None. When millerX asks before running something, “Trusted” adds it here."
+msgstr ""
+"Κανένα. Όταν το millerX ρωτά πριν εκτελέσει κάτι, το «Έμπιστο» το προσθέτει "
+"εδώ."
+
+#: src/dialogs.c:1129
+msgid "Not trusted any more: it asks again"
+msgstr "Όχι πια έμπιστο: θα ρωτά ξανά"
+
+#: src/dialogs.c:1191
 #, c-format
 msgid ""
 "%s goes into ~/.config/gtk-3.0/gtk.css, in a block marked as millerX's; the "
@@ -467,7 +490,7 @@ msgstr ""
 "χρησιμοποιούν την επόμενη φορά που θα ξεκινήσουν. Μπορείτε να το αφαιρέσετε "
 "ξανά από εδώ."
 
-#: src/dialogs.c:1125
+#: src/dialogs.c:1195
 msgid ""
 "millerX's block is taken out of ~/.config/gtk-3.0/gtk.css; the rest of that "
 "file stays. GTK 3 programs use the theme's colour again the next time they "
@@ -477,103 +500,111 @@ msgstr ""
 "υπόλοιπο αρχείο μένει. Τα προγράμματα GTK 3 χρησιμοποιούν ξανά το χρώμα του "
 "θέματος την επόμενη φορά που θα ξεκινήσουν."
 
-#: src/dialogs.c:1128
+#: src/dialogs.c:1198
 msgid "Use this highlight in all GTK programs?"
 msgstr "Χρήση αυτής της επισήμανσης σε όλα τα προγράμματα GTK;"
 
-#: src/dialogs.c:1128
+#: src/dialogs.c:1198
 msgid "Remove it from all GTK programs?"
 msgstr "Αφαίρεση από όλα τα προγράμματα GTK;"
 
-#: src/dialogs.c:1129
+#: src/dialogs.c:1199
 msgid "Use it"
 msgstr "Χρήση"
 
-#: src/dialogs.c:1129
+#: src/dialogs.c:1199
 msgid "Remove"
 msgstr "Αφαίρεση"
 
-#: src/dialogs.c:1132
+#: src/dialogs.c:1202
 msgid "Couldn't write ~/.config/gtk-3.0/gtk.css"
 msgstr "Δεν ήταν δυνατή η εγγραφή στο ~/.config/gtk-3.0/gtk.css"
 
-#: src/dialogs.c:1142
+#: src/dialogs.c:1212
 msgid "millerX settings"
 msgstr "Ρυθμίσεις millerX"
 
-#: src/dialogs.c:1153
+#: src/dialogs.c:1223
 msgid "Look"
 msgstr "Εμφάνιση"
 
-#: src/dialogs.c:1160 src/dialogs.c:1288
+#: src/dialogs.c:1230 src/dialogs.c:1360
 msgid "Thumbnails"
 msgstr "Μικρογραφίες"
 
-#: src/dialogs.c:1161
+#: src/dialogs.c:1231
 msgid "Folders"
 msgstr "Φάκελοι"
 
-#: src/dialogs.c:1169
+#: src/dialogs.c:1232
+msgid "Programs"
+msgstr "Προγράμματα"
+
+#: src/dialogs.c:1233
+msgid "Tools"
+msgstr "Εργαλεία"
+
+#: src/dialogs.c:1241
 msgid "Column dividers"
 msgstr "Διαχωριστικά στηλών"
 
-#: src/dialogs.c:1170
+#: src/dialogs.c:1242
 msgid "Follow the theme (20 % lighter / darker)"
 msgstr "Σύμφωνα με το θέμα (20 % πιο φωτεινό / πιο σκούρο)"
 
-#: src/dialogs.c:1171 src/dialogs.c:1199
+#: src/dialogs.c:1243 src/dialogs.c:1271
 msgid "Own colour"
 msgstr "Δικό μου χρώμα"
 
-#: src/dialogs.c:1188
+#: src/dialogs.c:1260
 msgid "Colour"
 msgstr "Χρώμα"
 
-#: src/dialogs.c:1191
+#: src/dialogs.c:1263
 msgid "Width (px)"
 msgstr "Πλάτος (px)"
 
-#: src/dialogs.c:1193
+#: src/dialogs.c:1265
 msgid "Solid"
 msgstr "Συμπαγές"
 
-#: src/dialogs.c:1194
+#: src/dialogs.c:1266
 msgid "Fading at the ends"
 msgstr "Σβήνει στις άκρες"
 
-#: src/dialogs.c:1196
+#: src/dialogs.c:1268
 msgid "Style"
 msgstr "Στυλ"
 
-#: src/dialogs.c:1197
+#: src/dialogs.c:1269
 msgid "Highlight colour"
 msgstr "Χρώμα επισήμανσης"
 
-#: src/dialogs.c:1198
+#: src/dialogs.c:1270
 msgid "Follow the theme"
 msgstr "Σύμφωνα με το θέμα"
 
-#: src/dialogs.c:1215 src/window.c:2207
+#: src/dialogs.c:1287 src/window.c:2369
 msgid "millerX"
 msgstr "millerX"
 
-#: src/dialogs.c:1216
+#: src/dialogs.c:1288
 msgid "Use for all GTK programs…"
 msgstr "Χρήση σε όλα τα προγράμματα GTK…"
 
-#: src/dialogs.c:1217
+#: src/dialogs.c:1289
 msgid "Remove from all"
 msgstr "Αφαίρεση από όλα"
 
-#: src/dialogs.c:1223 src/dialogs.c:1238
+#: src/dialogs.c:1295 src/dialogs.c:1310
 msgid "System"
 msgstr "Σύστημα"
 
-#: src/dialogs.c:1225
+#: src/dialogs.c:1297
 msgid "Browsing"
 msgstr "Περιήγηση"
 
-#: src/dialogs.c:1228
+#: src/dialogs.c:1300
 msgid ""
 "Where new columns start. A column you drag keeps its own width; double-click "
 "its divider to bring it back to this one."
@@ -581,40 +612,40 @@ msgstr ""
 "Από πού ξεκινούν οι νέες στήλες. Μια στήλη που σύρετε κρατά το δικό της "
 "πλάτος· διπλό κλικ στο διαχωριστικό της την επαναφέρει σε αυτό."
 
-#: src/dialogs.c:1230
+#: src/dialogs.c:1302
 msgid "Column width (px)"
 msgstr "Πλάτος στήλης (px)"
 
-#: src/dialogs.c:1231
+#: src/dialogs.c:1303
 msgid "Folders first"
 msgstr "Πρώτα οι φάκελοι"
 
-#: src/dialogs.c:1233
+#: src/dialogs.c:1305
 msgid "Sort by name"
 msgstr "Ταξινόμηση κατά όνομα"
 
-#: src/dialogs.c:1234
+#: src/dialogs.c:1306
 msgid "Show hidden files when millerX starts"
 msgstr "Εμφάνιση κρυφών αρχείων κατά την εκκίνηση του millerX"
 
-#: src/dialogs.c:1236
+#: src/dialogs.c:1308
 msgid "Hidden files"
 msgstr "Κρυφά αρχεία"
 
-#: src/dialogs.c:1239
+#: src/dialogs.c:1311
 msgid "English"
 msgstr "Αγγλικά"
 
-#: src/dialogs.c:1240
+#: src/dialogs.c:1312
 msgid "Wizard (English, of a sort)"
 msgstr "Μάγος (Αγγλικά, κατά κάποιον τρόπο)"
 
-#: src/dialogs.c:1241
+#: src/dialogs.c:1313
 msgid "Wienerisch (Viennese slang)"
 msgstr "Βιεννέζικα (αργκό της Βιέννης)"
 
 #. its file is gone
-#: src/dialogs.c:1253
+#: src/dialogs.c:1325
 msgid ""
 "System: the language your computer is set to (English where there is no "
 "translation). Takes effect the next time millerX starts."
@@ -622,11 +653,11 @@ msgstr ""
 "Σύστημα: η γλώσσα στην οποία είναι ρυθμισμένος ο υπολογιστής σας (Αγγλικά "
 "όπου δεν υπάρχει μετάφραση). Ισχύει από την επόμενη εκκίνηση του millerX."
 
-#: src/dialogs.c:1258
+#: src/dialogs.c:1330
 msgid "Your own…"
 msgstr "Δική σας…"
 
-#: src/dialogs.c:1259
+#: src/dialogs.c:1331
 #, c-format
 msgid ""
 "Add a language file (.po or .mo), for example one from millerX's extras on "
@@ -637,48 +668,48 @@ msgstr ""
 "του millerX στο GitHub. Για να γράψετε τη δική σας, αντιγράψτε το %s και "
 "συμπληρώστε τις γραμμές msgstr· όσες μείνουν κενές παραμένουν στα Αγγλικά."
 
-#: src/dialogs.c:1267 src/dialogs.c:1269
+#: src/dialogs.c:1339 src/dialogs.c:1341
 msgid "Language"
 msgstr "Γλώσσα"
 
-#: src/dialogs.c:1273
+#: src/dialogs.c:1345
 msgid "Takes effect after a restart."
 msgstr "Ισχύει μετά από επανεκκίνηση."
 
-#: src/dialogs.c:1275
+#: src/dialogs.c:1347
 msgid "Restart now"
 msgstr "Επανεκκίνηση τώρα"
 
-#: src/dialogs.c:1280
+#: src/dialogs.c:1352
 msgid "Preview"
 msgstr "Προεπισκόπηση"
 
-#: src/dialogs.c:1283
+#: src/dialogs.c:1355
 msgid "Minimum width (px)"
 msgstr "Ελάχιστο πλάτος (px)"
 
 #. it takes the rest of the window
-#: src/dialogs.c:1284
+#: src/dialogs.c:1356
 msgid "Show names under thumbnails"
 msgstr "Εμφάνιση ονομάτων κάτω από τις μικρογραφίες"
 
-#: src/dialogs.c:1286
+#: src/dialogs.c:1358
 msgid "Gallery"
 msgstr "Συλλογή"
 
-#: src/dialogs.c:1290
+#: src/dialogs.c:1362
 msgid "Always"
 msgstr "Πάντα"
 
-#: src/dialogs.c:1291
+#: src/dialogs.c:1363
 msgid "Not in network folders"
 msgstr "Όχι σε φακέλους δικτύου"
 
-#: src/dialogs.c:1292
+#: src/dialogs.c:1364
 msgid "Never (plain icons)"
 msgstr "Ποτέ (απλά εικονίδια)"
 
-#: src/dialogs.c:1295
+#: src/dialogs.c:1367
 msgid ""
 "Pictures in the gallery under a folder. A file you click is always shown "
 "big. Network folders (NFS, Samba, sshfs) can be slow with them."
@@ -687,27 +718,27 @@ msgstr ""
 "εμφανίζεται πάντα μεγάλο. Οι φάκελοι δικτύου (NFS, Samba, sshfs) μπορεί να "
 "είναι αργοί με αυτές."
 
-#: src/dialogs.c:1297
+#: src/dialogs.c:1369
 msgid "Show"
 msgstr "Εμφάνιση"
 
-#: src/dialogs.c:1299
+#: src/dialogs.c:1371
 msgid "Tiny (about 64 px)"
 msgstr "Πολύ μικρές (περίπου 64 px)"
 
-#: src/dialogs.c:1300
+#: src/dialogs.c:1372
 msgid "Small (about 100 px)"
 msgstr "Μικρές (περίπου 100 px)"
 
-#: src/dialogs.c:1301
+#: src/dialogs.c:1373
 msgid "Medium (about 200 px)"
 msgstr "Μεσαίες (περίπου 200 px)"
 
-#: src/dialogs.c:1302
+#: src/dialogs.c:1374
 msgid "Large (about 400 px)"
 msgstr "Μεγάλες (περίπου 400 px)"
 
-#: src/dialogs.c:1306
+#: src/dialogs.c:1378
 msgid ""
 "How big the gallery's pictures are. Large ones are made again the first time "
 "(bigger thumbnails, a bigger cache); a wide pane gets more of them per row, "
@@ -717,71 +748,61 @@ msgstr ""
 "την πρώτη φορά (μεγαλύτερες μικρογραφίες, μεγαλύτερη προσωρινή μνήμη)· ένα "
 "φαρδύ πλαίσιο δείχνει περισσότερες ανά σειρά, όχι μεγαλύτερες."
 
-#: src/dialogs.c:1310
+#: src/dialogs.c:1382
 msgid "Cache (shared with Thunar)"
 msgstr "Προσωρινή μνήμη (κοινή με το Thunar)"
 
-#: src/dialogs.c:1311
+#: src/dialogs.c:1383
 msgid "measuring…"
 msgstr "μέτρηση…"
 
-#: src/dialogs.c:1313
+#: src/dialogs.c:1385
 msgid "Clear…"
 msgstr "Εκκαθάριση…"
 
-#: src/dialogs.c:1317
+#: src/dialogs.c:1389
 msgid "Now"
 msgstr "Τώρα"
 
-#: src/dialogs.c:1320
+#: src/dialogs.c:1392
 msgid "Keep at most (MB)"
 msgstr "Διατήρηση έως (MB)"
 
-#: src/dialogs.c:1323
+#: src/dialogs.c:1395
 msgid "Forget unused after (days)"
 msgstr "Διαγραφή αχρησιμοποίητων μετά από (ημέρες)"
 
-#: src/dialogs.c:1324
+#: src/dialogs.c:1396
 msgid "Once a day when millerX starts"
 msgstr "Μία φορά την ημέρα κατά την εκκίνηση του millerX"
 
-#: src/dialogs.c:1326
+#: src/dialogs.c:1398
 msgid "Clean up"
 msgstr "Καθαρισμός"
 
-#: src/dialogs.c:1328
+#: src/dialogs.c:1400
 msgid "Optional helpers (millerX works without them; untick to not use one)"
 msgstr ""
 "Προαιρετικά βοηθητικά προγράμματα (το millerX λειτουργεί και χωρίς αυτά· "
 "αποεπιλέξτε για να μη χρησιμοποιείται κάποιο)"
 
-#: src/dialogs.c:1332
-msgid ""
-"Two files selected → Compare. \"auto\": meld, kdiff3, kompare or diffuse, "
-"whichever is there; none: the differences as text. Or your own command (the "
-"two files are added at the end)."
-msgstr ""
-"Δύο επιλεγμένα αρχεία → Σύγκριση. \"auto\": meld, kdiff3, kompare ή diffuse, "
-"όποιο υπάρχει· αν κανένα: οι διαφορές ως κείμενο. Ή η δική σας εντολή (τα "
-"δύο αρχεία προστίθενται στο τέλος)."
+#: src/dialogs.c:1403
+msgid "Folders sorted their own way (all others: by name)"
+msgstr "Φάκελοι με δική τους ταξινόμηση (όλοι οι άλλοι: κατά όνομα)"
 
-#: src/dialogs.c:1335
-msgid "Compare with"
-msgstr "Σύγκριση με"
-
-#: src/dialogs.c:1337
+#: src/dialogs.c:1413
 msgid "Recognise files"
 msgstr "Αναγνώριση αρχείων"
 
-#: src/dialogs.c:1339
+#: src/dialogs.c:1415
 msgid "By name, like other file managers"
 msgstr "Από το όνομα, όπως άλλοι διαχειριστές αρχείων"
 
-#: src/dialogs.c:1340
+#: src/dialogs.c:1416
 msgid "By content, when you open a file"
 msgstr "Από το περιεχόμενο, όταν ανοίγετε ένα αρχείο"
 
-#: src/dialogs.c:1343
+#: src/dialogs.c:1419
 msgid ""
 "Other file managers go by the name: a “holiday.jpg” that is really a program "
 "shows as a picture and opens in the picture viewer. By content, millerX also "
@@ -801,60 +822,298 @@ msgstr ""
 "σύμφωνα με το όνομα. Δεν είναι πρόγραμμα προστασίας από ιούς: εντοπίζει "
 "μεταμφιεσμένα αρχεία, όχι κάθε κόλπο."
 
-#: src/dialogs.c:1348
+#: src/dialogs.c:1424
 msgid "Recognise"
 msgstr "Αναγνώριση"
 
-#: src/dialogs.c:1349
-msgid "Folders sorted their own way (all others: by name)"
-msgstr "Φάκελοι με δική τους ταξινόμηση (όλοι οι άλλοι: κατά όνομα)"
+#: src/dialogs.c:1425 src/dialogs.c:1432 src/window.c:775 src/window.c:816
+#: src/window.c:867
+msgid "Run"
+msgstr "Εκτέλεση"
 
-#: src/dialogs.c:1396
+#: src/dialogs.c:1426
+msgid "Ask before running programs, scripts and launchers"
+msgstr "Ερώτηση πριν την εκτέλεση προγραμμάτων, σεναρίων εντολών και εκκινητών"
+
+#: src/dialogs.c:1429
+msgid ""
+"On: a double-click on a program, a script or a launcher (.desktop) says what "
+"it is and asks first; what you trusted runs at once. Off: everything runs at "
+"once, without a question, also a “holiday.jpg” that is really a program."
+msgstr ""
+"Ενεργό: ένα διπλό κλικ σε πρόγραμμα, σενάριο εντολών ή εκκινητή (.desktop) "
+"λέει τι είναι και ρωτά πρώτα· ό,τι έχετε ορίσει ως έμπιστο εκτελείται "
+"αμέσως. Ανενεργό: όλα εκτελούνται αμέσως, χωρίς ερώτηση, ακόμα και ένα "
+"«διακοπές.jpg» που στην πραγματικότητα είναι πρόγραμμα."
+
+#: src/dialogs.c:1433
+msgid "Trust system programs (owned by root)"
+msgstr "Εμπιστοσύνη στα προγράμματα του συστήματος (ανήκουν στο root)"
+
+#: src/dialogs.c:1436
+msgid ""
+"On: what your distribution installed runs without asking, also after "
+"updates: a program, script or launcher that belongs to root, in folders that "
+"belong to root, which only root can change (/usr, /opt…), on Linux's own "
+"disk file systems. Whoever can change those owns the machine already, so "
+"asking protects nothing there. Your own files (your home, downloads, USB "
+"sticks) still ask. Off: those ask too, and “Trusted” remembers them while "
+"they stay the same file."
+msgstr ""
+"Ενεργό: ό,τι εγκατέστησε η διανομή σας εκτελείται χωρίς ερώτηση, και μετά "
+"από ενημερώσεις: ένα πρόγραμμα, σενάριο εντολών ή εκκινητής που ανήκει στο "
+"root, σε φακέλους που ανήκουν στο root και μόνο το root μπορεί να αλλάξει "
+"(/usr, /opt…), στα συστήματα αρχείων δίσκου του ίδιου του Linux. Όποιος "
+"μπορεί να τα αλλάξει, ελέγχει ήδη τον υπολογιστή, οπότε μια ερώτηση εκεί "
+"δεν προστατεύει τίποτα. Τα δικά σας αρχεία (ο προσωπικός φάκελος, οι "
+"λήψεις, τα USB sticks) ρωτούν ακόμα. Ανενεργό: ρωτούν κι αυτά, και το "
+"«Έμπιστο» τα θυμάται όσο παραμένουν το ίδιο αρχείο."
+
+#: src/dialogs.c:1444
+msgid "Trusted (they run without asking while they stay the same file):"
+msgstr "Έμπιστα (εκτελούνται χωρίς ερώτηση όσο παραμένουν το ίδιο αρχείο):"
+
+#: src/dialogs.c:1450 src/dialogs.c:1710 src/window.c:2035 src/window.c:2097
+msgid "Compare"
+msgstr "Σύγκριση"
+
+#: src/dialogs.c:1453
+msgid ""
+"Two files selected → Compare. \"auto\": meld, kdiff3, kompare or diffuse, "
+"whichever is there; none: the differences as text. Or your own command (the "
+"two files are added at the end)."
+msgstr ""
+"Δύο επιλεγμένα αρχεία → Σύγκριση. \"auto\": meld, kdiff3, kompare ή diffuse, "
+"όποιο υπάρχει· αν κανένα: οι διαφορές ως κείμενο. Ή η δική σας εντολή (τα "
+"δύο αρχεία προστίθενται στο τέλος)."
+
+#: src/dialogs.c:1456
+msgid "Compare with"
+msgstr "Σύγκριση με"
+
+#: src/dialogs.c:1458
+msgid ""
+"Tools are part of millerX, not something added from outside. Each is off "
+"until you switch it on."
+msgstr ""
+"Τα εργαλεία είναι μέρος του millerX, όχι κάτι που προστέθηκε απ' έξω. Το "
+"καθένα είναι ανενεργό μέχρι να το ενεργοποιήσετε."
+
+#: src/dialogs.c:1464 src/git.c:471
+msgid "Git"
+msgstr "Git"
+
+#: src/dialogs.c:1467
+msgid "Colour file names by their Git state"
+msgstr "Χρωματισμός ονομάτων αρχείων ανάλογα με την κατάστασή τους στο Git"
+
+#: src/dialogs.c:1471
+msgid ""
+"Inside a repository: green for new files, red for changed ones; a folder "
+"shows what's in it. millerX asks git about the folder you look at, and again "
+"a moment after something changes. Fast in small repositories, noticeable in "
+"very big ones. A repository whose own settings could make git run programs "
+"(filters, includes) stays uncoloured."
+msgstr ""
+"Μέσα σε ένα αποθετήριο: πράσινο για νέα αρχεία, κόκκινο για αλλαγμένα· ένας "
+"φάκελος δείχνει τι περιέχει. Το millerX ρωτά το git για τον φάκελο που "
+"βλέπετε, και ξανά λίγο μετά από κάθε αλλαγή. Γρήγορο σε μικρά αποθετήρια, "
+"αισθητό σε πολύ μεγάλα. Ένα αποθετήριο του οποίου οι ρυθμίσεις θα μπορούσαν "
+"να κάνουν το git να εκτελέσει προγράμματα (filters, includes) μένει χωρίς "
+"χρώματα."
+
+#: src/dialogs.c:1520
 msgid "Files in Miller columns, from / to where you are."
 msgstr "Αρχεία σε στήλες Miller, από το / μέχρι εκεί που βρίσκεστε."
 
-#: src/dialogs.c:1483
+#: src/dialogs.c:1607
 msgid "✗ matches none of them"
 msgstr "✗ δεν ταιριάζει με κανένα"
 
-#: src/dialogs.c:1486
+#: src/dialogs.c:1610
 #, c-format
 msgid "✓ matches %s"
 msgstr "✓ ταιριάζει με το %s"
 
-#: src/dialogs.c:1490
+#: src/dialogs.c:1614
 msgid "…when the file is read"
 msgstr "…μόλις διαβαστεί το αρχείο"
 
-#: src/dialogs.c:1513
+#: src/dialogs.c:1637
 #, c-format
 msgid "✗ couldn't read the file: %s"
 msgstr "✗ δεν ήταν δυνατή η ανάγνωση του αρχείου: %s"
 
-#: src/dialogs.c:1556
+#: src/dialogs.c:1680
 #, c-format
 msgid "Checksums: %s"
 msgstr "Αθροίσματα ελέγχου: %s"
 
-#: src/dialogs.c:1559
+#: src/dialogs.c:1683
 msgid "_Close"
 msgstr "_Κλείσιμο"
 
-#: src/dialogs.c:1571
+#: src/dialogs.c:1695
 msgid "reading…"
 msgstr "ανάγνωση…"
 
-#: src/dialogs.c:1579 src/window.c:1845 src/window.c:1925
+#: src/dialogs.c:1703 src/window.c:2006 src/window.c:2087
 msgid "Copy"
 msgstr "Αντιγραφή"
 
-#: src/dialogs.c:1586 src/window.c:1873 src/window.c:1935
-msgid "Compare"
-msgstr "Σύγκριση"
-
-#: src/dialogs.c:1589
+#: src/dialogs.c:1713
 msgid "paste the checksum you were given"
 msgstr "επικολλήστε το άθροισμα ελέγχου που σας δόθηκε"
+
+#. git says why: no name set, a hook said no, nothing to commit …
+#: src/git.c:109 src/git.c:264 src/git.c:290 src/git.c:338
+msgid "git didn't say why."
+msgstr "Το git δεν είπε τον λόγο."
+
+#: src/git.c:171
+msgid "Nothing to commit: no changes in this repository."
+msgstr "Τίποτα για υποβολή: καμία αλλαγή σε αυτό το αποθετήριο."
+
+#: src/git.c:181 src/git.c:183
+msgid "Commit"
+msgstr "Υποβολή"
+
+#: src/git.c:188
+#, c-format
+msgid "<b>Commit to “%s”</b> (branch %s)"
+msgstr "<b>Υποβολή στο «%s»</b> (κλάδος %s)"
+
+#: src/git.c:189
+#, c-format
+msgid "<b>Commit to “%s”</b>"
+msgstr "<b>Υποβολή στο «%s»</b>"
+
+#: src/git.c:195
+msgid ""
+"The first line is the title; a blank line, then the details if you like."
+msgstr ""
+"Η πρώτη γραμμή είναι ο τίτλος· μετά μια κενή γραμμή και, αν θέλετε, οι "
+"λεπτομέρειες."
+
+#: src/git.c:208
+msgid "Goes in:"
+msgstr "Περιλαμβάνονται:"
+
+#: src/git.c:208
+msgid "Nothing added yet."
+msgstr "Δεν έχει προστεθεί τίποτα ακόμα."
+
+#: src/git.c:227
+#, c-format
+msgid "Also add the other changed file (%d)"
+msgid_plural "Also add the other changed files (%d)"
+msgstr[0] "Προσθήκη και του άλλου αλλαγμένου αρχείου (%d)"
+msgstr[1] "Προσθήκη και των άλλων αλλαγμένων αρχείων (%d)"
+
+#: src/git.c:231
+msgid ""
+"Changed, new and deleted files that aren't added yet go in too (git add -A). "
+"Files your .gitignore names stay out."
+msgstr ""
+"Αλλαγμένα, νέα και διαγραμμένα αρχεία που δεν έχουν προστεθεί ακόμα "
+"περιλαμβάνονται κι αυτά (git add -A). Τα αρχεία που ορίζει το .gitignore "
+"μένουν εκτός."
+
+#: src/git.c:264
+msgid "Couldn't add the changed files"
+msgstr "Δεν ήταν δυνατή η προσθήκη των αλλαγμένων αρχείων"
+
+#: src/git.c:277 src/git.c:291
+msgid "Couldn't commit"
+msgstr "Δεν ήταν δυνατή η υποβολή"
+
+#: src/git.c:277
+msgid "The message couldn't be written to a temporary file."
+msgstr "Δεν ήταν δυνατή η εγγραφή του μηνύματος σε προσωρινό αρχείο."
+
+#: src/git.c:286
+#, c-format
+msgid "Committed: %s"
+msgstr "Υποβλήθηκε: %s"
+
+#: src/git.c:338 src/git.c:357
+msgid "Couldn't revert"
+msgstr "Δεν ήταν δυνατή η επαναφορά"
+
+#: src/git.c:361
+msgid "Reverted to the last commit"
+msgstr "Έγινε επαναφορά στην τελευταία υποβολή"
+
+#: src/git.c:393
+msgid "Couldn't add to Git"
+msgstr "Δεν ήταν δυνατή η προσθήκη στο Git"
+
+#: src/git.c:394
+#, c-format
+msgid "Added to Git: %u item"
+msgid_plural "Added to Git: %u items"
+msgstr[0] "Προστέθηκε στο Git: %u στοιχείο"
+msgstr[1] "Προστέθηκαν στο Git: %u στοιχεία"
+
+#: src/git.c:404
+#, c-format
+msgid ""
+"Your changes to “%s” are thrown away: Git puts back the last committed "
+"version. This can't be undone."
+msgstr ""
+"Οι αλλαγές σας στο «%s» απορρίπτονται: το Git επαναφέρει την τελευταία "
+"υποβληθείσα έκδοση. Αυτό δεν αναιρείται."
+
+#: src/git.c:406
+#, c-format
+msgid ""
+"Your changes to %u item are thrown away: Git puts back the last committed "
+"version. This can't be undone."
+msgid_plural ""
+"Your changes to %u items are thrown away: Git puts back the last committed "
+"version. This can't be undone."
+msgstr[0] ""
+"Οι αλλαγές σας σε %u στοιχείο απορρίπτονται: το Git επαναφέρει την τελευταία "
+"υποβληθείσα έκδοση. Αυτό δεν αναιρείται."
+msgstr[1] ""
+"Οι αλλαγές σας σε %u στοιχεία απορρίπτονται: το Git επαναφέρει την τελευταία "
+"υποβληθείσα έκδοση. Αυτό δεν αναιρείται."
+
+#: src/git.c:411
+msgid ""
+"A file that was only added, never committed, stays as it is: it is just "
+"taken out of Git again."
+msgstr ""
+"Ένα αρχείο που απλώς προστέθηκε και δεν έγινε ποτέ commit μένει όπως είναι: "
+"απλώς βγαίνει ξανά από το Git."
+
+#: src/git.c:413
+msgid "Revert to the last commit?"
+msgstr "Επαναφορά στην τελευταία υποβολή;"
+
+#: src/git.c:413
+msgid "Revert"
+msgstr "Επαναφορά"
+
+#: src/git.c:463
+msgid "Status"
+msgstr "Κατάσταση"
+
+#: src/git.c:464
+msgid "Log"
+msgstr "Ιστορικό"
+
+#: src/git.c:465
+msgid "Diff"
+msgstr "Διαφορές"
+
+#: src/git.c:468
+msgid "Commit…"
+msgstr "Υποβολή…"
+
+#: src/git.c:470
+msgid "Revert…"
+msgstr "Επαναφορά…"
 
 #: src/job.c:87
 #, c-format
@@ -897,19 +1156,29 @@ msgid_plural "Copied %u items to %s"
 msgstr[0] "Αντιγράφηκε %u στοιχείο στο %s"
 msgstr[1] "Αντιγράφηκαν %u στοιχεία στο %s"
 
-#: src/job.c:222
+#: src/job.c:164
+#, c-format
+msgid ""
+"root may not read it: it is on a mount that only its own user may open "
+"(sshfs, a phone, a network share). Copy it in a normal millerX window."
+msgstr ""
+"το root δεν επιτρέπεται να το διαβάσει: βρίσκεται σε προσάρτηση που μόνο ο "
+"δικός της χρήστης μπορεί να ανοίξει (sshfs, ένα κινητό, ένας κοινόχρηστος "
+"φάκελος δικτύου). Αντιγράψτε το σε ένα κανονικό παράθυρο του millerX."
+
+#: src/job.c:243
 msgid "can't put a folder into itself"
 msgstr "ένας φάκελος δεν μπορεί να μπει μέσα στον εαυτό του"
 
-#: src/job.c:318
+#: src/job.c:340
 msgid "only local files can be extracted"
 msgstr "μόνο τοπικά αρχεία μπορούν να αποσυμπιεστούν"
 
-#: src/job.c:349
+#: src/job.c:371
 msgid "the archive is empty"
 msgstr "το αρχείο συμπίεσης είναι κενό"
 
-#: src/job.c:405
+#: src/job.c:427
 msgid "only local files can be packed"
 msgstr "μόνο τοπικά αρχεία μπορούν να συμπιεστούν"
 
@@ -1015,7 +1284,7 @@ msgstr "Προστέθηκε σελιδοδείκτης: %s"
 msgid "Bookmark removed: %s"
 msgstr "Ο σελιδοδείκτης αφαιρέθηκε: %s"
 
-#: src/places.c:118 src/window.c:536
+#: src/places.c:118 src/window.c:553
 #, c-format
 msgid "Not found: %s"
 msgstr "Δεν βρέθηκε: %s"
@@ -1119,7 +1388,7 @@ msgstr "%s: μπορεί να αφαιρεθεί με ασφάλεια"
 msgid "%s unmounted"
 msgstr "Το %s αποπροσαρτήθηκε"
 
-#: src/places.c:765 src/window.c:1829
+#: src/places.c:765 src/window.c:1990
 msgid "Open in new window"
 msgstr "Άνοιγμα σε νέο παράθυρο"
 
@@ -1278,22 +1547,22 @@ msgstr "Πίσω στις στήλες (Escape)"
 msgid "Search in “%s” and the folders in it"
 msgstr "Αναζήτηση στο «%s» και στους φακέλους του"
 
-#: src/settings.c:237
+#: src/settings.c:245
 msgid "Pick a language file: a .po or .mo file."
 msgstr "Επιλέξτε ένα αρχείο γλώσσας: αρχείο .po ή .mo."
 
-#: src/settings.c:244
+#: src/settings.c:252
 msgid ""
 "A .po file needs msgfmt (gettext) to be checked, and it isn't installed."
 msgstr ""
 "Ένα αρχείο .po χρειάζεται το msgfmt (gettext) για να ελεγχθεί, και αυτό δεν "
 "είναι εγκατεστημένο."
 
-#: src/settings.c:253
+#: src/settings.c:261
 msgid "Couldn't make a temporary file."
 msgstr "Δεν ήταν δυνατή η δημιουργία προσωρινού αρχείου."
 
-#: src/settings.c:540
+#: src/settings.c:548
 msgid "Drag to resize, double-click for the default width"
 msgstr "Σύρετε για αλλαγή μεγέθους, διπλό κλικ για το προεπιλεγμένο πλάτος"
 
@@ -1385,7 +1654,7 @@ msgstr "Άδειασμα του κάδου…"
 msgid "Put back"
 msgstr "Επαναφορά"
 
-#: src/trash.c:224 src/window.c:1858 src/window.c:1929
+#: src/trash.c:224 src/window.c:2019 src/window.c:2091
 msgid "Delete permanently…"
 msgstr "Οριστική διαγραφή…"
 
@@ -1487,7 +1756,7 @@ msgstr ""
 "\n"
 "Χρειάζονται δικαιώματα root."
 
-#: src/window.c:165 src/window.c:1876
+#: src/window.c:165 src/window.c:2038
 msgid "Open as root…"
 msgstr "Άνοιγμα ως root…"
 
@@ -1512,49 +1781,70 @@ msgstr "ROOT: %s"
 msgid "Computer: click a disk to open it, right-click to eject"
 msgstr "Υπολογιστής: κλικ σε δίσκο για άνοιγμα, δεξί κλικ για εξαγωγή"
 
-#: src/window.c:453
+#. TRANSLATORS: "/boot: 28 items, 3 selected" (the plural goes by the 28)
+#: src/window.c:448
 #, c-format
-msgid "%d item selected"
-msgid_plural "%d items selected"
-msgstr[0] "%d στοιχείο επιλεγμένο"
-msgstr[1] "%d στοιχεία επιλεγμένα"
+msgid "%s: %d item, %d selected"
+msgid_plural "%s: %d items, %d selected"
+msgstr[0] "%s: %d στοιχείο, %d επιλεγμένα"
+msgstr[1] "%s: %d στοιχεία, %d επιλεγμένα"
 
-#: src/window.c:562
+#: src/window.c:579
 msgid "Hidden files shown"
 msgstr "Τα κρυφά αρχεία εμφανίζονται"
 
-#: src/window.c:562
+#: src/window.c:579
 msgid "Hidden files hidden"
 msgstr "Τα κρυφά αρχεία αποκρύπτονται"
 
-#: src/window.c:712
+#: src/window.c:735
+msgid "Trusted"
+msgstr "Έμπιστο"
+
+#: src/window.c:736
+msgid ""
+"Run it, and from now on without asking, as long as it stays the same file. "
+"Settings → Programs lists what you trusted."
+msgstr ""
+"Εκτέλεση τώρα, και από εδώ και πέρα χωρίς ερώτηση, όσο παραμένει το ίδιο "
+"αρχείο. Οι Ρυθμίσεις → Προγράμματα δείχνουν τι έχετε ορίσει ως έμπιστο."
+
+#: src/window.c:744
+msgid ""
+"You trusted it before, but it has changed since: an update, or another file "
+"under the same name."
+msgstr ""
+"Το είχατε ορίσει ως έμπιστο, αλλά έχει αλλάξει από τότε: μια ενημέρωση ή "
+"άλλο αρχείο με το ίδιο όνομα."
+
+#: src/window.c:754
+msgid "Couldn't remember it as trusted."
+msgstr "Δεν ήταν δυνατή η αποθήκευσή του ως έμπιστο."
+
+#: src/window.c:769
 #, c-format
 msgid "“%s” is a script"
 msgstr "Το «%s» είναι σενάριο εντολών"
 
-#: src/window.c:714
+#: src/window.c:770
 msgid "Run it, or open it to read what it does?"
 msgstr "Εκτέλεση ή άνοιγμα για να δείτε τι κάνει;"
 
-#: src/window.c:716 src/window.c:1828 src/window.c:1831 src/window.c:1908
-#: src/window.c:1910
+#: src/window.c:772 src/window.c:1989 src/window.c:1992 src/window.c:2070
+#: src/window.c:2072
 msgid "Open"
 msgstr "Άνοιγμα"
 
-#: src/window.c:717
+#: src/window.c:773
 msgid "Run in terminal"
 msgstr "Εκτέλεση σε τερματικό"
 
-#: src/window.c:718 src/window.c:745 src/window.c:784
-msgid "Run"
-msgstr "Εκτέλεση"
-
-#: src/window.c:740
+#: src/window.c:810
 #, c-format
 msgid "“%s” is a program"
 msgstr "Το «%s» είναι πρόγραμμα"
 
-#: src/window.c:742
+#: src/window.c:812
 msgid ""
 "Whatever its name says, this file is a program. It runs with your rights and "
 "can do anything you can. Run it only if you trust where it came from."
@@ -1563,16 +1853,16 @@ msgstr ""
 "τα δικαιώματά σας και μπορεί να κάνει ό,τι μπορείτε κι εσείς. Εκτελέστε το "
 "μόνο αν εμπιστεύεστε την προέλευσή του."
 
-#: src/window.c:761
+#: src/window.c:834
 msgid "No program for text files is set."
 msgstr "Δεν έχει οριστεί πρόγραμμα για αρχεία κειμένου."
 
-#: src/window.c:778
+#: src/window.c:858
 #, c-format
 msgid "“%s” is a launcher"
 msgstr "Το «%s» είναι εκκινητής"
 
-#: src/window.c:780
+#: src/window.c:859
 #, c-format
 msgid ""
 "It calls itself “%s” and runs:\n"
@@ -1587,23 +1877,23 @@ msgstr ""
 "\n"
 "Εκτελέστε τον μόνο αν εμπιστεύεστε την προέλευσή του."
 
-#: src/window.c:781
+#: src/window.c:860
 msgid "(no command given)"
 msgstr "(δεν δίνεται εντολή)"
 
-#: src/window.c:783
+#: src/window.c:864
 msgid "Open as text"
 msgstr "Άνοιγμα ως κείμενο"
 
-#: src/window.c:867
+#: src/window.c:955
 msgid "Couldn't run it"
 msgstr "Δεν ήταν δυνατή η εκτέλεση"
 
-#: src/window.c:921 src/window.c:980 src/window.c:1038
+#: src/window.c:1009 src/window.c:1068 src/window.c:1126 src/window.c:1182
 msgid "No terminal found"
 msgstr "Δεν βρέθηκε τερματικό"
 
-#: src/window.c:922 src/window.c:981 src/window.c:1039
+#: src/window.c:1010 src/window.c:1069 src/window.c:1127 src/window.c:1183
 msgid ""
 "Install a terminal (xterm, xfce4-terminal, konsole, …) or set the TERMINAL "
 "environment variable to the one you use."
@@ -1611,59 +1901,87 @@ msgstr ""
 "Εγκαταστήστε ένα τερματικό (xterm, xfce4-terminal, konsole, …) ή ορίστε τη "
 "μεταβλητή περιβάλλοντος TERMINAL σε αυτό που χρησιμοποιείτε."
 
-#: src/window.c:1046
+#: src/window.c:1190
 msgid "New folder"
 msgstr "Νέος φάκελος"
 
-#: src/window.c:1046
+#: src/window.c:1190
 msgid "New Folder"
 msgstr "Νέος φάκελος"
 
-#: src/window.c:1053 src/window.c:1055
+#: src/window.c:1197 src/window.c:1199
 msgid "Couldn't create the folder"
 msgstr "Δεν ήταν δυνατή η δημιουργία του φακέλου"
 
-#: src/window.c:1069
+#: src/window.c:1213
 msgid "New file"
 msgstr "Νέο αρχείο"
 
-#: src/window.c:1069
+#: src/window.c:1213
 msgid "New File"
 msgstr "Νέο αρχείο"
 
-#: src/window.c:1077 src/window.c:1079
+#: src/window.c:1221 src/window.c:1223
 msgid "Couldn't create the file"
 msgstr "Δεν ήταν δυνατή η δημιουργία του αρχείου"
 
-#: src/window.c:1099
+#: src/window.c:1243
 msgid "Rename"
 msgstr "Μετονομασία"
 
-#: src/window.c:1103
+#: src/window.c:1247
 #, c-format
 msgid "“%s” already exists."
 msgstr "Το «%s» υπάρχει ήδη."
 
-#: src/window.c:1104 src/window.c:1110
+#: src/window.c:1248 src/window.c:1254
 msgid "Couldn't rename"
 msgstr "Δεν ήταν δυνατή η μετονομασία"
 
-#: src/window.c:1166
+#: src/window.c:1310
 msgid "Some items couldn't be deleted"
 msgstr "Ορισμένα στοιχεία δεν διαγράφηκαν"
 
-#: src/window.c:1170
+#: src/window.c:1314
 #, c-format
 msgid "%u item deleted"
 msgid_plural "%u items deleted"
 msgstr[0] "Διαγράφηκε %u στοιχείο"
 msgstr[1] "Διαγράφηκαν %u στοιχεία"
 
-#: src/window.c:1244 src/window.c:1252
+#: src/window.c:1388 src/window.c:1409
 msgid "Can't move to trash"
 msgstr "Δεν είναι δυνατή η μετακίνηση στον κάδο"
 
-#: src/window.c:1251
+#: src/window.c:1397
+#, c-format
+msgid ""
+"%s: %s\n"
+"\n"
+"This window runs as root, and root's trash is its own (/root/.local/share/"
+"Trash), not yours. It only takes files from the disk /root is on; for /"
+"home, /boot, /var or another disk, root has no trash.\n"
+"\n"
+"Delete permanently instead?"
+msgstr ""
+"%s: %s\n"
+"\n"
+"Αυτό το παράθυρο τρέχει ως root, και το root έχει δικό του κάδο απορριμμάτων "
+"(/root/.local/share/Trash), όχι τον δικό σας. Δέχεται μόνο αρχεία από τον "
+"δίσκο όπου βρίσκεται το /root· για το /home, το /boot, το /var ή άλλο δίσκο, "
+"το root δεν έχει κάδο.\n"
+"\n"
+"Οριστική διαγραφή αντί γι' αυτό;"
+
+#: src/window.c:1401
+msgid "Root can't move this to a trash"
+msgstr "Το root δεν μπορεί να το μετακινήσει σε κάδο"
+
+#: src/window.c:1401 src/window.c:1409
+msgid "Delete permanently"
+msgstr "Οριστική διαγραφή"
+
+#: src/window.c:1408
 #, c-format
 msgid ""
 "%s: %s\n"
@@ -1674,25 +1992,33 @@ msgstr ""
 "\n"
 "Οριστική διαγραφή αντί γι' αυτό;"
 
-#: src/window.c:1252
-msgid "Delete permanently"
-msgstr "Οριστική διαγραφή"
+#: src/window.c:1416
+#, c-format
+msgid "%u item moved to root's trash (/root/.local/share/Trash, not yours)"
+msgid_plural ""
+"%u items moved to root's trash (/root/.local/share/Trash, not yours)"
+msgstr[0] ""
+"%u στοιχείο μετακινήθηκε στον κάδο του root (/root/.local/share/Trash, όχι "
+"στον δικό σας)"
+msgstr[1] ""
+"%u στοιχεία μετακινήθηκαν στον κάδο του root (/root/.local/share/Trash, όχι "
+"στον δικό σας)"
 
-#: src/window.c:1259
+#: src/window.c:1420
 #, c-format
 msgid "%u item moved to the trash"
 msgid_plural "%u items moved to the trash"
 msgstr[0] "Μετακινήθηκε %u στοιχείο στον κάδο"
 msgstr[1] "Μετακινήθηκαν %u στοιχεία στον κάδο"
 
-#: src/window.c:1270
+#: src/window.c:1431
 #, c-format
 msgid "Delete %u item permanently?"
 msgid_plural "Delete %u items permanently?"
 msgstr[0] "Οριστική διαγραφή %u στοιχείου;"
 msgstr[1] "Οριστική διαγραφή %u στοιχείων;"
 
-#: src/window.c:1271
+#: src/window.c:1432
 #, c-format
 msgid ""
 "%s\n"
@@ -1703,222 +2029,222 @@ msgstr ""
 "\n"
 "Αυτό δεν αναιρείται."
 
-#: src/window.c:1272
+#: src/window.c:1433
 msgid "Delete"
 msgstr "Διαγραφή"
 
-#: src/window.c:1339
+#: src/window.c:1500
 #, c-format
 msgid "%u item cut"
 msgid_plural "%u items cut"
 msgstr[0] "Αποκόπηκε %u στοιχείο"
 msgstr[1] "Αποκόπηκαν %u στοιχεία"
 
-#: src/window.c:1341
+#: src/window.c:1502
 #, c-format
 msgid "%u item copied"
 msgid_plural "%u items copied"
 msgstr[0] "Αντιγράφηκε %u στοιχείο"
 msgstr[1] "Αντιγράφηκαν %u στοιχεία"
 
-#: src/window.c:1387
+#: src/window.c:1548
 msgid "Nothing to paste"
 msgstr "Τίποτα για επικόλληση"
 
-#: src/window.c:1416
+#: src/window.c:1577
 msgid "Extract to"
 msgstr "Αποσυμπίεση σε"
 
-#: src/window.c:1418
+#: src/window.c:1579
 msgid "Extract"
 msgstr "Αποσυμπίεση"
 
-#: src/window.c:1444 src/window.c:1445
+#: src/window.c:1605 src/window.c:1606
 msgid "Compress"
 msgstr "Συμπίεση"
 
-#: src/window.c:1452
+#: src/window.c:1613
 #, c-format
 msgid "Pack “%s” into an archive in the same folder:"
 msgstr "Συμπίεση του «%s» σε αρχείο στον ίδιο φάκελο:"
 
-#: src/window.c:1479
+#: src/window.c:1640
 #, c-format
 msgid "“%s” already exists. Pick another name."
 msgstr "Το «%s» υπάρχει ήδη. Επιλέξτε άλλο όνομα."
 
-#: src/window.c:1480
+#: src/window.c:1641
 msgid "Couldn't compress"
 msgstr "Δεν ήταν δυνατή η συμπίεση"
 
-#: src/window.c:1530
+#: src/window.c:1691
 msgid "Couldn't tell what kind of file this is"
 msgstr "Δεν ήταν δυνατό να αναγνωριστεί το είδος του αρχείου"
 
-#: src/window.c:1532
+#: src/window.c:1693
 msgid "Couldn't set the default program"
 msgstr "Δεν ήταν δυνατός ο ορισμός του προεπιλεγμένου προγράμματος"
 
-#: src/window.c:1536
+#: src/window.c:1697
 #, c-format
 msgid "%s opens with %s now"
 msgstr "Το %s ανοίγει τώρα με %s"
 
-#: src/window.c:1713
+#: src/window.c:1874
 msgid "Date modified (newest first)"
 msgstr "Ημερομηνία τροποποίησης (νεότερα πρώτα)"
 
-#: src/window.c:1732
+#: src/window.c:1893
 msgid "Back to name"
 msgstr "Πίσω στο όνομα"
 
-#: src/window.c:1738
+#: src/window.c:1899
 #, c-format
 msgid "Sort “%s”"
 msgstr "Ταξινόμηση «%s»"
 
-#: src/window.c:1783
+#: src/window.c:1944
 msgid "Set default"
 msgstr "Ορισμός ως προεπιλογή"
 
-#: src/window.c:1793
+#: src/window.c:1954
 msgid "Other application…"
 msgstr "Άλλη εφαρμογή…"
 
-#: src/window.c:1796
+#: src/window.c:1957
 msgid "Check file type"
 msgstr "Έλεγχος τύπου αρχείου"
 
-#: src/window.c:1799
+#: src/window.c:1960
 msgid "Open with"
 msgstr "Άνοιγμα με"
 
-#: src/window.c:1839 src/window.c:1919
+#: src/window.c:2000 src/window.c:2081
 msgid "Extract here"
 msgstr "Αποσυμπίεση εδώ"
 
-#: src/window.c:1840 src/window.c:1920
+#: src/window.c:2001 src/window.c:2082
 msgid "Extract to…"
 msgstr "Αποσυμπίεση σε…"
 
-#: src/window.c:1842 src/window.c:1922
+#: src/window.c:2003 src/window.c:2084
 msgid "Compress…"
 msgstr "Συμπίεση…"
 
-#: src/window.c:1844 src/window.c:1924
+#: src/window.c:2005 src/window.c:2086
 msgid "Cut"
 msgstr "Αποκοπή"
 
-#: src/window.c:1848
+#: src/window.c:2009
 #, c-format
 msgid "Paste into “%s”"
 msgstr "Επικόλληση στο «%s»"
 
-#: src/window.c:1853 src/window.c:1861
+#: src/window.c:2014 src/window.c:2022
 msgid "Paste"
 msgstr "Επικόλληση"
 
-#: src/window.c:1856 src/window.c:1927
+#: src/window.c:2017 src/window.c:2089
 msgid "Rename…"
 msgstr "Μετονομασία…"
 
-#: src/window.c:1857 src/window.c:1928
+#: src/window.c:2018 src/window.c:2090
 msgid "Move to trash"
 msgstr "Μετακίνηση στον κάδο"
 
-#: src/window.c:1864
+#: src/window.c:2025
 msgid "New folder…"
 msgstr "Νέος φάκελος…"
 
-#: src/window.c:1865
+#: src/window.c:2026
 msgid "New file…"
 msgstr "Νέο αρχείο…"
 
 #. the highlighted folder, else this column's own
-#: src/window.c:1867
+#: src/window.c:2028
 msgid "Open terminal here"
 msgstr "Άνοιγμα τερματικού εδώ"
 
-#: src/window.c:1869 src/window.c:1931
+#: src/window.c:2031 src/window.c:2093
 msgid "Copy path"
 msgstr "Αντιγραφή διαδρομής"
 
-#: src/window.c:1871 src/window.c:1933
+#: src/window.c:2033 src/window.c:2095
 msgid "Checksums…"
 msgstr "Αθροίσματα ελέγχου…"
 
-#: src/window.c:1874
+#: src/window.c:2036
 msgid "Add to bookmarks"
 msgstr "Προσθήκη στους σελιδοδείκτες"
 
-#: src/window.c:1878 src/window.c:1936
+#: src/window.c:2040 src/window.c:2098
 msgid "Properties…"
 msgstr "Ιδιότητες…"
 
-#: src/window.c:1880
+#: src/window.c:2042
 msgid "Show hidden files"
 msgstr "Εμφάνιση κρυφών αρχείων"
 
-#: src/window.c:1914
+#: src/window.c:2076
 msgid "Show in column"
 msgstr "Εμφάνιση σε στήλη"
 
-#: src/window.c:1931
+#: src/window.c:2093
 msgid "Copy paths"
 msgstr "Αντιγραφή διαδρομών"
 
-#: src/window.c:2216
+#: src/window.c:2378
 msgid "Parent folder (Backspace, Alt+Up)"
 msgstr "Γονικός φάκελος (Backspace, Alt+Πάνω)"
 
-#: src/window.c:2218
+#: src/window.c:2380
 msgid "Home (Alt+Home)"
 msgstr "Προσωπικός φάκελος (Alt+Home)"
 
-#: src/window.c:2220
+#: src/window.c:2382
 msgid "Computer: disks, USB sticks, network (Alt+/)"
 msgstr "Υπολογιστής: δίσκοι, USB, δίκτυο (Alt+/)"
 
-#: src/window.c:2224
+#: src/window.c:2386
 msgid "Bookmarks (Ctrl+D adds this folder)"
 msgstr "Σελιδοδείκτες (το Ctrl+D προσθέτει αυτόν τον φάκελο)"
 
-#: src/window.c:2228
+#: src/window.c:2390
 msgid "New window"
 msgstr "Νέο παράθυρο"
 
-#: src/window.c:2234
+#: src/window.c:2396
 msgid "Open this folder as root…"
 msgstr "Άνοιγμα αυτού του φακέλου ως root…"
 
-#: src/window.c:2240
+#: src/window.c:2402
 msgid "Search here…"
 msgstr "Αναζήτηση εδώ…"
 
-#: src/window.c:2244
+#: src/window.c:2406
 msgid "Settings…"
 msgstr "Ρυθμίσεις…"
 
-#: src/window.c:2247
+#: src/window.c:2409
 msgid "About millerX"
 msgstr "Σχετικά με το millerX"
 
-#: src/window.c:2297
+#: src/window.c:2459
 msgid ""
 "<b>You are root:</b> every change here is made as administrator. Be careful."
 msgstr "<b>Είστε root:</b> κάθε αλλαγή εδώ γίνεται ως διαχειριστής. Προσοχή."
 
-#: src/window.c:2374
+#: src/window.c:2540
 msgid "Not now"
 msgstr "Όχι τώρα"
 
-#: src/window.c:2374
+#: src/window.c:2540
 msgid ""
 "Files are still being copied, moved or packed. Restart when that is done."
 msgstr ""
 "Γίνεται ακόμα αντιγραφή, μετακίνηση ή συμπίεση αρχείων. Κάντε επανεκκίνηση "
 "όταν τελειώσει."
 
-#: src/window.c:2406
+#: src/window.c:2572
 msgid "Couldn't restart millerX"
 msgstr "Δεν ήταν δυνατή η επανεκκίνηση του millerX"

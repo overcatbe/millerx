@@ -7,9 +7,9 @@
 #include <unistd.h>
 
 Look LOOK = { NULL, 2, FALSE, PREVIEW_DEFAULT, TRUE, FALSE, .column_width = COL_DEFAULT,
-              .use_ffmpeg = TRUE, .use_pdftoppm = TRUE, .use_pkexec = TRUE, .use_blender = TRUE,
+              .use_ffmpeg = TRUE, .use_pdftoppm = TRUE, .use_pkexec = TRUE, .use_blender = TRUE, .use_git = FALSE, .git_colours = FALSE,
               .thumb_size = TSIZE_MEDIUM,
-              .thumbs = THUMBS_LOCAL, .detect = DETECT_NAME };
+              .thumbs = THUMBS_LOCAL, .detect = DETECT_NAME, .ask_programs = TRUE, .trust_system = TRUE };
 
 static char *config_file(void)
 {
@@ -83,12 +83,16 @@ void look_load(void)
     LOOK.use_pdftoppm = get_bool(kf, "helpers", "pdftoppm", TRUE);
     LOOK.use_pkexec = get_bool(kf, "helpers", "pkexec", TRUE);
     LOOK.use_blender = get_bool(kf, "helpers", "blender", TRUE);
+    LOOK.use_git = get_bool(kf, "helpers", "git", FALSE);
+    LOOK.git_colours = get_bool(kf, "helpers", "git_colours", FALSE);
     char *th = get_str(kf, "thumbnails", "show");
     LOOK.thumbs = !g_strcmp0(th, "always") ? THUMBS_ALWAYS : !g_strcmp0(th, "never") ? THUMBS_NEVER : THUMBS_LOCAL;
     g_free(th);
     char *dt = get_str(kf, "look", "recognise");      /* by name unless asked for */
     LOOK.detect = !g_strcmp0(dt, "content") ? DETECT_CONTENT : DETECT_NAME;
     g_free(dt);
+    LOOK.ask_programs = get_bool(kf, "browse", "ask_programs", TRUE);
+    LOOK.trust_system = get_bool(kf, "browse", "trust_system", TRUE);
     char *ts = get_str(kf, "thumbnails", "size");
     LOOK.thumb_size = !g_strcmp0(ts, "tiny") ? TSIZE_TINY : !g_strcmp0(ts, "small") ? TSIZE_SMALL
                     : !g_strcmp0(ts, "large") ? TSIZE_LARGE : TSIZE_MEDIUM;
@@ -141,10 +145,14 @@ gboolean look_save(GError **err)
     g_key_file_set_string(kf, "look", "highlight_color", LOOK.highlight);
     g_key_file_set_boolean(kf, "browse", "folders_first", LOOK.folders_first);
     g_key_file_set_boolean(kf, "browse", "show_hidden", LOOK.show_hidden);
+    g_key_file_set_boolean(kf, "browse", "ask_programs", LOOK.ask_programs);
+    g_key_file_set_boolean(kf, "browse", "trust_system", LOOK.trust_system);
     g_key_file_set_boolean(kf, "helpers", "ffmpeg", LOOK.use_ffmpeg);
     g_key_file_set_boolean(kf, "helpers", "pdftoppm", LOOK.use_pdftoppm);
     g_key_file_set_boolean(kf, "helpers", "pkexec", LOOK.use_pkexec);
     g_key_file_set_boolean(kf, "helpers", "blender", LOOK.use_blender);
+    g_key_file_set_boolean(kf, "helpers", "git", LOOK.use_git);
+    g_key_file_set_boolean(kf, "helpers", "git_colours", LOOK.git_colours);
     g_key_file_set_string(kf, "helpers", "compare", LOOK.compare ? LOOK.compare : "auto");
     g_key_file_set_string(kf, "thumbnails", "show",
                           LOOK.thumbs == THUMBS_LOCAL ? "local" : LOOK.thumbs == THUMBS_NEVER ? "never" : "always");

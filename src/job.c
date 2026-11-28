@@ -150,6 +150,25 @@ static Choice ask(Job *j, GFile *src, GFile *dst, gboolean merge)
 /* ---- the work (worker thread) ---------------------------------------------------------- */
 #define COPY_FLAGS (G_FILE_COPY_NOFOLLOW_SYMLINKS | G_FILE_COPY_ALL_METADATA)
 
+/* Root is refused only on a few mounts: one user's own (sshfs, rclone, a phone, GVfs's
+ * /run/user/…/gvfs, without allow_other) and NFS with root_squash. GLib then only says
+ * "Cannot retrieve attribute standard::type" (brobr), so say what it really is. */
+static void root_explain(GFile *src, GError **err)
+{
+    if (!err || !*err || !is_root())
+        return;
+    char *path = g_file_get_path(src);
+    GStatBuf st;
+    if (path && g_lstat(path, &st) && errno == EACCES) {
+        GError *e = g_error_new(G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED,
+                                _("root may not read it: it is on a mount that only its own user may open "
+                                  "(sshfs, a phone, a network share). Copy it in a normal millerX window."));
+        g_clear_error(err);
+        *err = e;
+    }
+    g_free(path);
+}
+
 static gboolean copy_tree(Job *j, GFile *src, GFile *dst, gboolean replace, GError **err)
 {
     if (g_cancellable_is_cancelled(j->cancel))
@@ -200,6 +219,8 @@ static gboolean copy_tree(Job *j, GFile *src, GFile *dst, gboolean replace, GErr
         flags |= G_FILE_COPY_OVERWRITE;
     }
     gboolean ok = g_file_copy(src, target, flags, j->cancel, NULL, NULL, err);
+    if (!ok)
+        root_explain(src, err);
     g_object_unref(target);
     return ok;
 }
@@ -252,6 +273,7 @@ static gboolean one(Job *j, GFile *src, GError **err)
             }
             if (!g_error_matches(e, G_IO_ERROR, G_IO_ERROR_WOULD_RECURSE)
                 && !g_error_matches(e, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED)) {
+                root_explain(src, &e);
                 g_propagate_error(err, e);
                 g_object_unref(target);
                 ok = FALSE;

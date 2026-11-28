@@ -4,7 +4,14 @@ A small, native file browser with **Miller columns**: every folder from `/` down
 where you are sits in its own column, and the selected file is previewed on the right.
 Like a mind map of your disk. Written in C with GTK 3 and GIO.
 
-> **New in 0.8.6:** security fixes from rizitis' review: a program or launcher **asks before it
+> **New in 0.8.8:** **Trusted programs**: the "is a program" question has a **Trusted** button,
+> and what you trusted runs without asking while it stays the same file; what your distribution
+> installed doesn't ask at all (thanks, SCerovec) · **middle-click a file** to open it · the
+> status line counts right after a multi-select and shows "28 items, 3 selected" · **Esc**
+> unselects · **Git actions** in the right-click menu, with a small Commit window, and green/red
+> names (thanks, random_guy) · Settings got a **Programs** and a **Tools** tab.
+>
+> **0.8.6:** security fixes from rizitis' review: a program or launcher **asks before it
 > runs** · language files are checked · no previews as root · hardened build · optional
 > **Recognise files by content** (thanks, SCerovec) · after a move or trash millerX stays on the
 > parent folder. See [Security in 0.8.6](#security-in-086).
@@ -79,13 +86,24 @@ millerX carries his name.
   to… (pick a folder), or Compress… to zip, tar.gz, tar.xz, tar.zst or 7z. In the background,
   with Cancel; hostile archives can't write outside the folder.
 - **Resizable columns**: drag a divider for long names, double-click for the default width.
-- **More windows**: Ctrl+N, Menu → New window, or middle-click a folder. Copy, paste and
+- **More windows**: Ctrl+N, Menu → New window, or middle-click a folder (a middle-click on a
+  file opens it, like a double-click). Copy, paste and
   drag & drop work between them, e.g. one window above the other to compare two folders.
 - **Open, Open with, Open terminal here** (your `$TERMINAL`, or the first of 17 known terminals).
   Open with → Set default picks the program a click opens that kind of file with (saved in
   `~/.config/mimeapps.list`, so Thunar and the file dialogs follow it too). Open with → Other
   application… offers every installed program, and Check file type shows in a terminal what
   `file` says the file really is, whatever its name says.
+- **Git** (optional, off by default: Settings → Tools → Git): inside a repository the
+  right-click menu gets **Git ▸** Status, Log and Diff (in your terminal), Add, **Commit…** (a
+  small window: the message, and exactly which files go in) and Revert… (asks first).
+  A second switch, **Colour file names by their Git state**, makes new files green and changed
+  ones red (a folder shows what's in it). millerX asks git about the folder you look at only,
+  and stores nothing itself; a repository whose own config has filters or includes, which could
+  make git run programs, stays uncoloured.
+  Git actions run git as usual: in a repository you don't trust, its own settings (pager, diff
+  tool, hooks, filters) can run programs, as with git in a terminal. Revert gives a changed file its
+  committed version back; a file that was only added stays and is just taken out of Git again.
 - **Checksums** (right-click → Checksums…): MD5, SHA-1 and SHA-256 in one read, a Copy button each,
   and a field to paste the checksum you were given: ✓ or ✗.
 - **Cut, copy, paste**, compatible with Thunar's clipboard. A highlighted folder receives the paste.
@@ -93,7 +111,7 @@ millerX carries his name.
   links. Drag with the right button (or hold Alt when dropping) and millerX asks: Copy here, Move
   here or Link here.
 - **Compare** two files: select two, right-click → Compare. It opens meld, kdiff3, kompare or
-  diffuse, whichever is installed, or your own tool (Settings → Optional helpers → Compare with);
+  diffuse, whichever is installed, or your own tool (Settings → Programs → Compare with);
   with none of them it shows the differences itself (`diff -u`).
 - **Links** show in italics with the link emblem, in the columns and the gallery.
 - **Rename, new folder, new file, move to trash, delete permanently**, with a conflict dialog
@@ -167,7 +185,7 @@ Everything he found is fixed in 0.8.6:
 **Thanks to SCerovec** for the idea of recognising files by their content. Other file managers don't
 do this, so it's off by default, for those who want to be extra careful:
 
-- Settings → Folders → Recognise files → **By content, when you open a file**. millerX then reads
+- Settings → Programs → Recognise files → **By content, when you open a file**. millerX then reads
   the start of the file you select or open: the preview, Properties, Open with and a double-click
   go by what it really is (a "holiday.jpg" that is text opens in the text editor). The icons in
   the lists stay by name, nothing is read in the background. Not a virus scanner.
@@ -182,6 +200,30 @@ Tested on 2026-11-26 with a small program that only creates a marker file:
 | **millerX 0.8.6** | picture icon, asks first (by content: the preview says "Executable") | asks, Cancel is the default |
 
 Nautilus wasn't tested.
+
+### Trusted programs (0.8.8)
+
+> *"A sentience of impending doom that always follows reckless foolishness."*
+> SCerovec, on why millerX asks first
+
+The question before a program, script or launcher runs has a **Trusted** button (SCerovec's
+wish): it runs it, and from then on it runs without asking, **as long as it is the same file**.
+millerX remembers its SHA-256 fingerprint; an update or another file put there under the same
+name is asked about again ("it has changed since you trusted it"). Settings → Programs lists
+what you trusted, ✕ forgets one.
+
+What your distribution installed doesn't ask at all: **Trust system programs (owned by root)**,
+on by default, lets a program, script or launcher run when it and every folder above it belong
+to root and only root can change them (/usr, /opt…). Whoever can change those owns the machine
+already, so a question there protects nothing, and Kate doesn't ask again after every update.
+Your own files (your home, downloads, USB sticks) still ask. Only Linux's own disk file systems
+count (ext4, XFS, Btrfs and friends): a FAT or NTFS stick, an ISO or a network share mounted by
+root shows every file as root's, and those still ask. A link counts as root's only when the link
+and its folder are root's too, so a "README" link to /usr/bin/make in a download asks.
+
+The same place has **Ask before running programs, scripts and launchers**, on by default;
+switched off, everything runs at once without a question, also a "holiday.jpg" that is really
+a program.
 
 ## What millerX isn't
 
@@ -214,13 +256,15 @@ fast and clear, it leaves some things out on purpose:
 | Ctrl+H | show hidden files |
 | Ctrl+L | location bar |
 | Ctrl+F | search here (Escape: back to the columns) |
+| Esc | unselect everything in this column |
 | Alt+Enter | properties |
 | Ctrl+N | new window at this folder |
 | Ctrl+, | settings |
 | F5 | reload |
 | Ctrl+Q, Ctrl+W | close |
 
-Middle-click a folder (or right-click → Open in new window) to open it in a second window.
+Middle-click a folder (or right-click → Open in new window) to open it in a second window;
+middle-click a file to open it.
 
 In the gallery: Ctrl/Shift+click selects several thumbnails, Ctrl+A all. Enter opens one in its
 column; Delete / Shift+Delete, Ctrl+C / Ctrl+X, F2, the Menu key and Alt+Enter work as in a column.
@@ -238,8 +282,8 @@ millerx
 └── libwebp          WebP pictures (optional: left out if it isn't there when building)
 ```
 
-Programs it uses **if they are installed**, nothing breaks without them (Settings → Optional
-helpers shows which ones it found):
+Programs it uses **if they are installed**, nothing breaks without them (Settings → Thumbnails →
+Optional helpers shows which ones it found):
 
 | For | Program | Without it |
 | --- | --- | --- |
@@ -249,7 +293,8 @@ helpers shows which ones it found):
 | Compare two files | `meld`, `kdiff3`, `kompare` or `diffuse` (or your own, in Settings) | the differences as text (`diff -u`) |
 | Blender files' pictures | `blender-thumbnailer` (comes with Blender; also found in `/opt/blender`, else the newest `/opt/blender-*`) | the .blend icon |
 | USB sticks, Connect to server | gvfs / udisks2 | only disks already mounted |
-| Open terminal here | any terminal (`$TERMINAL` or one of 17 known) | a message saying none was found |
+| Open terminal here, Git's Status / Log / Diff | any terminal (`$TERMINAL` or one of 17 known) | a message saying none was found |
+| Git actions (off by default) | `git` | no Git menu |
 
 No Qt, no KDE or GNOME libraries, no Python, no thumbnailer service, nothing running in
 the background. It works with any window manager or desktop on X11.
@@ -301,6 +346,8 @@ recognise = name         # name (like other file managers) | content (the file y
 [browse]
 folders_first = true
 show_hidden = false
+ask_programs = true      # a program, script or launcher asks before it runs (what you trusted doesn't)
+trust_system = true      # ...except root's own (owned by root, in folders only root can change)
 
 [thumbnails]
 show = local             # local (none in network folders) | always | never
@@ -314,6 +361,8 @@ ffmpeg = true            # video frames, music covers, AVIF/HEIC
 pdftoppm = true          # PDF pages
 pkexec = true            # "Open as root"
 blender = true           # pictures saved in .blend files
+git = false              # Git actions in the right-click menu, inside a repository
+git_colours = false      # ...and file names coloured by their Git state
 compare = auto           # Compare: auto (meld, kdiff3, kompare, diffuse) or your own command
 
 [window]                 # written by millerX: where the last closed window was
@@ -332,9 +381,17 @@ Exec=/usr/bin/millerx --dbus
 
 Folders with their own sorting are kept in `~/.config/millerx/sorting.conf`, one per line
 (`date`, `size`, `type` or `name`, a tab, `1` if reversed, a tab, the folder). The settings
-list them too, to change or remove.
+list them too, to change or remove. Trusted programs are in `~/.config/millerx/trusted` (size,
+SHA-256 and path, one per line); Settings → Programs lists them.
 
 ![Settings](docs/settings.png?v=082)
+
+## Testers
+
+millerX is tested by the people of the
+[LinuxQuestions thread](https://www.linuxquestions.org/questions/slackware-14/miller-columns-file-manager-4175768497/):
+01micko, brobr, chrisretusn, dchmelik, FTIO, gmgf, gus3, kgha, Paulo2, pm_a_cup_of_tea,
+random_guy, rizitis and SCerovec. Thank you!
 
 ## Bugs and wishes
 

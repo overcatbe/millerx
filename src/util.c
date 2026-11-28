@@ -118,7 +118,7 @@ gboolean is_archive_type(const char *ct)
 }
 
 /* ---- Recognise files by content (SCerovec's idea, LinuxQuestions) -------------------------------
- * Settings → Folders → Recognise files. By name (the default) millerX is like other file managers:
+ * Settings → Programs → Recognise files. By name (the default) millerX is like other file managers:
  * GIO goes by the name and only looks inside when the name says nothing. By content, the file you
  * select or open is read too (its first 4 KB, once): where the content is of another *family* than
  * the name says (a "holiday.jpg" that is a program, text or an archive; a "notes.txt" that is a

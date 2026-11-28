@@ -41,7 +41,8 @@ enum { TSIZE_SMALL, TSIZE_MEDIUM, TSIZE_LARGE, TSIZE_TINY };  /* gallery tiles: 
 
 /* list store columns */
 GIcon *link_icon(GIcon *icon);
-enum { C_ICON, C_NAME, C_ISDIR, C_FILE, C_SORT, C_MTIME, C_SIZE, C_EXT, C_LINK, C_N };
+enum { C_ICON, C_NAME, C_ISDIR, C_FILE, C_SORT, C_MTIME, C_SIZE, C_EXT, C_LINK, C_GIT, C_N };
+enum { GIT_CLEAN, GIT_NEW, GIT_CHANGED };   /* C_GIT: a name's colour (git.c) */
 
 /* ---- settings (settings.c) --------------------------------------------- */
 typedef struct {
@@ -59,10 +60,14 @@ typedef struct {
     int column_width;       /* start width of folder columns, 120-600 */
     int thumbs;             /* gallery thumbnails: THUMBS_ALWAYS, _LOCAL (not on network folders), _NEVER */
     int detect;             /* DETECT_NAME (default, like other file managers) or DETECT_CONTENT */
+    gboolean trust_system;  /* root's own programs (owned by root, only root can change them) run unasked */
+    gboolean ask_programs;  /* a program, script or launcher asks before it runs (default; trust.c) */
     gboolean use_ffmpeg;    /* optional helpers, when installed: switched off here */
     gboolean use_pdftoppm;
     gboolean use_pkexec;    /* off: no "Open as root" anywhere */
     gboolean use_blender;   /* blender-thumbnailer: the picture saved inside .blend files */
+    gboolean git_colours;   /* … and file names coloured by their Git state (off by default) */
+    gboolean use_git;       /* Git actions in the right-click menu, inside a repository (off by default) */
     int thumb_size;         /* TSIZE_TINY, _SMALL, _MEDIUM, _LARGE */
     char *language;         /* "system", "en", "wizard", "wienerisch" or "own:NAME": read once at start */
     char *compare;          /* what compares two files: "auto" (meld, kdiff3, kompare, diffuse) or a command */
@@ -124,6 +129,15 @@ gboolean sorting_get(const char *path, FolderSort *out);     /* TRUE: the folder
 void sorting_set(const char *path, SortBy by, gboolean reverse);
 void sorting_clear(const char *path);
 GList *sorting_paths(void);                                  /* new strings, sorted */
+
+/* trust.c: programs you trusted run without the question while they are the same file */
+enum { TRUST_NO, TRUST_YES, TRUST_CHANGED };
+int trust_check(const char *path);          /* TRUST_CHANGED: trusted, but it isn't the same file now */
+gboolean trust_add(const char *path);
+void trust_remove(const char *path);
+GList *trust_paths(void);                   /* new strings, sorted */
+gboolean trust_is_system(const char *path);  /* root's: owned by root, only root can change it or its folders */
+void settings_trust_changed(void);          /* an open Settings window shows the new Trusted list */
 char *sorting_describe(FolderSort s);
 char *sorting_ext(const char *name);
 int sorting_compare(FolderSort s, gboolean da, gboolean db, const char *ka, const char *kb,
@@ -159,6 +173,9 @@ struct Column {
     gboolean trash;            /* the trash or a folder in it: put back, delete for good */
     gboolean trash_root;       /* trash:/// itself: its dates are deletion dates, its own sort button */
     GPtrArray *objs;           /* its GMounts / GVolumes, by row (C_SIZE) */
+    guint git_timer;           /* Git colours (git.c): a refresh waiting, */
+    gboolean git_busy, git_again;   /* git status running, and asked again meanwhile */
+    GFileMonitor *git_index;   /* the repository's .git/index: a commit changes the colours */
 };
 
 struct Preview {
@@ -231,6 +248,12 @@ void win_error_root(Win *w, const char *title, const char *text, GFile *folder);
 void win_open_as_root(Win *w, GFile *folder);
 gboolean is_root(void);
 gboolean win_confirm(Win *w, const char *title, const char *text, const char *ok);
+/* /bin/sh -c script in a terminal, in dir, with args as $0 $1 …; 0 when no terminal was found */
+gboolean win_terminal_run(Win *w, const char *dir, const char *script, const char *const *args);
+/* git.c: the "Git" submenu of the right-click menu (switched on in Settings, inside a repository) */
+void git_menu_add(GtkWidget *menu, Win *w, GList *files, GFile *folder);
+void git_colours_schedule(Column *c);       /* soon: ask git for this column's colours */
+void git_colours_stop(Column *c);           /* the column closes, or the colours were switched off */
 char *win_ask_name(Win *w, const char *title, const char *initial, gboolean select_stem);
 void win_open_path(Win *w, GFile *f);
 void win_chain_finished(Win *w);

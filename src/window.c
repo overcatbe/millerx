@@ -435,12 +435,30 @@ static void truncate_after(Win *w, Column *c)
     }
 }
 
+/* The status line for a column: "/boot: 28 items", and ", 3 selected" when there are several.
+ * Written on every change of the selection, so it never keeps an old count (random_guy). */
+static void status_count(Win *w, Column *c, int selected)
+{
+    if (c->computer)
+        return;                     /* Computer has its own line */
+    char *p = file_path(c->gfile);
+    int n = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(c->store), NULL);
+    if (selected > 1) {
+        /* TRANSLATORS: "/boot: 28 items, 3 selected" (the plural goes by the 28) */
+        win_status(w, ngettext("%s: %d item, %d selected", "%s: %d items, %d selected", n), p, n, selected);
+    } else {
+        win_status(w, ngettext("%s: %d item", "%s: %d items", n), p, n);
+    }
+    g_free(p);
+}
+
 void win_column_selected(Win *w, Column *c)
 {
     if (!g_list_find(w->columns, c))
         return;
     truncate_after(w, c);
     int n = column_n_selected(c);
+    status_count(w, c, n);          /* a folder opening to the right writes its own when it's read */
     if (n == 0) {
         preview_clear(w->preview);
         update_location(w, c->gfile);
@@ -450,7 +468,6 @@ void win_column_selected(Win *w, Column *c)
         GList *files = column_selected_files(c);
         update_location(w, c->gfile);
         preview_show_many(w->preview, files);
-        win_status(w, ngettext("%d item selected", "%d items selected", n), n);
         g_list_free_full(files, g_object_unref);
         return;
     }
@@ -704,22 +721,69 @@ static int exec_kind(const char *path)
     return EXEC_NO;
 }
 
+/* Trusted programs (trust.c): "Trusted" runs it now and from then on without asking, while it is
+ * the same file. With "Ask before running programs" off (Settings → Programs) nothing asks. */
+static int trust_state(const char *path)
+{
+    if (!LOOK.ask_programs || (LOOK.trust_system && trust_is_system(path)))
+        return TRUST_YES;
+    return trust_check(path);
+}
+
+static void add_trusted(GtkWidget *d, int id)
+{
+    GtkWidget *b = gtk_dialog_add_button(GTK_DIALOG(d), _("Trusted"), id);
+    gtk_widget_set_tooltip_text(b, _("Run it, and from now on without asking, as long as it stays the "
+                                     "same file. Settings → Programs lists what you trusted."));
+}
+
+/* the dialog's text, plus a line when it was trusted but isn't the same file any more */
+static void ask_text(GtkWidget *d, int trust, const char *text)
+{
+    char *t = trust == TRUST_CHANGED
+        ? g_strconcat(text, "\n\n", _("You trusted it before, but it has changed since: an update, or "
+                                       "another file under the same name."), NULL)
+        : g_strdup(text);
+    gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(d), "%s", t);
+    g_free(t);
+}
+
+static void trust_now(Win *w, const char *path)
+{
+    if (!trust_add(path))
+        win_status(w, "%s", _("Couldn't remember it as trusted."));
+    else
+        settings_trust_changed();
+}
+
 /* a script: run it blindly, or read it first? */
 static void ask_script(Win *w, const char *path)
 {
+    int trust = trust_state(path);
+    if (trust == TRUST_YES) {
+        run_program(w, path);
+        return;
+    }
     char *base = g_path_get_basename(path);
     GtkWidget *d = gtk_message_dialog_new(GTK_WINDOW(w->window), GTK_DIALOG_MODAL, GTK_MESSAGE_QUESTION,
                                           GTK_BUTTONS_NONE, _("“%s” is a script"), base);
-    gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(d),
-                                             _("Run it, or open it to read what it does?"));
+    ask_text(d, trust, _("Run it, or open it to read what it does?"));
     gtk_dialog_add_button(GTK_DIALOG(d), _("Cancel"), 0);
     gtk_dialog_add_button(GTK_DIALOG(d), _("Open"), 1);
     gtk_dialog_add_button(GTK_DIALOG(d), _("Run in terminal"), 2);
+    add_trusted(d, 4);
     gtk_dialog_add_button(GTK_DIALOG(d), _("Run"), 3);
     gtk_dialog_set_default_response(GTK_DIALOG(d), 1);
+    win_ref(w);                                 /* the window may be closed behind the dialog */
     int r = gtk_dialog_run(GTK_DIALOG(d));
     gtk_widget_destroy(d);
     g_free(base);
+    if (w->dead)
+        r = 0;
+    if (r == 4) {
+        trust_now(w, path);
+        r = 3;
+    }
     if (r == 1) {
         GFile *f = g_file_new_for_path(path);
         open_by_type(w, f);
@@ -729,26 +793,35 @@ static void ask_script(Win *w, const char *path)
     } else if (r == 3) {
         run_program(w, path);
     }
+    win_unref(w);
 }
 
 /* A program (ELF): never started without asking. Its name can say "holiday.jpg" and the x bit
  * says nothing (FAT sticks, archives), so the dialog says what it really is; Cancel is the default. */
 static void ask_program(Win *w, const char *path)
 {
+    int trust = trust_state(path);
+    if (trust == TRUST_YES) {
+        run_program(w, path);
+        return;
+    }
     char *base = g_path_get_basename(path);
     GtkWidget *d = gtk_message_dialog_new(GTK_WINDOW(w->window), GTK_DIALOG_MODAL, GTK_MESSAGE_WARNING,
                                           GTK_BUTTONS_NONE, _("“%s” is a program"), base);
-    gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(d),
+    ask_text(d, trust,
         _("Whatever its name says, this file is a program. It runs with your rights and can do "
           "anything you can. Run it only if you trust where it came from."));
     gtk_dialog_add_button(GTK_DIALOG(d), _("Cancel"), 0);
+    add_trusted(d, 2);
     gtk_dialog_add_button(GTK_DIALOG(d), _("Run"), 1);
     gtk_dialog_set_default_response(GTK_DIALOG(d), 0);
     win_ref(w);                                 /* the window may be closed behind the dialog */
     int r = gtk_dialog_run(GTK_DIALOG(d));
     gtk_widget_destroy(d);
     g_free(base);
-    if (r == 1 && !w->dead)
+    if (r == 2)
+        trust_now(w, path);
+    if ((r == 1 || r == 2) && !w->dead)
         run_program(w, path);
     win_unref(w);
 }
@@ -771,22 +844,37 @@ static void open_as_text(Win *w, GFile *f)
  * survives extraction, so it says what it would run and asks. Open (as text) is the default. */
 static void ask_launcher(Win *w, GFile *f, GDesktopAppInfo *app)
 {
+    char *path = g_file_get_path(f);
+    int trust = path ? trust_state(path) : TRUST_NO;
+    if (trust == TRUST_YES) {
+        open_with(w, G_APP_INFO(app), NULL);
+        g_free(path);
+        return;
+    }
     char *base = g_file_get_basename(f);
     const char *name = g_app_info_get_name(G_APP_INFO(app));
     const char *cmd = g_app_info_get_commandline(G_APP_INFO(app));
     GtkWidget *d = gtk_message_dialog_new(GTK_WINDOW(w->window), GTK_DIALOG_MODAL, GTK_MESSAGE_WARNING,
                                           GTK_BUTTONS_NONE, _("“%s” is a launcher"), base);
-    gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(d),
-        _("It calls itself “%s” and runs:\n\n%s\n\nRun it only if you trust where it came from."),
-        name ? name : "", cmd ? cmd : _("(no command given)"));
+    char *text = g_strdup_printf(_("It calls itself “%s” and runs:\n\n%s\n\nRun it only if you trust where it came from."),
+                                 name ? name : "", cmd ? cmd : _("(no command given)"));
+    ask_text(d, trust, text);
+    g_free(text);
     gtk_dialog_add_button(GTK_DIALOG(d), _("Cancel"), 0);
     gtk_dialog_add_button(GTK_DIALOG(d), _("Open as text"), 1);
+    if (path)
+        add_trusted(d, 3);
     gtk_dialog_add_button(GTK_DIALOG(d), _("Run"), 2);
     gtk_dialog_set_default_response(GTK_DIALOG(d), 1);
     win_ref(w);                                 /* the window may be closed behind the dialog */
     int r = gtk_dialog_run(GTK_DIALOG(d));
     gtk_widget_destroy(d);
     g_free(base);
+    if (r == 3) {
+        trust_now(w, path);
+        r = 2;
+    }
+    g_free(path);
     if (!w->dead && r == 1)
         open_as_text(w, f);
     else if (!w->dead && r == 2)
@@ -833,29 +921,58 @@ static void open_with(Win *w, GAppInfo *app, GList *files)
     }
 }
 
-/* Known terminals, how to tell them the folder, and how to have them run a command (NULL: we
- * don't know that one's way, so it isn't used for running). All of them are also started *in*
- * the folder, so the ones without a folder flag open there too. */
-static const struct { const char *exe, *flag, *exec; } TERMINALS[] = {
-    { "xfce4-terminal", "--working-directory=", "-x" },
-    { "x-terminal-emulator", NULL, "-e" },    /* Debian's alternatives link */
-    { "konsole", "--workdir", "-e" },
-    { "gnome-terminal", "--working-directory=", "--" },
-    { "kgx", "--working-directory=", NULL },  /* GNOME Console */
-    { "ptyxis", "--working-directory=", NULL },
-    { "mate-terminal", "--working-directory=", "-x" },
-    { "lxterminal", "--working-directory=", NULL },
-    { "qterminal", "-w", NULL },
-    { "tilix", "--working-directory=", NULL },
-    { "terminator", "--working-directory=", "-x" },
-    { "alacritty", "--working-directory", "-e" },
-    { "kitty", "--directory", "" },           /* "": the command simply follows */
-    { "foot", "--working-directory=", "" },
-    { "wezterm", NULL, NULL },
-    { "urxvt", NULL, "-e" },
-    { "st", NULL, "-e" },
-    { "xterm", NULL, "-e" },
+/* Known terminals: a word that goes first (WezTerm's "start"), how to tell them the folder, and how
+ * to have them run a command ("": the command simply follows; NULL: we don't know that one's way
+ * for sure, so it isn't used for running). Each way is from the terminal's own manual. All of them
+ * are also started *in* the folder, so the ones without a folder flag open there too.
+ * $TERMINAL is used first; if it names one of these, that one's own way is used for running too
+ * (xfce4-terminal wants -x, gnome-terminal --), otherwise xterm's -e. */
+static const struct { const char *exe, *pre, *flag, *exec; } TERMINALS[] = {
+    { "xfce4-terminal", NULL, "--working-directory=", "-x" },
+    { "x-terminal-emulator", NULL, NULL, "-e" },    /* Debian's alternatives link */
+    { "konsole", NULL, "--workdir", "-e" },
+    { "gnome-terminal", NULL, "--working-directory=", "--" },
+    { "kgx", NULL, "--working-directory=", "--" },  /* GNOME Console */
+    { "ptyxis", NULL, "--working-directory=", "--" },
+    { "mate-terminal", NULL, "--working-directory=", "-x" },
+    { "lxterminal", NULL, "--working-directory=", NULL },   /* -e takes one string */
+    { "qterminal", NULL, "-w", NULL },                      /* -e takes one string */
+    { "tilix", NULL, "--working-directory=", NULL },        /* -e takes one string */
+    { "terminator", NULL, "--working-directory=", "-x" },
+    { "alacritty", NULL, "--working-directory", "-e" },
+    { "kitty", NULL, "--directory", "" },
+    { "foot", NULL, "--working-directory=", "" },
+    { "wezterm", "start", "--cwd", "--" },
+    { "urxvt", NULL, NULL, "-e" },
+    { "st", NULL, NULL, "-e" },
+    { "xterm", NULL, NULL, "-e" },
 };
+
+/* the TERMINALS entry for a program (name or path), or -1 */
+static int terminal_known(const char *prog)
+{
+    char *base = g_path_get_basename(prog);
+    int found = -1;
+    for (guint i = 0; found < 0 && i < G_N_ELEMENTS(TERMINALS); i++)
+        if (!strcmp(base, TERMINALS[i].exe))
+            found = (int) i;
+    g_free(base);
+    return found;
+}
+
+/* entry i's first word and folder flag, onto a (which frees its strings) */
+static void terminal_dir(GPtrArray *a, int i, const char *dir)
+{
+    const char *flag = TERMINALS[i].flag;
+    if (TERMINALS[i].pre)
+        g_ptr_array_add(a, g_strdup(TERMINALS[i].pre));
+    if (flag && g_str_has_suffix(flag, "=")) {
+        g_ptr_array_add(a, g_strconcat(flag, dir, NULL));        /* --working-directory=/path */
+    } else if (flag) {
+        g_ptr_array_add(a, g_strdup(flag));                       /* --workdir /path */
+        g_ptr_array_add(a, g_strdup(dir));
+    }
+}
 
 /* a program, started in its own folder */
 static void run_program(Win *w, const char *path)
@@ -870,23 +987,33 @@ static void run_program(Win *w, const char *path)
     g_free(dir);
 }
 
-/* A script in a terminal, which then waits for Enter, so you can read what it printed.
- * $TERMINAL is taken to understand -e, like xterm. */
-static void run_in_terminal(Win *w, const char *path)
+/* A shell script in a terminal (a script you run, Check file type, Git's Status, Log, Diff): the
+ * script is fixed text, everything that comes from files goes in as arguments ($0 $1 …), never
+ * into the script. */
+gboolean win_terminal_run(Win *w, const char *dir, const char *script, const char *const *args)
 {
-    char *dir = g_path_get_dirname(path);
-    const char *wait = "\"$0\"; echo; printf '[finished: press Enter]'; read x";
     gboolean ok = FALSE;
     const char *env = g_getenv("TERMINAL");
     if (env && *env) {
         char **tv = NULL;
         if (g_shell_parse_argv(env, NULL, &tv, NULL)) {
-            GPtrArray *a = g_ptr_array_new();
+            GPtrArray *a = g_ptr_array_new_with_free_func(g_free);
             for (int i = 0; tv[i]; i++)
-                g_ptr_array_add(a, tv[i]);
-            const char *rest[] = { "-e", "/bin/sh", "-c", wait, path };
+                g_ptr_array_add(a, g_strdup(tv[i]));
+            int k = terminal_known(tv[0]);
+            const char *exec = "-e";                    /* xterm's way, the most common one */
+            if (k >= 0 && TERMINALS[k].exec) {
+                if (TERMINALS[k].pre && !tv[1])         /* "wezterm" alone: "wezterm start" */
+                    g_ptr_array_add(a, g_strdup(TERMINALS[k].pre));
+                exec = TERMINALS[k].exec;
+            }
+            if (*exec)
+                g_ptr_array_add(a, g_strdup(exec));
+            const char *rest[] = { "/bin/sh", "-c", script };
             for (guint i = 0; i < G_N_ELEMENTS(rest); i++)
-                g_ptr_array_add(a, (char *) rest[i]);
+                g_ptr_array_add(a, g_strdup(rest[i]));
+            for (int i = 0; args[i]; i++)
+                g_ptr_array_add(a, g_strdup(args[i]));
             g_ptr_array_add(a, NULL);
             ok = spawn_child(dir, (char **) a->pdata, G_SPAWN_SEARCH_PATH, NULL);
             g_ptr_array_free(a, TRUE);
@@ -901,18 +1028,14 @@ static void run_in_terminal(Win *w, const char *path)
             continue;
         GPtrArray *a = g_ptr_array_new_with_free_func(g_free);
         g_ptr_array_add(a, exe);
-        const char *flag = TERMINALS[i].flag;
-        if (flag && g_str_has_suffix(flag, "=")) {
-            g_ptr_array_add(a, g_strconcat(flag, dir, NULL));
-        } else if (flag) {
-            g_ptr_array_add(a, g_strdup(flag));
-            g_ptr_array_add(a, g_strdup(dir));
-        }
+        terminal_dir(a, (int) i, dir);
         if (*TERMINALS[i].exec)
             g_ptr_array_add(a, g_strdup(TERMINALS[i].exec));
-        const char *rest[] = { "/bin/sh", "-c", wait, path };
+        const char *rest[] = { "/bin/sh", "-c", script };
         for (guint k = 0; k < G_N_ELEMENTS(rest); k++)
             g_ptr_array_add(a, g_strdup(rest[k]));
+        for (int k = 0; args[k]; k++)
+            g_ptr_array_add(a, g_strdup(args[k]));
         g_ptr_array_add(a, NULL);
         ok = spawn_child(dir, (char **) a->pdata, G_SPAWN_DEFAULT, NULL);
         g_ptr_array_free(a, TRUE);
@@ -921,65 +1044,29 @@ static void run_in_terminal(Win *w, const char *path)
         win_error(w, _("No terminal found"),
                   _("Install a terminal (xterm, xfce4-terminal, konsole, …) or set the TERMINAL "
                   "environment variable to the one you use."));
+    return ok;
+}
+
+/* A script in a terminal, which then waits for Enter, so you can read what it printed */
+static void run_in_terminal(Win *w, const char *path)
+{
+    char *dir = g_path_get_dirname(path);
+    const char *args[] = { path, NULL };                /* $0 */
+    win_terminal_run(w, dir, "\"$0\"; echo; printf '[finished: press Enter]'; read x", args);
     g_free(dir);
 }
 
 /* Open with → Check file type: a terminal in the file's folder runs `file` on it, so you see
- * what the file really is, whatever its name says. Its own function on purpose: run_in_terminal
- * (scripts) stays as it is; both use the same TERMINALS list. The name goes in as an argument
- * ("$0"), never into the shell text, so odd names can't do anything. */
+ * what the file really is, whatever its name says. The name goes in as an argument ("$0"), never
+ * into the shell text, so odd names can't do anything. */
 static void check_file_type(Win *w, GFile *f)
 {
     char *path = g_file_get_path(f);
     if (!path)
         return;
     char *dir = g_path_get_dirname(path), *name = g_path_get_basename(path);
-    const char *script = "file -- \"$0\"; echo; printf '[finished: press Enter]'; read x";
-    gboolean ok = FALSE;
-    const char *env = g_getenv("TERMINAL");
-    if (env && *env) {
-        char **tv = NULL;
-        if (g_shell_parse_argv(env, NULL, &tv, NULL)) {
-            GPtrArray *a = g_ptr_array_new();
-            for (int i = 0; tv[i]; i++)
-                g_ptr_array_add(a, tv[i]);
-            const char *rest[] = { "-e", "/bin/sh", "-c", script, name };
-            for (guint i = 0; i < G_N_ELEMENTS(rest); i++)
-                g_ptr_array_add(a, (char *) rest[i]);
-            g_ptr_array_add(a, NULL);
-            ok = spawn_child(dir, (char **) a->pdata, G_SPAWN_SEARCH_PATH, NULL);
-            g_ptr_array_free(a, TRUE);
-        }
-        g_strfreev(tv);
-    }
-    for (guint i = 0; !ok && i < G_N_ELEMENTS(TERMINALS); i++) {
-        if (!TERMINALS[i].exec)
-            continue;
-        char *exe = g_find_program_in_path(TERMINALS[i].exe);
-        if (!exe)
-            continue;
-        GPtrArray *a = g_ptr_array_new_with_free_func(g_free);
-        g_ptr_array_add(a, exe);
-        const char *flag = TERMINALS[i].flag;
-        if (flag && g_str_has_suffix(flag, "=")) {
-            g_ptr_array_add(a, g_strconcat(flag, dir, NULL));
-        } else if (flag) {
-            g_ptr_array_add(a, g_strdup(flag));
-            g_ptr_array_add(a, g_strdup(dir));
-        }
-        if (*TERMINALS[i].exec)
-            g_ptr_array_add(a, g_strdup(TERMINALS[i].exec));
-        const char *rest[] = { "/bin/sh", "-c", script, name };
-        for (guint k = 0; k < G_N_ELEMENTS(rest); k++)
-            g_ptr_array_add(a, g_strdup(rest[k]));
-        g_ptr_array_add(a, NULL);
-        ok = spawn_child(dir, (char **) a->pdata, G_SPAWN_DEFAULT, NULL);
-        g_ptr_array_free(a, TRUE);
-    }
-    if (!ok)
-        win_error(w, _("No terminal found"),
-                  _("Install a terminal (xterm, xfce4-terminal, konsole, …) or set the TERMINAL "
-                  "environment variable to the one you use."));
+    const char *args[] = { name, NULL };
+    win_terminal_run(w, dir, "file -- \"$0\"; echo; printf '[finished: press Enter]'; read x", args);
     g_free(name);
     g_free(dir);
     g_free(path);
@@ -1020,19 +1107,12 @@ static void terminal_here(Win *w, GFile *folder)
         char *exe = g_find_program_in_path(TERMINALS[i].exe);
         if (!exe)
             continue;
-        const char *flag = TERMINALS[i].flag;
-        char *a1 = NULL, *a2 = NULL;
-        if (flag && g_str_has_suffix(flag, "="))
-            a1 = g_strconcat(flag, path, NULL);          /* --working-directory=/path */
-        else if (flag) {
-            a1 = g_strdup(flag);                          /* --workdir /path */
-            a2 = g_strdup(path);
-        }
-        char *argv[] = { exe, a1, a2, NULL };
-        ok = spawn_child(path, argv, G_SPAWN_DEFAULT, NULL);
-        g_free(a1);
-        g_free(a2);
-        g_free(exe);
+        GPtrArray *a = g_ptr_array_new_with_free_func(g_free);
+        g_ptr_array_add(a, exe);
+        terminal_dir(a, (int) i, path);
+        g_ptr_array_add(a, NULL);
+        ok = spawn_child(path, (char **) a->pdata, G_SPAWN_DEFAULT, NULL);
+        g_ptr_array_free(a, TRUE);
     }
     if (!ok)
         win_error(w, _("No terminal found"),
@@ -1246,6 +1326,19 @@ void win_trash(Win *w, GList *files)
         g_free(msg);
         g_free(names);
         g_list_free_full(failed, g_object_unref);
+    } else if (failed && is_root()) {
+        /* root has its own trash (/root/.local/share/Trash), only on /root's disk: GLib won't make one
+         * on /home, /boot, /var, /mnt… ("system internal mounts", brobr) */
+        char *names = some_names(failed, 5);
+        char *msg = g_strdup_printf(_("%s: %s\n\nThis window runs as root, and root's trash is its own "
+                                      "(/root/.local/share/Trash), not yours. It only takes files from the disk "
+                                      "/root is on; for /home, /boot, /var or another disk, root has no trash.\n\n"
+                                      "Delete permanently instead?"), names, first_err);
+        if (win_confirm(w, _("Root can't move this to a trash"), msg, _("Delete permanently")))
+            delete_files(w, failed);
+        g_free(msg);
+        g_free(names);
+        g_list_free_full(failed, g_object_unref);
     } else if (failed) {
         char *names = some_names(failed, 5);
         char *msg = g_strdup_printf(_("%s: %s\n\nDelete permanently instead?"), names, first_err);
@@ -1254,6 +1347,10 @@ void win_trash(Win *w, GList *files)
         g_free(msg);
         g_free(names);
         g_list_free_full(failed, g_object_unref);
+    } else if (is_root()) {
+        guint n = g_list_length(files);
+        win_status(w, ngettext("%u item moved to root's trash (/root/.local/share/Trash, not yours)",
+                               "%u items moved to root's trash (/root/.local/share/Trash, not yours)", n), n);
     } else {
         guint n = g_list_length(files);
         win_status(w, ngettext("%u item moved to the trash", "%u items moved to the trash", n), n);
@@ -1865,6 +1962,7 @@ void win_context_menu(Win *w, Column *c, GdkEventButton *ev)
     item(menu, w, c, NULL, NULL, A_NEW_FILE, _("New file…"), NULL, TRUE);
     sort_menu(menu, w, folder);       /* the highlighted folder, else this column's own */
     item(menu, w, c, NULL, folder, A_TERMINAL, _("Open terminal here"), NULL, TRUE);
+    git_menu_add(menu, w, files, c->gfile);   /* only when switched on, inside a repository */
     if (files)
         item(menu, w, c, files, NULL, A_COPY_PATH, _("Copy path"), NULL, TRUE);
     if (n == 1 && !single_dir && !is_dir(files->data, TRUE))
@@ -2328,6 +2426,7 @@ void app_apply_look(GtkApplication *app, const Look *nl)
     char *col = g_strdup(nl->divider_color), *hl = g_strdup(nl->highlight);
     char *lang = g_strdup(nl->language ? nl->language : "system");
     gboolean hl_changed = g_strcmp0(nl->highlight, LOOK.highlight);
+    gboolean git_changed = nl->use_git != LOOK.use_git || nl->git_colours != LOOK.git_colours;
     g_free(LOOK.divider_color);
     g_free(LOOK.highlight);
     g_free(LOOK.language);
@@ -2343,6 +2442,9 @@ void app_apply_look(GtkApplication *app, const Look *nl)
         Win *w = g_object_get_data(G_OBJECT(l->data), "millerx-win");
         if (w && !w->dead) {
             win_look_changed(w, resort);
+            if (git_changed)                 /* Git colours on or off: at once */
+                for (GList *k = w->columns; k; k = k->next)
+                    git_colours_schedule(k->data);
             if (hl_changed) {
                 /* tree views keep the look of rows that were already selected: restyle each */
                 gtk_widget_reset_style(w->window);

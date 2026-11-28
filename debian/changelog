@@ -1,3 +1,14 @@
+millerx (0.8.8) unstable; urgency=medium
+
+  * Trusted programs: a program, script or launcher you trusted runs
+    without asking while it stays the same file (SHA-256).
+  * Setting: ask before running programs, scripts and launchers (on).
+  * Middle-click on a file opens it.
+  * The status line counts right after a multi-select; Esc unselects.
+  * Optional Git actions in the right-click menu, with a Commit window.
+
+ -- overcatbe <1771834+overcatbe@users.noreply.github.com>  Sat, 28 Nov 2026 08:30:00 +0200
+
 millerx (0.8.6) unstable; urgency=medium
 
   * Security fixes from rizitis' review: programs and launchers ask before

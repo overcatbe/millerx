@@ -1,6 +1,7 @@
 src/archive.c
 src/column.c
 src/dialogs.c
+src/git.c
 src/highlight.c
 src/job.c
 src/main.c
@@ -12,5 +13,6 @@ src/settings.c
 src/sorting.c
 src/thumbcache.c
 src/trash.c
+src/trust.c
 src/util.c
 src/window.c
