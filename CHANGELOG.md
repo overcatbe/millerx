@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.8.9 (not released yet)
+
+Wishes from the LinuxQuestions thread, and sticks without GVfs.
+
+- **USB sticks, cards and discs straight from udisks2**, no GVfs needed. The Computer column
+  lists them with their name, device and file system; a click mounts, an encrypted one asks for
+  its passphrase (wiped from memory after use). Right-click: Mount, Unlock…, Unmount and
+  **Safe to remove**, which unmounts everything on that stick, locks what was unlocked and
+  switches it off; the status line says it is writing out what is left, since that can take a
+  while on a slow stick. Never offered for the disk the system runs from. Without udisks2 the
+  Computer column works through GIO as before.
+- **A stick plugged in gets a notice**: "SANDISK plugged in (/dev/sdb1, vfat, 32 GB)" with Mount
+  and Show, then where it was mounted. Plug in, mount, copy, Safe to remove, walk away: the
+  stick-shift way. Thanks, SCerovec!
+- **Automount** (Settings → Tools → Devices, off by default): a stick mounts itself and opens in a
+  new window. Encrypted ones always wait for you.
+- **"millerX was updated · Restart now."** After a package upgrade the running millerX notices its
+  own program was replaced and offers a restart; your windows come back where they were. New
+  windows of an old millerX say so too. Thanks, SCerovec!
+- **The copy bar counts bytes**: it counts what to copy first, then "Copying name (2/5) · 1.2 GB
+  of 4.0 GB", so one big file moves the bar too (it used to move only between files). A move on
+  the same disk is still a quick rename, with nothing to count. Thanks, kgha!
+- **"You may not read it"** instead of GLib's "Cannot retrieve attribute standard::type" in a
+  normal window too: "/root belongs to root. Copy it in a millerX window opened as root", "…
+  belongs to <user>", or "… is yours, but its permissions shut you out". Thanks, brobr!
+- **`$TERMINAL` set to lxterminal, qterminal or tilix**: they still open folders, but running a
+  script or a Git command uses the next terminal, because they split the command line their own
+  way and a file name must never go through that.
+- **Translations:** the texts about sticks and disks (udisks2) were never collected for
+  translation; German and Greek have them now, and all 0.8.9 texts.
+
 ## 0.8.8 (2026-11-28)
 
 Wishes from the LinuxQuestions thread. (There is no millerX 0.8.7: that number went to millerX

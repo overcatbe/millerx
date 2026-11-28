@@ -4,6 +4,9 @@
 #include "millerx.h"
 #include <mntent.h>
 #include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/file.h>
 
 /* ---- bookmarks --------------------------------------------------------------------------- */
 typedef struct {
@@ -318,6 +321,20 @@ gboolean path_on_network(const char *path)
     return net;
 }
 
+/* is path a mount point of a device (/dev/…)? Those are udisks2's or the mount table's rows */
+static gboolean is_dev_mount(const char *path)
+{
+    FILE *f = path ? setmntent("/proc/self/mounts", "r") : NULL;
+    if (!f)
+        return FALSE;
+    gboolean r = FALSE;
+    struct mntent *e;
+    while (!r && (e = getmntent(f)))
+        r = !strcmp(e->mnt_dir, path) && !strncmp(e->mnt_fsname, "/dev/", 5);
+    endmntent(f);
+    return r;
+}
+
 /* one row; obj (a GMount or GVolume) is kept in the column, its index in C_SIZE; the kind in
  * C_MTIME; "where\ndevice\nfile system" in C_EXT for the preview; C_SORT keeps the groups in order */
 static void add_row(Column *c, int group, int kind, const char *name, GIcon *icon, GFile *root,
@@ -368,10 +385,18 @@ void computer_fill(Column *c)
     Win *w = c->win;
     gtk_list_store_clear(c->store);
     g_ptr_array_set_size(c->objs, 0);
-    /* what GIO shows itself (sticks, phones, network places) is listed from GIO, with mount/eject */
+    /* sticks, disks, cards and discs: from udisks2 when it is there; then GIO keeps only what has
+     * no device (phones, cameras, network places). Without udisks2 GIO lists them all, as before. */
+    gboolean ud = ud_ready();
+    GPtrArray *rows = ud ? ud_rows() : NULL;
     GHashTable *gio_paths = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
     GList *all = g_volume_monitor_get_mounts(w->volumes);
-    for (GList *l = all; l; l = l->next) {
+    for (guint i = 0; rows && i < rows->len; i++) {
+        UdRow *r = g_ptr_array_index(rows, i);
+        if (r->mount)
+            g_hash_table_add(gio_paths, g_strdup(r->mount));
+    }
+    for (GList *l = all; !ud && l; l = l->next) {
         GFile *root = g_mount_get_root(l->data);
         char *p = g_file_get_path(root);
         if (p)
@@ -380,6 +405,17 @@ void computer_fill(Column *c)
     }
     fill_disks(c, gio_paths, FALSE);
     g_hash_table_unref(gio_paths);
+    for (guint i = 0; rows && i < rows->len; i++) {
+        UdRow *r = g_ptr_array_index(rows, i);
+        int kind = r->state == UD_MOUNTED ? K_UD_MOUNTED : r->state == UD_LOCKED ? K_UD_LOCKED : K_UD_UNMOUNTED;
+        GFile *root = r->mount ? g_file_new_for_path(r->mount) : NULL;
+        char *info = g_strdup_printf("%s\n%s\n%s", r->mount ? r->mount : "", r->dev ? r->dev : "", r->fs ? r->fs : "");
+        add_row(c, r->system ? 1 : 2, kind, r->name, r->icon, root, r->obj, info);
+        g_free(info);
+        g_clear_object(&root);
+    }
+    if (rows)
+        g_ptr_array_unref(rows);
 
     GHashTable *seen = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
     GList *vols = g_volume_monitor_get_volumes(w->volumes);
@@ -389,7 +425,9 @@ void computer_fill(Column *c)
         char *name = g_volume_get_name(v);
         GIcon *icon = g_volume_get_icon(v);
         char *dev = g_volume_get_identifier(v, G_VOLUME_IDENTIFIER_KIND_UNIX_DEVICE);
-        if (mnt) {
+        if (ud && dev) {
+            /* a device: udisks2's row */
+        } else if (mnt) {
             GFile *root = g_mount_get_root(mnt);
             g_hash_table_add(seen, g_file_get_uri(root));
             char *where = file_path(root);
@@ -398,7 +436,6 @@ void computer_fill(Column *c)
             g_free(info);
             g_free(where);
             g_object_unref(root);
-            g_object_unref(mnt);
         } else if (g_volume_can_mount(v)) {
             char *info = g_strdup_printf("\n%s\n", dev ? dev : "");
             add_row(c, 2, K_VOLUME, name, icon, NULL, G_OBJECT(v), info);
@@ -406,6 +443,7 @@ void computer_fill(Column *c)
         }
         g_free(dev);
         g_clear_object(&icon);
+        g_clear_object(&mnt);
         g_free(name);
     }
     g_list_free_full(vols, g_object_unref);
@@ -415,7 +453,10 @@ void computer_fill(Column *c)
         GVolume *v = g_mount_get_volume(mnt);
         GFile *root = g_mount_get_root(mnt);
         char *uri = g_file_get_uri(root);
-        if (!v && !g_mount_is_shadowed(mnt) && !g_hash_table_contains(seen, uri)) {
+        char *native = ud ? g_file_get_path(root) : NULL;
+        gboolean device = native && is_dev_mount(native);   /* udisks2's (or the mount table's) */
+        g_free(native);
+        if (!v && !device && !g_mount_is_shadowed(mnt) && !g_hash_table_contains(seen, uri)) {
             char *name = g_mount_get_name(mnt);
             GIcon *icon = g_mount_get_icon(mnt);
             char *where = file_path(root);
@@ -487,7 +528,9 @@ static int selected_row(Column *c, GtkTreeIter *it, GObject **obj, char **info, 
     gint64 kind;
     guint64 idx;
     gtk_tree_model_get(m, it, C_MTIME, &kind, C_SIZE, &idx, C_EXT, info, C_NAME, name, -1);
-    *obj = (kind == K_MOUNT || kind == K_VOLUME) && idx < c->objs->len ? g_ptr_array_index(c->objs, idx) : NULL;
+    gboolean has_obj = kind == K_MOUNT || kind == K_VOLUME || kind == K_UD_MOUNTED || kind == K_UD_UNMOUNTED ||
+                       kind == K_UD_LOCKED;
+    *obj = has_obj && idx < c->objs->len ? g_ptr_array_index(c->objs, idx) : NULL;
     return (int) kind;
 }
 
@@ -505,7 +548,8 @@ void computer_preview(Column *c)
     gtk_tree_model_get(GTK_TREE_MODEL(c->store), &it, C_ICON, &icon, C_FILE, &root, -1);
     char **f = g_strsplit(info ? info : "", "\n", 3);
     const char *where = f[0] ? f[0] : "", *dev = f[0] && f[1] ? f[1] : "", *fs = f[0] && f[1] && f[2] ? f[2] : "";
-    const char *note = kind == K_VOLUME ? _("Not mounted: click to mount it.")
+    const char *note = kind == K_VOLUME || kind == K_UD_UNMOUNTED ? _("Not mounted: click to mount it.")
+                     : kind == K_UD_LOCKED ? _("Encrypted: click to unlock it.")
                      : kind == K_CONNECT ? _("sftp://, smb://, ftp://, dav:// … through GVfs. Click to enter an address.")
                      : NULL;
     preview_show_disk(c->win->preview, name, icon, root, where, dev, fs, note);
@@ -571,6 +615,7 @@ static void connect_to_server(Win *w)
 }
 
 static void mount_volume(Win *w, GVolume *v);
+static void mount_ud(Win *w, GObject *dev, gboolean new_window);
 
 /* a click or Enter on a row that isn't a folder yet: mount it, or connect */
 void computer_activate(Column *c)
@@ -581,6 +626,8 @@ void computer_activate(Column *c)
     int kind = selected_row(c, &it, &obj, &info, &name);
     if (kind == K_VOLUME && obj)
         mount_volume(c->win, G_VOLUME(obj));
+    else if ((kind == K_UD_UNMOUNTED || kind == K_UD_LOCKED) && obj)
+        mount_ud(c->win, obj, FALSE);
     else if (kind == K_CONNECT)
         connect_to_server(c->win);
     g_free(info);
@@ -588,17 +635,15 @@ void computer_activate(Column *c)
 }
 
 /* step out of a drive that is going away, so nothing of ours keeps it busy */
-static void leave_mount(Win *w, GMount *mnt)
+static void leave_root(Win *w, GFile *root)
 {
     if (w->dead)
         return;
-    GFile *root = g_mount_get_root(mnt);
     gboolean inside = FALSE;
     for (GList *l = w->columns; l && !inside; l = l->next) {
         Column *c = l->data;
         inside = !c->computer && (g_file_equal(c->gfile, root) || g_file_has_prefix(c->gfile, root));
     }
-    g_object_unref(root);
     if (inside && computer_column(w)) {
         win_open_computer(w);
     } else if (inside) {
@@ -606,6 +651,13 @@ static void leave_mount(Win *w, GMount *mnt)
         win_open_path(w, h);
         g_object_unref(h);
     }
+}
+
+static void leave_mount(Win *w, GMount *mnt)
+{
+    GFile *root = g_mount_get_root(mnt);
+    leave_root(w, root);
+    g_object_unref(root);
 }
 
 /* in the Computer column, select (and so open) the row of root; FALSE if it isn't there */
@@ -709,8 +761,224 @@ static void unmount(Win *w, GMount *mnt)
     g_object_unref(op);
 }
 
+/* ---- udisks2: mount, unmount, safe to remove ---- */
+static GtkApplication *APP;
+
+typedef struct {
+    char *name;
+    gboolean flag;                  /* mounting: open a new window there; unmounting: remove */
+} UdCtx;
+
+static UdCtx *ctx_new(GObject *dev, gboolean flag)
+{
+    UdCtx *x = g_new0(UdCtx, 1);
+    x->name = ud_name(dev);
+    x->flag = flag;
+    return x;
+}
+
+static void ctx_free(UdCtx *x)
+{
+    g_free(x->name);
+    g_free(x);
+}
+
+static void ud_mounted(Win *w, const char *path, const char *err, gpointer data)
+{
+    UdCtx *x = data;
+    if (!w->dead) {
+        if (err && *err) {
+            char *t = g_strdup_printf(_("Couldn't mount %s"), x->name);
+            win_error(w, t, err);
+            g_free(t);
+            win_status(w, " ");
+        } else if (err) {
+            win_status(w, " ");                         /* the passphrase was cancelled */
+        } else if (path) {
+            win_status(w, _("Mounted %s at %s"), x->name, path);
+            GFile *root = g_file_new_for_path(path);
+            if (x->flag)
+                win_new(w->app, root);
+            else if (!computer_select_root(w, root))
+                win_open_path(w, root);
+            g_object_unref(root);
+        }
+    }
+    ctx_free(x);
+}
+
+static void mount_ud(Win *w, GObject *dev, gboolean new_window)
+{
+    UdCtx *x = ctx_new(dev, new_window);
+    win_status(w, _("Mounting %s …"), x->name);
+    ud_mount(w, dev, ud_mounted, x);
+}
+
+static void ud_unmounted(Win *w, const char *path, const char *err, gpointer data)
+{
+    UdCtx *x = data;
+    if (!w->dead) {
+        if (err && *err) {
+            char *t = g_strdup_printf(x->flag ? _("Couldn't make %s safe to remove") : _("Couldn't unmount %s"), x->name);
+            win_error(w, t, err);
+            g_free(t);
+            win_status(w, " ");
+        } else {
+            win_status(w, x->flag ? _("%s: safe to remove") : _("%s unmounted"), x->name);
+        }
+        computer_refresh(w);
+    }
+    ctx_free(x);
+}
+
+static void unmount_ud(Win *w, GObject *dev, gboolean remove)
+{
+    /* every window steps out first, so millerX itself doesn't keep it busy */
+    GPtrArray *mps = ud_mounts_on_drive(dev, remove);
+    for (guint i = 0; i < mps->len; i++) {
+        GFile *root = g_file_new_for_path(g_ptr_array_index(mps, i));
+        for (GList *l = gtk_application_get_windows(w->app); l; l = l->next) {
+            Win *o = g_object_get_data(G_OBJECT(l->data), "millerx-win");
+            if (o)
+                leave_root(o, root);
+        }
+        g_object_unref(root);
+    }
+    UdCtx *x = ctx_new(dev, remove);
+    /* unmounting writes out what is still in memory: say so, on a slow stick it takes a while */
+    if (mps->len)
+        win_status(w, _("Writing what is left to %s and unmounting …"), x->name);
+    else
+        win_status(w, _("Switching %s off …"), x->name);
+    g_ptr_array_unref(mps);
+    ud_unmount(w, dev, remove, ud_unmounted, x);
+}
+
+/* the row of dev in the Computer column, selected; FALSE if it isn't there */
+static gboolean computer_select_dev(Win *w, GObject *dev)
+{
+    Column *c = computer_column(w);
+    if (!c)
+        return FALSE;
+    GtkTreeModel *m = GTK_TREE_MODEL(c->store);
+    GtkTreeIter it;
+    gboolean ok = gtk_tree_model_get_iter_first(m, &it);
+    while (ok) {
+        gint64 kind;
+        guint64 idx;
+        gtk_tree_model_get(m, &it, C_MTIME, &kind, C_SIZE, &idx, -1);
+        if ((kind == K_UD_MOUNTED || kind == K_UD_UNMOUNTED || kind == K_UD_LOCKED) && idx < c->objs->len &&
+            g_ptr_array_index(c->objs, idx) == dev) {
+            column_select_iter(c, &it);
+            return TRUE;
+        }
+        ok = gtk_tree_model_iter_next(m, &it);
+    }
+    return FALSE;
+}
+
+/* ---- a stick plugged in: tell (Automount off), or mount it and open a window (on) ---- */
+static int LOCK_FD = -1;
+
+/* with several millerX running, only one of them reacts (the first to take the lock) */
+static gboolean devices_ours(void)
+{
+    if (LOCK_FD >= 0)
+        return TRUE;
+    char *p = g_build_filename(g_get_user_runtime_dir(), "millerx-devices.lock", NULL);
+    int fd = open(p, O_RDWR | O_CREAT | O_CLOEXEC, 0600);
+    g_free(p);
+    if (fd < 0)
+        return TRUE;
+    if (flock(fd, LOCK_EX | LOCK_NB) != 0) {
+        close(fd);
+        return FALSE;
+    }
+    LOCK_FD = fd;
+    return TRUE;
+}
+
+static Win *active_win(void)
+{
+    if (!APP)
+        return NULL;
+    GtkWindow *aw = gtk_application_get_active_window(APP);
+    Win *w = aw ? g_object_get_data(G_OBJECT(aw), "millerx-win") : NULL;
+    for (GList *l = gtk_application_get_windows(APP); !w && l; l = l->next)
+        w = g_object_get_data(G_OBJECT(l->data), "millerx-win");
+    return w && !w->dead ? w : NULL;
+}
+
+static void arrived_clicked(Win *w, int button, gpointer data)
+{
+    GObject *dev = data;
+    if (button == 2) {                              /* Show: its row in the Computer column */
+        win_open_computer(w);
+        computer_select_dev(w, dev);
+        return;
+    }
+    char *mp = ud_state(dev) == UD_MOUNTED ? ud_mount_point(dev) : NULL;
+    if (mp) {                                       /* Open */
+        GFile *root = g_file_new_for_path(mp);
+        win_open_path(w, root);
+        g_object_unref(root);
+        g_free(mp);
+    } else {
+        mount_ud(w, dev, FALSE);                    /* Mount / Unlock… */
+    }
+}
+
+void places_device_arrived(GObject *dev)
+{
+    Win *w = active_win();
+    if (!w || is_root() || !devices_ours())
+        return;
+    int st = ud_state(dev);
+    if (LOOK.automount && st == UD_UNMOUNTED && ud_auto(dev)) {
+        mount_ud(w, dev, TRUE);
+        return;
+    }
+    char *name = ud_name(dev), *what = ud_describe(dev), *t;
+    const char *b1;
+    if (st == UD_MOUNTED) {
+        char *mp = ud_mount_point(dev);
+        t = g_strdup_printf(_("%s (%s) is mounted at %s"), name, what, mp ? mp : "?");
+        g_free(mp);
+        b1 = _("Open");
+    } else if (st == UD_LOCKED) {
+        t = g_strdup_printf(_("%s plugged in (%s). It is encrypted."), name, what);
+        b1 = _("Unlock…");
+    } else {
+        t = g_strdup_printf(_("%s plugged in (%s)."), name, what);
+        b1 = _("Mount");
+    }
+    win_notice(w, g_dbus_object_get_object_path(G_DBUS_OBJECT(dev)), t, b1, _("Show"), arrived_clicked,
+               g_object_ref(dev), g_object_unref);
+    g_free(t);
+    g_free(name);
+    g_free(what);
+}
+
+void places_device_gone(const char *path)
+{
+    for (GList *l = APP ? gtk_application_get_windows(APP) : NULL; l; l = l->next) {
+        Win *w = g_object_get_data(G_OBJECT(l->data), "millerx-win");
+        if (w && !w->dead)
+            win_notice_close(w, path);
+    }
+}
+
+void places_devices_changed(void)
+{
+    for (GList *l = APP ? gtk_application_get_windows(APP) : NULL; l; l = l->next) {
+        Win *w = g_object_get_data(G_OBJECT(l->data), "millerx-win");
+        if (w && !w->dead)
+            computer_refresh(w);
+    }
+}
+
 /* ---- right-click in the Computer column ---- */
-enum { CM_OPEN_NEW, CM_MOUNT, CM_UNMOUNT, CM_CONNECT, CM_REFRESH };
+enum { CM_OPEN_NEW, CM_MOUNT, CM_UNMOUNT, CM_CONNECT, CM_REFRESH, CM_UD_MOUNT, CM_UD_UNMOUNT, CM_UD_REMOVE };
 
 static void cm_run(GtkMenuItem *mi, Win *w)
 {
@@ -723,6 +991,9 @@ static void cm_run(GtkMenuItem *mi, Win *w)
     case CM_UNMOUNT: if (obj) unmount(w, G_MOUNT(obj)); break;
     case CM_CONNECT: connect_to_server(w); break;
     case CM_REFRESH: computer_refresh(w); break;
+    case CM_UD_MOUNT: if (obj) mount_ud(w, obj, FALSE); break;
+    case CM_UD_UNMOUNT: if (obj) unmount_ud(w, obj, FALSE); break;
+    case CM_UD_REMOVE: if (obj) unmount_ud(w, obj, TRUE); break;
     }
 }
 
@@ -769,6 +1040,14 @@ void computer_menu(Win *w, Column *c, GdkEventButton *ev)
         gboolean ej = g_mount_can_eject(G_MOUNT(obj));
         cm_item(menu, w, ej ? "Eject" : "Unmount", CM_UNMOUNT, obj, NULL, ej || g_mount_can_unmount(G_MOUNT(obj)));
     }
+    if (kind == K_UD_UNMOUNTED)
+        cm_item(menu, w, _("Mount"), CM_UD_MOUNT, obj, NULL, obj != NULL);
+    if (kind == K_UD_LOCKED)
+        cm_item(menu, w, _("Unlock…"), CM_UD_MOUNT, obj, NULL, obj != NULL);
+    if (kind == K_UD_MOUNTED)
+        cm_item(menu, w, _("Unmount"), CM_UD_UNMOUNT, obj, NULL, obj != NULL);
+    if ((kind == K_UD_MOUNTED || kind == K_UD_UNMOUNTED || kind == K_UD_LOCKED) && obj && ud_removable(obj))
+        cm_item(menu, w, _("Safe to remove"), CM_UD_REMOVE, obj, NULL, TRUE);
     if (kind >= 0)
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), gtk_separator_menu_item_new());
     cm_item(menu, w, _("Connect to server…"), CM_CONNECT, NULL, NULL, TRUE);
@@ -789,6 +1068,15 @@ void computer_menu(Win *w, Column *c, GdkEventButton *ev)
 static void on_mount_added(GVolumeMonitor *vm, GMount *mnt, Win *w)
 {
     (void) vm;
+    if (ud_ready()) {                       /* a device: udisks2 tells about it */
+        GFile *root = g_mount_get_root(mnt);
+        char *p = g_file_get_path(root);
+        gboolean device = p && is_dev_mount(p);
+        g_free(p);
+        g_object_unref(root);
+        if (device)
+            return;
+    }
     char *n = g_mount_get_name(mnt);
     win_status(w, _("Mounted: %s"), n);
     g_free(n);
@@ -797,6 +1085,11 @@ static void on_mount_added(GVolumeMonitor *vm, GMount *mnt, Win *w)
 static void on_volume_added(GVolumeMonitor *vm, GVolume *v, Win *w)
 {
     (void) vm;
+    char *dev = g_volume_get_identifier(v, G_VOLUME_IDENTIFIER_KIND_UNIX_DEVICE);
+    gboolean device = dev != NULL;
+    g_free(dev);
+    if (device && ud_ready())               /* a device: udisks2 tells about it */
+        return;
     char *n = g_volume_get_name(v);
     win_status(w, _("Drive connected: %s (drive button to open)"), n);
     g_free(n);
@@ -815,6 +1108,7 @@ static void on_mount_gone(GVolumeMonitor *vm, GMount *mnt, Win *w)
 
 void places_watch_volumes(Win *w)
 {
+    APP = w->app;
     w->volumes = g_volume_monitor_get();
     g_signal_connect(w->volumes, "mount-added", G_CALLBACK(on_mount_added), w);
     g_signal_connect(w->volumes, "volume-added", G_CALLBACK(on_volume_added), w);

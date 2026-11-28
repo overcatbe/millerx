@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
+#include <pwd.h>
 
 typedef enum { K_COPY, K_EXTRACT, K_EXTRACT_TO, K_COMPRESS } Kind;   /* K_EXTRACT_TO: into dest */
 
@@ -30,9 +31,15 @@ struct Job {
     gboolean for_all;
     GFile *q_src, *q_dst;
     gboolean q_merge;
-    /* progress */
-    char *text;
-    double frac;
+    /* progress in bytes: counted first, then every file reports while it copies (not for a move
+     * on the same disk, which is only a rename) */
+    gboolean bytes;
+    guint64 total;           /* everything to copy */
+    guint64 done;            /* finished files */
+    guint64 file_base;       /* done when the current file started */
+    guint64 now;             /* done + the current file so far */
+    gint64 shown;            /* the last update to the window (not more than ten a second) */
+    char *label;             /* "Copying name (2/5)" */
 };
 
 void job_cancel(Job *j)
@@ -53,7 +60,10 @@ static gboolean ui_progress(gpointer data)
     Win *w = pr->j->win;
     if (!w->dead) {
         gtk_label_set_text(GTK_LABEL(w->statusbar), pr->text);
-        gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(w->progress), pr->frac);
+        if (pr->frac < 0)
+            gtk_progress_bar_pulse(GTK_PROGRESS_BAR(w->progress));     /* still counting */
+        else
+            gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(w->progress), pr->frac);
     }
     g_free(pr->text);
     g_free(pr);
@@ -69,6 +79,7 @@ static void job_free(Job *j)
     g_ptr_array_unref(j->errors);
     g_mutex_clear(&j->lock);
     g_cond_clear(&j->cond);
+    g_free(j->label);
     win_unref(j->win);
     g_free(j);
 }
@@ -150,22 +161,122 @@ static Choice ask(Job *j, GFile *src, GFile *dst, gboolean merge)
 /* ---- the work (worker thread) ---------------------------------------------------------- */
 #define COPY_FLAGS (G_FILE_COPY_NOFOLLOW_SYMLINKS | G_FILE_COPY_ALL_METADATA)
 
-/* Root is refused only on a few mounts: one user's own (sshfs, rclone, a phone, GVfs's
- * /run/user/…/gvfs, without allow_other) and NFS with root_squash. GLib then only says
- * "Cannot retrieve attribute standard::type" (brobr), so say what it really is. */
+static void post(Job *j, char *text, double frac)      /* takes text */
+{
+    Progress *pr = g_new0(Progress, 1);
+    pr->j = j;
+    pr->text = text;
+    pr->frac = frac;
+    g_idle_add(ui_progress, pr);
+}
+
+/* the size of everything under f, links not followed (as they are copied); the bar pulses meanwhile */
+static guint64 tree_size(Job *j, GFile *f)
+{
+    GFileInfo *fi = g_file_query_info(f, "standard::type,standard::size", G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                      j->cancel, NULL);
+    if (!fi)
+        return 0;
+    guint64 n = g_file_info_get_size(fi);
+    gboolean dir = g_file_info_get_file_type(fi) == G_FILE_TYPE_DIRECTORY;
+    g_object_unref(fi);
+    if (!dir)
+        return n;
+    gint64 now = g_get_monotonic_time();
+    if (now - j->shown > 200000) {
+        j->shown = now;
+        post(j, g_strdup(_("Counting what to copy …")), -1);
+    }
+    GFileEnumerator *en = g_file_enumerate_children(f, "standard::name,standard::type,standard::size",
+                                                    G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS, j->cancel, NULL);
+    GFileInfo *info;
+    while (en && !g_cancellable_is_cancelled(j->cancel) && (info = g_file_enumerator_next_file(en, j->cancel, NULL))) {
+        if (g_file_info_get_file_type(info) == G_FILE_TYPE_DIRECTORY) {
+            GFile *c = g_file_get_child(f, g_file_info_get_name(info));
+            n += tree_size(j, c);
+            g_object_unref(c);
+        } else {
+            n += g_file_info_get_size(info);
+        }
+        g_object_unref(info);
+    }
+    g_clear_object(&en);
+    return n;
+}
+
+static void show_bytes(Job *j, gboolean now_anyway)
+{
+    gint64 t = g_get_monotonic_time();
+    if (!now_anyway && t - j->shown < 100000)
+        return;
+    j->shown = t;
+    char *a = g_format_size(j->now), *b = g_format_size(j->total);
+    /* TRANSLATORS: "Copying name (2/5) · 1.2 GB of 4.0 GB" */
+    post(j, g_strdup_printf(_("%s · %s of %s"), j->label, a, b),
+         j->total ? MIN(1.0, (double) j->now / (double) j->total) : 0);
+    g_free(a);
+    g_free(b);
+}
+
+static void copy_progress(goffset cur, goffset total, gpointer data)
+{
+    Job *j = data;
+    j->now = j->file_base + (guint64) cur;
+    show_bytes(j, FALSE);
+}
+
+static guint64 file_size(GFile *f)
+{
+    GFileInfo *fi = g_file_query_info(f, "standard::size", G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS, NULL, NULL);
+    guint64 n = fi ? g_file_info_get_size(fi) : 0;
+    g_clear_object(&fi);
+    return n;
+}
+
+/* GLib only says "Cannot retrieve attribute standard::type" when it may not read a file
+ * (brobr), so say what it really is. Root is refused only on a few mounts: one user's own
+ * (sshfs, rclone, a phone, GVfs's /run/user/…/gvfs, without allow_other) and NFS with
+ * root_squash. A normal user is refused inside a folder of someone else, like root's
+ * trash in /root dragged from a root window (brobr, 0.8.8). */
 static void root_explain(GFile *src, GError **err)
 {
-    if (!err || !*err || !is_root())
+    if (!err || !*err)
         return;
     char *path = g_file_get_path(src);
     GStatBuf st;
-    if (path && g_lstat(path, &st) && errno == EACCES) {
-        GError *e = g_error_new(G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED,
-                                _("root may not read it: it is on a mount that only its own user may open "
-                                  "(sshfs, a phone, a network share). Copy it in a normal millerX window."));
-        g_clear_error(err);
-        *err = e;
+    if (!path || !g_lstat(path, &st) || errno != EACCES) {
+        g_free(path);
+        return;
     }
+    GError *e = NULL;
+    if (is_root()) {
+        e = g_error_new(G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED,
+                        _("root may not read it: it is on a mount that only its own user may open "
+                          "(sshfs, a phone, a network share). Copy it in a normal millerX window."));
+    } else {
+        /* the first folder up the path we can see is the one we may not enter */
+        char *dir = g_path_get_dirname(path);
+        while (g_lstat(dir, &st) && strcmp(dir, "/")) {
+            char *up = g_path_get_dirname(dir);
+            g_free(dir);
+            dir = up;
+        }
+        struct passwd *pw = getpwuid(st.st_uid);
+        if (st.st_uid == 0)
+            e = g_error_new(G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED,
+                            _("You may not read it: %s belongs to root. Copy it in a millerX window opened as root."),
+                            dir);
+        else if (st.st_uid == getuid())
+            e = g_error_new(G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED,
+                            _("You may not read it: %s is yours, but its permissions shut you out."), dir);
+        else
+            e = g_error_new(G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED,
+                            _("You may not read it: %s belongs to %s."), dir,
+                            pw && pw->pw_name ? pw->pw_name : _("another user"));
+        g_free(dir);
+    }
+    g_clear_error(err);
+    *err = e;
     g_free(path);
 }
 
@@ -218,7 +329,12 @@ static gboolean copy_tree(Job *j, GFile *src, GFile *dst, gboolean replace, GErr
         }
         flags |= G_FILE_COPY_OVERWRITE;
     }
-    gboolean ok = g_file_copy(src, target, flags, j->cancel, NULL, NULL, err);
+    j->file_base = j->done;
+    gboolean ok = g_file_copy(src, target, flags, j->cancel, j->bytes ? copy_progress : NULL, j, err);
+    if (j->bytes) {
+        j->done = j->now = j->file_base + file_size(src);
+        show_bytes(j, FALSE);
+    }
     if (!ok)
         root_explain(src, err);
     g_object_unref(target);
@@ -266,8 +382,9 @@ static gboolean one(Job *j, GFile *src, GError **err)
         gboolean merge = replace && is_dir(target, FALSE);
         if (!merge) {
             GError *e = NULL;
+            j->file_base = j->done;              /* to another disk GLib copies a file, then deletes it */
             if (g_file_move(src, target, COPY_FLAGS | (replace ? G_FILE_COPY_OVERWRITE : 0),
-                            j->cancel, NULL, NULL, &e)) {
+                            j->cancel, j->bytes ? copy_progress : NULL, j, &e)) {
                 g_object_unref(target);
                 goto out;
             }
@@ -457,24 +574,52 @@ static gpointer compress_thread(gpointer data)
     return NULL;
 }
 
+/* bytes for the bar: a copy always; a move only when something goes to another disk (on the
+ * same disk it is a rename, done at once, and counting a big folder would only slow it down) */
+static gboolean wants_bytes(Job *j)
+{
+    if (j->kind != K_COPY)
+        return FALSE;
+    if (!j->move)
+        return TRUE;
+    dev_t to, from;
+    if (!device_of(j->dest, &to))
+        return TRUE;
+    for (GList *l = j->sources; l; l = l->next)
+        if (!device_of(l->data, &from) || from != to)
+            return TRUE;
+    return FALSE;
+}
+
 static gpointer job_thread(gpointer data)
 {
     Job *j = data;
     guint n = g_list_length(j->sources), i = 0;
+    guint64 *sizes = g_new0(guint64, n + 1);
+    j->bytes = wants_bytes(j);
+    for (GList *l = j->sources; j->bytes && l && !g_cancellable_is_cancelled(j->cancel); l = l->next, i++)
+        j->total += sizes[i] = tree_size(j, l->data);
+    i = 0;
     for (GList *l = j->sources; l; l = l->next) {
         if (g_cancellable_is_cancelled(j->cancel))
             break;
         i++;
         char *b = g_file_get_basename(l->data);
-        Progress *pr = g_new0(Progress, 1);
-        pr->j = j;
-        pr->text = g_strdup_printf("%s %s (%u/%u)", j->kind != K_COPY ? "Extracting" : j->move ? "Moving" : "Copying",
-                                   b, i, n);
-        pr->frac = (double) (i - 1) / n;
-        g_idle_add(ui_progress, pr);
+        g_free(j->label);
+        j->label = g_strdup_printf("%s %s (%u/%u)", j->kind != K_COPY ? _("Extracting") : j->move ? _("Moving")
+                                   : _("Copying"), b, i, n);
+        guint64 before = j->done;
+        if (j->bytes) {
+            j->now = j->done;
+            show_bytes(j, TRUE);
+        } else {
+            post(j, g_strdup(j->label), (double) (i - 1) / n);
+        }
         GError *err = NULL;
         gboolean ok = j->kind == K_COPY ? one(j, l->data, &err)
                                         : extract_one(j, l->data, (double) (i - 1) / n, 1.0 / n, &err);
+        if (j->bytes)                /* skipped, renamed or failed files count as done too */
+            j->done = j->now = before + sizes[i - 1];
         if (ok)
             j->done_n++;
         if (err) {                 /* also when it worked but something was left out */
@@ -489,6 +634,7 @@ static gpointer job_thread(gpointer data)
         g_clear_error(&err);
         g_free(b);
     }
+    g_free(sizes);
     g_idle_add(ui_done, j);
     return NULL;
 }

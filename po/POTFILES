@@ -14,5 +14,6 @@ src/sorting.c
 src/thumbcache.c
 src/trash.c
 src/trust.c
+src/udisks.c
 src/util.c
 src/window.c

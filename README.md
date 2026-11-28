@@ -124,8 +124,13 @@ millerX carries his name.
   upper/lower case alike, nearest first. Pick one to see it in the preview, Enter opens it in the
   columns, Escape goes back. Hidden files only when they are shown.
 - **Computer column** (the computer button, Alt+/): all your disks with free space and a fill bar,
-  USB sticks (one click mounts, right-click ejects), network shares and GVfs places (sftp://,
+  USB sticks, cards and discs straight from udisks2 (one click mounts, encrypted ones ask for their
+  passphrase; right-click: Unmount, Safe to remove), network shares and GVfs places (sftp://,
   smb://), and "Connect to server…". A disk opens to the right like any folder.
+- **A stick plugged in** gets a notice: its name, device, file system and size, with Mount and
+  Show; you see where it was mounted, and "Safe to remove" writes out what is left, unmounts it and
+  switches it off. Or Settings → Tools → **Automount** (off by default): it mounts itself and opens
+  in a new window.
 - **Type to jump**: type the first letters of a name; the same letter again goes to the next match.
 - **Properties** with editable permissions, free space and folder totals. Several items selected:
   one window for all of them; a box with a dash means some have that permission, a click sets it
@@ -292,7 +297,8 @@ Optional helpers shows which ones it found):
 | Open as root | `pkexec` + a polkit agent | no root window |
 | Compare two files | `meld`, `kdiff3`, `kompare` or `diffuse` (or your own, in Settings) | the differences as text (`diff -u`) |
 | Blender files' pictures | `blender-thumbnailer` (comes with Blender; also found in `/opt/blender`, else the newest `/opt/blender-*`) | the .blend icon |
-| USB sticks, Connect to server | gvfs / udisks2 | only disks already mounted |
+| USB sticks, cards, discs | udisks2 (gvfs when udisks2 isn't running) | only disks already mounted |
+| Connect to server | gvfs | no network places |
 | Open terminal here, Git's Status / Log / Diff | any terminal (`$TERMINAL` or one of 17 known) | a message saying none was found |
 | Git actions (off by default) | `git` | no Git menu |
 

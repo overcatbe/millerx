@@ -68,6 +68,7 @@ typedef struct {
     gboolean use_blender;   /* blender-thumbnailer: the picture saved inside .blend files */
     gboolean git_colours;   /* … and file names coloured by their Git state (off by default) */
     gboolean use_git;       /* Git actions in the right-click menu, inside a repository (off by default) */
+    gboolean automount;     /* a stick plugged in mounts itself and opens a window (off: a notice says what came) */
     int thumb_size;         /* TSIZE_TINY, _SMALL, _MEDIUM, _LARGE */
     char *language;         /* "system", "en", "wizard", "wienerisch" or "own:NAME": read once at start */
     char *compare;          /* what compares two files: "auto" (meld, kdiff3, kompare, diffuse) or a command */
@@ -236,6 +237,7 @@ struct Win {
     gboolean clip_cut;
     GList *jobs;
     GVolumeMonitor *volumes;
+    GtkWidget *notices;        /* the notice bars (win_notice), above the columns */
     Search *search;            /* Ctrl+F: its bar and result list, hidden when not searching */
 };
 
@@ -243,6 +245,13 @@ Win *win_new(GtkApplication *app, GFile *start);
 Win *win_ref(Win *w);
 void win_unref(Win *w);
 void win_status(Win *w, const char *fmt, ...) G_GNUC_PRINTF(2, 3);
+/* a bar above the columns with up to two buttons and a ✕; the same id replaces the old one.
+ * fn gets the button (1, 2); data is freed with destroy when the bar goes. */
+typedef void (*NoticeFn)(Win *w, int button, gpointer data);
+void win_notice(Win *w, const char *id, const char *text, const char *b1, const char *b2, NoticeFn fn,
+                gpointer data, GDestroyNotify destroy);
+void win_notice_close(Win *w, const char *id);
+void app_watch_update(GtkApplication *app);     /* our program file replaced: offer a restart */
 void win_error(Win *w, const char *title, const char *text);
 void win_error_root(Win *w, const char *title, const char *text, GFile *folder);
 void win_open_as_root(Win *w, GFile *folder);
@@ -331,7 +340,7 @@ gboolean arc_create(const char *out, int format, char **paths, const char *base,
 void places_fill_bookmarks(Win *w);
 gboolean path_on_network(const char *path);
 /* the Computer column (places.c); its rows' kind is in C_MTIME */
-enum { K_DISK, K_MOUNT, K_VOLUME, K_CONNECT };
+enum { K_DISK, K_MOUNT, K_VOLUME, K_CONNECT, K_UD_MOUNTED, K_UD_UNMOUNTED, K_UD_LOCKED };
 gboolean file_is_computer(GFile *f);
 void computer_fill(Column *c);
 void computer_refresh(Win *w);
@@ -341,6 +350,33 @@ void computer_menu(Win *w, Column *c, GdkEventButton *ev);
 void win_open_computer(Win *w);
 void places_bookmark_add(Win *w, GFile *folder);
 void places_watch_volumes(Win *w);
+void places_devices_changed(void);              /* udisks.c: list the devices again, every window */
+void places_device_arrived(GObject *dev);       /* … a stick was plugged in: tell, or mount it */
+void places_device_gone(const char *path);      /* … it is gone: its notice too */
+
+/* ---- sticks, disks, discs from udisks2, without GVfs (udisks.c) ------------------------------------ */
+enum { UD_SKIP, UD_LOCKED, UD_UNMOUNTED, UD_MOUNTED };
+typedef struct {
+    GObject *obj;              /* the udisks2 object (a GDBusObject): what the row acts on */
+    int state;                 /* UD_LOCKED, UD_UNMOUNTED, UD_MOUNTED */
+    gboolean system;           /* the computer's own disk (only listed while not mounted) */
+    char *name, *dev, *fs, *mount;
+    GIcon *icon;
+} UdRow;
+/* done: path is the mount point after mounting; err NULL = it worked, "" = cancelled */
+typedef void (*UdDone)(Win *w, const char *path, const char *err, gpointer data);
+void ud_start(GtkApplication *app);
+gboolean ud_ready(void);                        /* udisks2 is there: it lists the devices, not GIO */
+GPtrArray *ud_rows(void);                       /* UdRow*, sorted by device */
+int ud_state(GObject *dev);
+char *ud_name(GObject *dev);
+char *ud_describe(GObject *dev);                /* "/dev/sdb1, vfat, 32 GB" */
+char *ud_mount_point(GObject *dev);
+gboolean ud_auto(GObject *dev);                 /* udisks2 says: mount it by itself if wanted */
+gboolean ud_removable(GObject *dev);            /* a stick, card, disc, USB disk or image: "Safe to remove" */
+void ud_mount(Win *w, GObject *dev, UdDone done, gpointer data);       /* unlocks first if encrypted */
+void ud_unmount(Win *w, GObject *dev, gboolean remove, UdDone done, gpointer data);
+GPtrArray *ud_mounts_on_drive(GObject *dev, gboolean remove);          /* what that will unmount */
 
 /* ---- search (search.c) ---------------------------------------------------------------------------- */
 void search_build(Win *w, GtkWidget *bar_box, GtkWidget *pane);

@@ -745,6 +745,7 @@ typedef struct {
     GtkWidget *use[5];         /* the optional helpers, when installed; NULL when not */
     GtkWidget *compare;        /* what compares two files */
     GtkWidget *git_col;        /* Git colours; NULL when git isn't installed */
+    GtkWidget *automount;      /* Tools → Devices */
     GtkWidget *hl_auto, *hl_own, *hl_colour, *hl_sys, *hl_unsys;
 } Set;
 
@@ -793,6 +794,7 @@ static void settings_changed(GtkWidget *any, Set *s)
         nl.git_colours = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->git_col));
         gtk_widget_set_sensitive(s->git_col, nl.use_git);
     }
+    nl.automount = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->automount));
     nl.detect = !g_strcmp0(gtk_combo_box_get_active_id(GTK_COMBO_BOX(s->detect)), "content") ? DETECT_CONTENT
                                                                                               : DETECT_NAME;
     nl.ask_programs = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->ask));
@@ -1475,6 +1477,17 @@ void dialog_settings(Win *w)
         srow(grid, &r, "", s->git_col);
         g_signal_connect(s->git_col, "toggled", G_CALLBACK(settings_changed), s);
     }
+    section(&grid, &r, _("Devices"));
+    s->automount = gtk_check_button_new_with_label(_("Automount: a stick plugged in mounts itself and opens a window"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(s->automount), LOOK.automount);
+    gtk_widget_set_tooltip_text(s->automount,
+        _("Off: millerX only tells you what was plugged in (its name, device, file system and size), "
+          "with a button to mount it; you see where it was mounted, and “Safe to remove” in the Computer "
+          "column writes out what is left, unmounts it and switches it off. "
+          "On: sticks, cards and discs mount by themselves and open in a new window. "
+          "Encrypted ones always wait for you."));
+    srow(grid, &r, "", s->automount);
+    g_signal_connect(s->automount, "toggled", G_CALLBACK(settings_changed), s);
 
     g_signal_connect(s->auto_rb, "toggled", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->colour, "color-set", G_CALLBACK(settings_changed), s);

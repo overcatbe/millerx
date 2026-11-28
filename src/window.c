@@ -4,6 +4,7 @@
 #include "millerx.h"
 #include <string.h>
 #include <unistd.h>
+#include <sys/stat.h>
 #include <gdk/gdkx.h>
 #include <gio/gdesktopappinfo.h>
 
@@ -42,6 +43,129 @@ void win_status(Win *w, const char *fmt, ...)
     va_end(ap);
     gtk_label_set_text(GTK_LABEL(w->statusbar), s);
     g_free(s);
+}
+
+/* ---- notice bars: a stick came, millerX was updated … ---------------------------------------------- */
+typedef struct {
+    Win *w;
+    NoticeFn fn;
+} NoticeCb;
+
+static void notice_response(GtkInfoBar *ib, int r, NoticeCb *cb)
+{
+    Win *w = cb->w;
+    if (r > 0 && cb->fn && !w->dead)
+        cb->fn(w, r, g_object_get_data(G_OBJECT(ib), "data"));
+    gtk_widget_destroy(GTK_WIDGET(ib));           /* the data goes with it */
+}
+
+void win_notice_close(Win *w, const char *id)
+{
+    if (w->dead || !w->notices)
+        return;
+    GList *kids = gtk_container_get_children(GTK_CONTAINER(w->notices));
+    for (GList *l = kids; l; l = l->next)
+        if (!g_strcmp0(g_object_get_data(l->data, "id"), id))
+            gtk_widget_destroy(l->data);
+    g_list_free(kids);
+}
+
+void win_notice(Win *w, const char *id, const char *text, const char *b1, const char *b2, NoticeFn fn,
+                gpointer data, GDestroyNotify destroy)
+{
+    if (w->dead || !w->notices) {
+        if (destroy && data)
+            destroy(data);
+        return;
+    }
+    win_notice_close(w, id);
+    GtkWidget *ib = gtk_info_bar_new();
+    gtk_info_bar_set_message_type(GTK_INFO_BAR(ib), GTK_MESSAGE_INFO);
+    gtk_info_bar_set_show_close_button(GTK_INFO_BAR(ib), TRUE);
+    GtkWidget *l = gtk_label_new(text);
+    gtk_label_set_xalign(GTK_LABEL(l), 0);
+    gtk_label_set_ellipsize(GTK_LABEL(l), PANGO_ELLIPSIZE_END);
+    gtk_label_set_selectable(GTK_LABEL(l), TRUE);  /* the mount point can be copied */
+    gtk_container_add(GTK_CONTAINER(gtk_info_bar_get_content_area(GTK_INFO_BAR(ib))), l);
+    if (b1)
+        gtk_info_bar_add_button(GTK_INFO_BAR(ib), b1, 1);
+    if (b2)
+        gtk_info_bar_add_button(GTK_INFO_BAR(ib), b2, 2);
+    g_object_set_data_full(G_OBJECT(ib), "id", g_strdup(id), g_free);
+    if (data)
+        g_object_set_data_full(G_OBJECT(ib), "data", data, destroy);
+    NoticeCb *cb = g_new0(NoticeCb, 1);
+    cb->w = w;
+    cb->fn = fn;
+    g_object_set_data_full(G_OBJECT(ib), "cb", cb, g_free);
+    g_signal_connect(ib, "response", G_CALLBACK(notice_response), cb);
+    gtk_box_pack_start(GTK_BOX(w->notices), ib, FALSE, FALSE, 0);
+    gtk_widget_show_all(ib);
+}
+
+/* ---- our own program file replaced (an update) while we run: offer a restart ------------------------- */
+static GFileMonitor *SELF_MON;
+static dev_t SELF_DEV;
+static ino_t SELF_INO;
+static gboolean SELF_UPDATED;
+
+static void restart_clicked(Win *w, int button, gpointer data)
+{
+    app_restart(w->app);
+}
+
+static void self_notice(Win *w)
+{
+    win_notice(w, "update", _("millerX was updated. Restart to use the new version (your windows come back where they are)."),
+               _("Restart now"), NULL, restart_clicked, NULL, NULL);
+}
+
+static gboolean self_check(gpointer app)
+{
+    char *exe = g_object_get_data(G_OBJECT(SELF_MON), "path");
+    struct stat st;
+    /* a package upgrade puts a new file in its place: another inode (a half-written file is
+     * looked at again when its writing is done) */
+    if (SELF_UPDATED || stat(exe, &st) != 0 || (st.st_dev == SELF_DEV && st.st_ino == SELF_INO))
+        return G_SOURCE_REMOVE;
+    SELF_UPDATED = TRUE;
+    for (GList *l = gtk_application_get_windows(app); l; l = l->next) {
+        Win *w = g_object_get_data(G_OBJECT(l->data), "millerx-win");
+        if (w && !w->dead)
+            self_notice(w);
+    }
+    return G_SOURCE_REMOVE;
+}
+
+static void self_changed(GFileMonitor *m, GFile *f, GFile *other, GFileMonitorEvent ev, gpointer app)
+{
+    if (ev == G_FILE_MONITOR_EVENT_CREATED || ev == G_FILE_MONITOR_EVENT_CHANGES_DONE_HINT ||
+        ev == G_FILE_MONITOR_EVENT_MOVED_IN || ev == G_FILE_MONITOR_EVENT_RENAMED ||
+        ev == G_FILE_MONITOR_EVENT_ATTRIBUTE_CHANGED)
+        g_timeout_add_seconds(2, self_check, app);   /* let the package tool finish first */
+}
+
+void app_watch_update(GtkApplication *app)
+{
+    if (SELF_MON)
+        return;
+    char *exe = g_file_read_link("/proc/self/exe", NULL);
+    struct stat st;
+    if (!exe || g_str_has_suffix(exe, " (deleted)") || stat(exe, &st) != 0) {
+        g_free(exe);
+        return;
+    }
+    SELF_DEV = st.st_dev;
+    SELF_INO = st.st_ino;
+    GFile *f = g_file_new_for_path(exe);
+    SELF_MON = g_file_monitor_file(f, G_FILE_MONITOR_WATCH_MOVES, NULL, NULL);
+    g_object_unref(f);
+    if (!SELF_MON) {
+        g_free(exe);
+        return;
+    }
+    g_object_set_data_full(G_OBJECT(SELF_MON), "path", exe, g_free);
+    g_signal_connect(SELF_MON, "changed", G_CALLBACK(self_changed), app);
 }
 
 /* ---- messages ---------------------------------------------------------------------- */
@@ -996,7 +1120,13 @@ gboolean win_terminal_run(Win *w, const char *dir, const char *script, const cha
     const char *env = g_getenv("TERMINAL");
     if (env && *env) {
         char **tv = NULL;
-        if (g_shell_parse_argv(env, NULL, &tv, NULL)) {
+        /* lxterminal, qterminal and tilix take the command after -e as one string, which they
+         * split their own way: file names must never go through that, so for running something
+         * they are passed over (they still open folders) and the next terminal is used */
+        if (g_shell_parse_argv(env, NULL, &tv, NULL) && terminal_known(tv[0]) >= 0 &&
+            !TERMINALS[terminal_known(tv[0])].exec)
+            g_clear_pointer(&tv, g_strfreev);
+        if (tv) {
             GPtrArray *a = g_ptr_array_new_with_free_func(g_free);
             for (int i = 0; tv[i]; i++)
                 g_ptr_array_add(a, g_strdup(tv[i]));
@@ -2398,6 +2528,8 @@ Win *win_new(GtkApplication *app, GFile *start)
         gtk_box_pack_start(GTK_BOX(box), ib, FALSE, FALSE, 0);
     }
     gtk_box_pack_start(GTK_BOX(box), bar, FALSE, FALSE, 0);
+    w->notices = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    gtk_box_pack_start(GTK_BOX(box), w->notices, FALSE, FALSE, 0);
     search_build(w, box, pane);          /* its bar right under the toolbar */
     gtk_box_pack_start(GTK_BOX(box), pane, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(box), sbox, FALSE, FALSE, 0);
@@ -2412,6 +2544,8 @@ Win *win_new(GtkApplication *app, GFile *start)
     gtk_widget_hide(w->cancel_btn);
     preview_clear(w->preview);
     win_open_path(w, start);
+    if (SELF_UPDATED)                    /* a new window of an outdated millerX says so too */
+        self_notice(w);
     return w;
 }
 
@@ -2485,8 +2619,14 @@ void app_restart(GtkApplication *app)
     if (first && !first->dead)
         geom_save(&first->geom);
     char *exe = g_file_read_link("/proc/self/exe", NULL);
-    if (!exe)
+    /* updated while running: the kernel calls our old file "… (deleted)"; the new one is at the
+     * same path, and that is the one to start */
+    if (exe && g_str_has_suffix(exe, " (deleted)"))
+        exe[strlen(exe) - strlen(" (deleted)")] = '\0';
+    if (!exe || !g_file_test(exe, G_FILE_TEST_IS_EXECUTABLE)) {
+        g_free(exe);
         exe = g_build_filename(MILLERX_BINDIR, "millerx", NULL);
+    }
     GPtrArray *argv = g_ptr_array_new_with_free_func(g_free);
     g_ptr_array_add(argv, exe);
     for (GList *l = wins; l; l = l->next) {

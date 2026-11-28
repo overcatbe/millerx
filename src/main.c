@@ -87,6 +87,8 @@ static void on_startup(GApplication *app, gpointer d)
     thumbcache_auto_clean();
     highlight_apply();
     gtk_window_set_default_icon_name("millerx");
+    ud_start(GTK_APPLICATION(app));        /* sticks and disks from udisks2 (GIO if it isn't there) */
+    app_watch_update(GTK_APPLICATION(app));
 }
 
 static void on_activate(GApplication *app, gpointer d)
