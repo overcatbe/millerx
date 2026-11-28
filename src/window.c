@@ -2,6 +2,7 @@
  * Copyright (C) 2026 overcatbe */
 /* The window: toolbar, the strip of columns, preview, status bar, actions, clipboard, menu. */
 #include "millerx.h"
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -173,7 +174,8 @@ void app_watch_update(GtkApplication *app)
 /* ---- messages ---------------------------------------------------------------------- */
 void win_error(Win *w, const char *title, const char *text)
 {
-    GtkWidget *d = gtk_message_dialog_new(GTK_WINDOW(w->window), GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR,
+    /* asked by a Settings or Properties window whose main window is closed already: no parent */
+    GtkWidget *d = gtk_message_dialog_new(w->dead ? NULL : GTK_WINDOW(w->window), GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR,
                                           GTK_BUTTONS_CLOSE, "%s", title);
     gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(d), "%s", text);
     gtk_dialog_run(GTK_DIALOG(d));
@@ -298,7 +300,7 @@ void win_error_root(Win *w, const char *title, const char *text, GFile *folder)
 
 gboolean win_confirm(Win *w, const char *title, const char *text, const char *ok)
 {
-    GtkWidget *d = gtk_message_dialog_new(GTK_WINDOW(w->window), GTK_DIALOG_MODAL, GTK_MESSAGE_WARNING,
+    GtkWidget *d = gtk_message_dialog_new(w->dead ? NULL : GTK_WINDOW(w->window), GTK_DIALOG_MODAL, GTK_MESSAGE_WARNING,
                                           GTK_BUTTONS_NONE, "%s", title);
     gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(d), "%s", text);
     gtk_dialog_add_button(GTK_DIALOG(d), _("Cancel"), GTK_RESPONSE_CANCEL);
@@ -1086,6 +1088,22 @@ static int terminal_known(const char *prog)
     return found;
 }
 
+/* lxterminal, qterminal or tilix, under whatever name: x-terminal-emulator (Debian's alternatives)
+ * or a link of one's own points to the real one, and that is what splits the command line */
+static gboolean terminal_splits(const char *prog)
+{
+    int k = terminal_known(prog);
+    if (k >= 0 && !TERMINALS[k].exec)
+        return TRUE;
+    char *found = strchr(prog, '/') ? g_strdup(prog) : g_find_program_in_path(prog);
+    char *real = found ? realpath(found, NULL) : NULL;
+    k = real ? terminal_known(real) : -1;
+    gboolean splits = k >= 0 && !TERMINALS[k].exec;
+    free(real);
+    g_free(found);
+    return splits;
+}
+
 /* entry i's first word and folder flag, onto a (which frees its strings) */
 static void terminal_dir(GPtrArray *a, int i, const char *dir)
 {
@@ -1125,8 +1143,7 @@ gboolean win_terminal_run(Win *w, const char *dir, const char *script, const cha
         /* lxterminal, qterminal and tilix take the command after -e as one string, which they
          * split their own way: file names must never go through that, so for running something
          * they are passed over (they still open folders) and the next terminal is used */
-        if (g_shell_parse_argv(env, NULL, &tv, NULL) && terminal_known(tv[0]) >= 0 &&
-            !TERMINALS[terminal_known(tv[0])].exec)
+        if (g_shell_parse_argv(env, NULL, &tv, NULL) && terminal_splits(tv[0]))
             g_clear_pointer(&tv, g_strfreev);
         if (tv) {
             GPtrArray *a = g_ptr_array_new_with_free_func(g_free);
@@ -1156,8 +1173,10 @@ gboolean win_terminal_run(Win *w, const char *dir, const char *script, const cha
         if (!TERMINALS[i].exec)
             continue;
         char *exe = g_find_program_in_path(TERMINALS[i].exe);
-        if (!exe)
+        if (!exe || terminal_splits(exe)) {             /* x-terminal-emulator → qterminal … */
+            g_free(exe);
             continue;
+        }
         GPtrArray *a = g_ptr_array_new_with_free_func(g_free);
         g_ptr_array_add(a, exe);
         terminal_dir(a, (int) i, dir);
@@ -1367,6 +1386,8 @@ typedef struct {
     GFile *denied_in;     /* folder of the first "permission denied" */
 } Del;
 
+static int DELETING;                     /* permanent deletes still running */
+
 static gboolean delete_report(gpointer data)
 {
     Del *d = data;
@@ -1386,6 +1407,7 @@ static gboolean delete_report(gpointer data)
     g_list_free_full(d->files, g_object_unref);
     win_unref(d->w);
     g_free(d);
+    DELETING--;
     return G_SOURCE_REMOVE;
 }
 
@@ -1411,6 +1433,7 @@ static gpointer delete_thread(gpointer data)
 
 static void delete_files(Win *w, GList *files)
 {
+    DELETING++;                         /* "Restart now" waits for it (main thread only) */
     Del *d = g_new0(Del, 1);
     d->w = win_ref(w);
     d->files = g_list_copy_deep(files, obj_copy, NULL);
@@ -2330,6 +2353,8 @@ static void on_destroy(GtkWidget *win, Win *w)
     for (GList *l = w->jobs; l; l = l->next)
         job_cancel(l->data);
     w->dead = TRUE;
+    if (w->preview)
+        preview_stop(w->preview);
     search_free(w);
     for (GList *l = w->columns; l; l = l->next) {
         column_close(l->data);
@@ -2682,6 +2707,16 @@ void app_restart(GtkApplication *app)
             return;
         }
     }
+    if (DELETING) {                     /* a delete is a thread of its own, not a job: a restart would cut it off */
+        Win *w = wins ? g_object_get_data(G_OBJECT(wins->data), "millerx-win") : NULL;
+        if (w && !w->dead)
+            win_error(w, _("Not now"), _("Files are still being deleted. Restart when that is done."));
+        g_list_free(wins);
+        return;
+    }
+    /* what was cut or copied: to the clipboard manager, as closing a window does, so a paste in
+     * the new millerX still finds it */
+    gtk_clipboard_store(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD));
     look_save(NULL);
     /* the new millerX opens its first window where the last closed one was: that is the oldest
      * window here, which comes back first (a plain quit doesn't close windows, so save it now) */

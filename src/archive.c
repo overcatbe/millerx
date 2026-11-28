@@ -94,6 +94,15 @@ gboolean arc_extract(const char *archive_path, const char *dir, GCancellable *ca
         if (g_cancellable_is_cancelled(cancel))
             break;
         const char *orig = archive_entry_pathname(e);
+        /* "./" (or "."): the folder itself, which tar -C dir . and every Slackware package start
+         * with. Nothing to make (the folder is there) and nothing unsafe: no "left out" for it */
+        const char *o = orig ? orig : "";
+        while (o[0] == '.' && (o[1] == '/' || !o[1]))
+            o += o[1] ? 2 : 1;
+        if (orig && !*o) {
+            archive_read_data_skip(a);
+            continue;
+        }
         char *rel = safe_name(orig);
         const char *hl = archive_entry_hardlink(e);
         char *hrel = hl ? safe_name(hl) : NULL;
@@ -247,6 +256,7 @@ gboolean arc_create(const char *out, int fmt, char **paths, const char *base, GC
                     break;
                 }
                 ssize_t n;
+                gint64 got = 0;
                 while ((n = read(fd, buf, 65536)) > 0) {
                     if (g_cancellable_is_cancelled(cancel))
                         break;
@@ -256,8 +266,23 @@ gboolean arc_create(const char *out, int fmt, char **paths, const char *base, GC
                         break;
                     }
                     done += n;
+                    got += n;
+                }
+                /* a read error (a dead network share) or a file that shrank while it was packed:
+                 * libarchive would pad the entry out, and the archive would hold a broken file
+                 * without a word. Say so and stop. */
+                if (ok && n < 0) {
+                    g_set_error(err, G_IO_ERROR, g_io_error_from_errno(errno), "%s: %s",
+                                archive_entry_pathname(e), g_strerror(errno));
+                    ok = FALSE;
+                } else if (ok && !g_cancellable_is_cancelled(cancel) && got < archive_entry_size(e)) {
+                    g_set_error(err, G_IO_ERROR, G_IO_ERROR_FAILED, _("%s: it changed while it was packed"),
+                                archive_entry_pathname(e));
+                    ok = FALSE;
                 }
                 close(fd);
+                if (!ok)
+                    break;
             }
         }
         archive_entry_free(e);

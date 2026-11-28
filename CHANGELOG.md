@@ -16,6 +16,42 @@ never released: it is all in here.)
     the first time millerX starts (if millerX had none of its own), with Unleashed chosen.
     millerX Unleashed itself ends with 0.8.8.
 
+- **Wizard and Wienerisch moved to extras/languages**, next to pirate and LOLCAT: millerX installs
+  German and Greek. Who used one: Settings → Language → "Your own…" adds it back (the file is in
+  extras/languages); until then millerX speaks the system's language.
+- **A review of all of millerX before 0.9.0** found these, all fixed:
+  - **Language files:** a file could fake a plural form and so get a translation past the check
+    that reads more `%s` than millerX passes (a crash). Every form is now checked against what
+    millerX itself asks for.
+  - **Trust system programs:** a program on an ext4 stick made by root counted as the system's
+    and ran without the question. Only the system's own disk counts now (`/`, `/usr`, `/opt` …),
+    never anything under /run, /media or /mnt.
+  - **Git:** names with `[`, `*` or `?` were patterns to git, so Revert on `a[1].txt` also threw
+    away the changes to `a1.txt`. Names are names now (`--literal-pathspecs`); and no fsmonitor
+    program from a repository's config runs on Status, Diff, Add or Commit.
+  - **Archives:** every Slackware package (and every `tar -C dir .`) said "1 item with an unsafe
+    name was left out", though nothing was; and with that note, extracting over an existing folder
+    with Merge did nothing. Both right now.
+  - **Packing:** a file that couldn't be read to the end (a dead network share) or shrank while it
+    was packed made a broken archive without a word. Now it says so and stops.
+  - **Put back from the trash with Replace:** the old item was deleted first; if putting back then
+    failed, both were gone. Now the old one waits aside and comes back if anything fails.
+  - **Sticks:** after a refresh the Computer column picked its row back by name, so with two sticks
+    called the same "Safe to remove" could hit the other one; restarting udisks2 announced (or, with
+    Automount, mounted) every stick again.
+  - **Restart now** waited for copies but not for a permanent delete, which it cut off halfway; and
+    what was cut or copied is kept for the new millerX.
+  - **Crashes:** Settings or Properties used after their main window was closed; the held item's
+    menu (Unleashed) after its column went; the gallery after its window closed; a pulled-out
+    encrypted stick while its passphrase was asked.
+  - **The gallery** no longer opens FIFOs or devices named like pictures (four of them in /tmp
+    stopped every thumbnail in that window).
+  - **x-terminal-emulator** pointing to lxterminal or qterminal is passed over for running
+    things, like those themselves.
+  - **gtk.css** that couldn't be read is never written over (Use for all GTK programs), and a
+    linked one stays a link. "By content" never opens a device file to look inside.
+  - Coming from Unleashed: own language files come along, and the first start already speaks the
+    chosen language.
 - **USB sticks, cards and discs straight from udisks2**, no GVfs needed. The Computer column
   lists them with their name, device and file system; a click mounts, an encrypted one asks for
   its passphrase (wiped from memory after use). Right-click: Mount, Unlock…, Unmount and

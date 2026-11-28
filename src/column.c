@@ -701,13 +701,22 @@ static void on_held_menu_done(GtkMenuShell *menu, Column *c)
     g_idle_add(held_menu_gone, c);
 }
 
+/* the menu's own hold on its column: it may stay open while the column is dropped (the folder it
+ * shows deleted by another program meanwhile) */
+static void held_menu_unref(gpointer c, GClosure *closure)
+{
+    (void) closure;
+    column_unref(c);
+}
+
 static gboolean menu_later(gpointer data)
 {
     MenuLater *m = data;
     GFile *f = m->c->closed ? NULL : held_file(m->c);
     if (f) {
         GtkWidget *menu = win_held_menu(m->c->win, m->c, f, (GdkEventButton *) m->ev);
-        g_signal_connect(menu, "deactivate", G_CALLBACK(on_held_menu_done), m->c);
+        column_ref(m->c);
+        g_signal_connect_data(menu, "deactivate", G_CALLBACK(on_held_menu_done), m->c, held_menu_unref, 0);
         g_object_unref(f);
     } else if (!m->c->closed) {
         held_clear(m->c);

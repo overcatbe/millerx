@@ -235,9 +235,13 @@ gboolean mo_check(const guchar *d, gsize size, char **why)
         }
         if (idlen == 0)
             continue;                                   /* the header */
-        const char *plural = memchr(id, '\0', idlen);
-        const char *fmt = plural ? plural + 1 : id;     /* every form is checked against msgid_plural */
-        if (strstr(id, "% ") || (plural && strstr(fmt, "% ")))
+        /* every form is checked against the singular msgid: that is what glibc matches (up to its
+         * first NUL) and what millerX's own code passes arguments for. The msgid_plural in the
+         * file is the file's word only: a made-up one with more %s would let a translation read
+         * arguments that were never passed. (millerX's own plural pairs all have the same % signs
+         * in both, so real translations lose nothing.) */
+        const char *fmt = id;
+        if (strstr(id, "% "))
             continue;                                   /* not a format, see above */
         Args a;
         if (!parse(fmt, &a, &w)) {                      /* not a format we know: nothing printf can use */

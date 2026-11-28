@@ -118,7 +118,8 @@ int main(int argc, char **argv)
         g_print("millerX %s\n", MILLERX_VERSION);
         return 0;
     }
-    /* Settings → Language: English anyway, the wizard's English or Viennese; "system" = the system's.
+    /* Settings → Language: English anyway, or an own language file; "system" = the system's.
+     * (Wizard and Wienerisch are own language files since 0.9.0: extras/languages.)
      * LANGUAGE also turns GTK's own words (buttons, the colour picker) the same way. */
     /* LANGUAGE as the session had it, kept for the programs we start (and for a restart, which
      * must not inherit the choice of this run) */
@@ -150,10 +151,6 @@ int main(int argc, char **argv)
 #endif
     if (!strcmp(lang, "en"))
         setenv("LANGUAGE", "en", 1);
-    else if (!strcmp(lang, "wizard"))
-        setenv("LANGUAGE", "en@wizard:en", 1);
-    else if (!strcmp(lang, "wienerisch"))           /* Viennese; what it lacks (GTK's own words) in German */
-        setenv("LANGUAGE", "de@wienerisch:de", 1);
     gtk_disable_setlocale();                    /* we set it here; GTK would undo the switch below */
     setlocale(LC_ALL, "");
     if (strcmp(lang, "system")) {

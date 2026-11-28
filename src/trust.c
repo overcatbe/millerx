@@ -252,6 +252,24 @@ static gboolean under_home(const char *real)
     return hl > 1 && !strncmp(real, home, hl) && (real[hl] == '/' || !real[hl]);
 }
 
+/* on the system's own disk: the device of /, /usr, /opt … (each may be its own partition), never a
+ * stick, a disc or a share mounted somewhere (/run/media, /media, /mnt), whatever its file system:
+ * an ext4 stick made by root has root's files too (review for 0.9.0) */
+static gboolean on_system_disk(const char *real, const struct stat *st)
+{
+    static const char *const AWAY[] = { "/run/", "/media/", "/mnt/" };
+    for (guint i = 0; i < G_N_ELEMENTS(AWAY); i++)
+        if (g_str_has_prefix(real, AWAY[i]))
+            return FALSE;
+    static const char *const SYS[] = { "/", "/usr", "/usr/local", "/opt", "/bin", "/sbin", "/lib", "/lib64" };
+    for (guint i = 0; i < G_N_ELEMENTS(SYS); i++) {
+        struct stat s;
+        if (!stat(SYS[i], &s) && s.st_dev == st->st_dev)
+            return TRUE;
+    }
+    return FALSE;
+}
+
 gboolean trust_is_system(const char *path)
 {
     gboolean ok = FALSE;
@@ -265,7 +283,7 @@ gboolean trust_is_system(const char *path)
     if (lstat(path, &st) || (S_ISLNK(st.st_mode) && st.st_uid != 0) || !dirs_root_only(real_parent))
         goto out;
     /* where it really is */
-    if (stat(real, &st) || !S_ISREG(st.st_mode) || !root_only(&st) || !system_fs(real))
+    if (stat(real, &st) || !S_ISREG(st.st_mode) || !root_only(&st) || !system_fs(real) || !on_system_disk(real, &st))
         goto out;
     char *rdir = g_path_get_dirname(real);
     ok = dirs_root_only(rdir);

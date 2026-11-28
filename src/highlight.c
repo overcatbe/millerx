@@ -3,6 +3,7 @@
 /* The highlight (selection) colour: the theme's, or your own, for millerX, and if you want it
  * for every GTK 3 program through a marked block in ~/.config/gtk-3.0/gtk.css. */
 #include "millerx.h"
+#include <stdlib.h>
 #include <string.h>
 
 #define MARK_START "/* millerX highlight: start (edit the colour in millerX's settings) */"
@@ -97,7 +98,21 @@ gboolean highlight_system_has(void)
 gboolean highlight_system_set(const char *colour, GError **err)
 {
     char *path = gtk_css_path(), *text = NULL;
-    g_file_get_contents(path, &text, NULL, NULL);
+    GError *re = NULL;
+    /* a gtk.css that is there but can't be read: never written over (all of it would be gone) */
+    if (!g_file_get_contents(path, &text, NULL, &re) && !g_error_matches(re, G_FILE_ERROR, G_FILE_ERROR_NOENT)) {
+        g_propagate_error(err, re);
+        g_free(path);
+        return FALSE;
+    }
+    g_clear_error(&re);
+    /* a link (a dotfiles repository): written where it points, the link stays */
+    char *real = realpath(path, NULL);
+    if (real) {
+        g_free(path);
+        path = g_strdup(real);
+        free(real);
+    }
     char *rest = without_block(text);
     GString *out = g_string_new(NULL);
     char *css = colour ? css_for(colour) : NULL;

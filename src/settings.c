@@ -61,6 +61,25 @@ static gboolean get_bool(GKeyFile *kf, const char *sec, const char *key, gboolea
 /* millerX Unleashed is a setting now (0.9.0): someone who only had Unleashed keeps its settings, sort
  * orders and trusted programs, once, and gets Unleashed's clicks. Who has millerX's own settings
  * already keeps those (the setting is one click away). */
+/* from into to, once (never over an existing file), regular files only, private (0600) */
+static void copy_once(const char *from, const char *to)
+{
+    struct stat st;
+    char *data = NULL;
+    gsize len = 0;
+    if (lstat(from, &st) || !S_ISREG(st.st_mode) || g_file_test(to, G_FILE_TEST_EXISTS) ||
+        !g_file_get_contents(from, &data, &len, NULL))
+        return;
+    int fd = g_open(to, O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC, 0600);
+    if (fd >= 0) {
+        gboolean ok = write(fd, data, len) == (gssize) len;
+        close(fd);
+        if (!ok)
+            g_unlink(to);
+    }
+    g_free(data);
+}
+
 static void unleashed_take_over(const char *path)
 {
     if (g_file_test(path, G_FILE_TEST_EXISTS))
@@ -73,22 +92,27 @@ static void unleashed_take_over(const char *path)
         static const char *const FILES[] = { "millerx.conf", "sorting.conf", "trusted" };
         for (guint i = 0; i < G_N_ELEMENTS(FILES); i++) {
             char *from = g_build_filename(old, FILES[i], NULL), *to = g_build_filename(dir, FILES[i], NULL);
-            char *data = NULL;
-            gsize len = 0;
-            if (!g_file_test(to, G_FILE_TEST_EXISTS) && g_file_test(from, G_FILE_TEST_IS_REGULAR) &&
-                g_file_get_contents(from, &data, &len, NULL)) {
-                int fd = g_open(to, O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC, 0600);   /* the trusted list: yours only */
-                if (fd >= 0) {
-                    gboolean ok = write(fd, data, len) == (gssize) len;
-                    close(fd);
-                    if (!ok)
-                        g_unlink(to);
-                }
-            }
-            g_free(data);
+            copy_once(from, to);        /* the trusted list: yours only (0600) */
             g_free(from);
             g_free(to);
         }
+        /* own languages ("own:NAME" in the settings): their files too, or the setting finds none */
+        char *lold = g_build_filename(g_get_user_data_dir(), "millerx-unleashed", "languages", NULL);
+        char *lnew = own_languages_dir();
+        GDir *ld = g_dir_open(lold, 0, NULL);
+        if (ld) {
+            g_mkdir_with_parents(lnew, 0700);
+            const char *n;
+            while ((n = g_dir_read_name(ld))) {
+                char *from = g_build_filename(lold, n, NULL), *to = g_build_filename(lnew, n, NULL);
+                copy_once(from, to);
+                g_free(from);
+                g_free(to);
+            }
+            g_dir_close(ld);
+        }
+        g_free(lold);
+        g_free(lnew);
         GKeyFile *kf = g_key_file_new();
         if (g_key_file_load_from_file(kf, path, G_KEY_FILE_KEEP_COMMENTS, NULL)) {
             g_key_file_set_string(kf, "browse", "clicks", "unleashed");
@@ -153,8 +177,8 @@ void look_load(void)
         g_free(LOOK.compare);
         LOOK.compare = g_strdup("auto");
     }
-    if (!LOOK.language || (strcmp(LOOK.language, "en") && strcmp(LOOK.language, "wizard")
-                              && strcmp(LOOK.language, "wienerisch") && !g_str_has_prefix(LOOK.language, "own:"))) {
+    /* "wizard" and "wienerisch" came with millerX until 0.8.8: now they are own language files */
+    if (!LOOK.language || (strcmp(LOOK.language, "en") && !g_str_has_prefix(LOOK.language, "own:"))) {
         g_free(LOOK.language);
         LOOK.language = g_strdup("system");
     }
@@ -230,10 +254,15 @@ char *look_language(void)
 {
     GKeyFile *kf = g_key_file_new();
     char *path = config_file();
+    unleashed_take_over(path);          /* before the language is read: the first start speaks it too */
     g_key_file_load_from_file(kf, path, G_KEY_FILE_NONE, NULL);
     char *l = get_str(kf, "look", "language");
     g_free(path);
     g_key_file_unref(kf);
+    if (l && strcmp(l, "en") && !g_str_has_prefix(l, "own:")) {   /* "wizard", "wienerisch" (until 0.8.8), odd */
+        g_free(l);
+        l = NULL;
+    }
     return l ? l : g_strdup("system");
 }
 

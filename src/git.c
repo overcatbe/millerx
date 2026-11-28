@@ -38,6 +38,11 @@ static gboolean git_run(const char *top, const char *const *args, char **out, ch
 {
     GPtrArray *a = g_ptr_array_new();
     g_ptr_array_add(a, (char *) "git");
+    /* file names are names, never patterns: "a[1].txt" must not also mean "a1.txt" (a Revert would
+     * throw away that one's changes too); and no fsmonitor program from the repository's config */
+    g_ptr_array_add(a, (char *) "--literal-pathspecs");
+    g_ptr_array_add(a, (char *) "-c");
+    g_ptr_array_add(a, (char *) "core.fsmonitor=false");
     g_ptr_array_add(a, (char *) "-C");
     g_ptr_array_add(a, (char *) top);
     for (int i = 0; args[i]; i++)
@@ -68,7 +73,9 @@ static char *git_top(const char *dir)
         g_free(out);
         return NULL;
     }
-    g_strstrip(out);
+    size_t len = strlen(out);           /* only the line's end: a folder name may end in a space */
+    while (len && out[len - 1] == '\n')
+        out[--len] = '\0';
     if (!*out) {
         g_free(out);
         return NULL;
@@ -87,7 +94,8 @@ static void in_terminal(GitCtx *g, const char *const *what)
     for (guint i = 0; i < g->paths->len; i++)
         g_ptr_array_add(a, g->paths->pdata[i]);
     g_ptr_array_add(a, NULL);
-    win_terminal_run(g->w, g->top, "git \"$@\"; echo; printf '[finished: press Enter]'; read x",
+    win_terminal_run(g->w, g->top, "git --literal-pathspecs -c core.fsmonitor=false \"$@\"; echo; "
+                     "printf '[finished: press Enter]'; read x",
                      (const char *const *) a->pdata);
     g_ptr_array_free(a, TRUE);
 }
@@ -487,7 +495,7 @@ void git_menu_add(GtkWidget *menu, Win *w, GList *files, GFile *folder)
  * gets no colours. status itself runs with fsmonitor and hooks off and without submodules (they have
  * configs of their own). Never as root. The review that found the holes this closes: 0.8.8. */
 
-static const char *const GIT_SAFE[] = { "git", "--no-optional-locks", "-c", "safe.bareRepository=explicit",
+static const char *const GIT_SAFE[] = { "git", "--no-optional-locks", "--literal-pathspecs", "-c", "safe.bareRepository=explicit",
                                         "-c", "core.fsmonitor=false", "-c", "core.hooksPath=/dev/null", NULL };
 
 static gboolean colours_on(void)

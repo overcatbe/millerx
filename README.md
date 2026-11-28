@@ -147,13 +147,13 @@ millerX carries his name.
 - **Highlight colour** of your own, chosen live in the settings, for millerX or for every
   GTK 3 program (a marked block in `~/.config/gtk-3.0/gtk.css`, removable again).
 - **Languages:** English, German and Greek, following your system; Settings → Language can
-  also pick English anyway, or one of two joke languages: **Wizard** ("Banish to the Void",
-  "Thou art not worthy") and **Wienerisch** (Viennese slang, root is "da Kaiser").
+  also pick English anyway. The joke languages **Wizard** ("Banish to the Void", "Thou art not
+  worthy") and **Wienerisch** (Viennese slang, root is "da Kaiser") are downloads in extras now.
   The Greek is looked after by rizitis, a native speaker. Only the language in use is ever
   loaded; each one is about 30 KB on disk.
 - **More languages:** every new language, real or just for fun, is a download in
   [extras/languages](extras/languages/) (pirate, LOLCAT, …), so millerX doesn't grow with each
-  one: the four it has stay. Settings → Language → "Your own…" picks the file, checks it and
+  one: German and Greek come with it. Settings → Language → "Your own…" picks the file, checks it and
   adds it to the list. Or write your own: copy `/usr/share/millerx/millerx.pot` to `NAME.po` and
   fill in the `msgstr` lines (empty ones stay English). Translators welcome: see
   [CONTRIBUTING](CONTRIBUTING.md#translations).
@@ -170,7 +170,7 @@ millerX carries his name.
 
 ![The Computer column: disks, USB sticks and network, each with its free space](docs/computer.png?v=082)
 
-The languages: Wizard, German and Greek.
+The languages: Wizard (from extras), German and Greek.
 
 <p>
 <img src="docs/wizard.png?v=082" width="32%" alt="Wizard: Banish to the Void, Read the runes, Add to sacred texts">

@@ -159,10 +159,14 @@ static char *type_by_content(const char *path, const char *name_ct)
 {
     if (!path || !name_ct || g_content_type_is_unknown(name_ct))
         return NULL;                    /* no name type: GIO looked inside already */
+    /* a regular file only, looked at before it is opened: opening some devices does something
+     * (a watchdog starts counting, a tape rewinds), and a root window may be pointed at /dev */
+    struct stat st;
+    if (stat(path, &st) || !S_ISREG(st.st_mode))
+        return NULL;
     int fd = open(path, O_RDONLY | O_NONBLOCK | O_CLOEXEC);
     if (fd < 0)
         return NULL;
-    struct stat st;
     char buf[4096];
     ssize_t n = -1;
     if (!fstat(fd, &st) && S_ISREG(st.st_mode))

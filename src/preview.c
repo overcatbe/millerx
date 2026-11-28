@@ -747,13 +747,17 @@ static gpointer list_thread(gpointer data)
                 char *full = g_build_filename(j->dir, n, NULL);
                 GStatBuf st;
                 e->link = g_lstat(full, &st) == 0 && S_ISLNK(st.st_mode);
+                gboolean special = FALSE;
                 if (g_stat(full, &st) == 0) {
                     e->dir = S_ISDIR(st.st_mode);
                     e->mtime = st.st_mtime;
                     e->size = st.st_size;
+                    /* a FIFO named x.jpg (or a socket, a device) would hold a thumbnail worker
+                     * forever on open(): never in the gallery (review for 0.9.0) */
+                    special = !e->dir && !S_ISREG(st.st_mode);
                 }
                 g_free(full);
-                if (e->dir) {               /* files only */
+                if (e->dir || special) {    /* files only */
                     entry_free(e);
                     continue;
                 }
@@ -1954,6 +1958,26 @@ Preview *preview_new(Win *w)
     gtk_container_add(GTK_CONTAINER(p->outer), p->box);
     gtk_viewport_set_shadow_type(GTK_VIEWPORT(gtk_bin_get_child(GTK_BIN(p->outer))), GTK_SHADOW_NONE);
     return p;
+}
+
+/* the window closed: its widgets go now, the Preview only when the last job lets go of the window
+ * (a video thumbnail may take seconds). Nothing may touch the widgets until then: no gallery,
+ * no watching its folder, no timers. (Review for 0.9.0.) */
+void preview_stop(Preview *p)
+{
+    grid_stop(p);
+    if (p->header_idle) {
+        g_source_remove(p->header_idle);
+        p->header_idle = 0;
+    }
+    if (p->image_timer) {
+        g_source_remove(p->image_timer);
+        p->image_timer = 0;
+    }
+    if (p->resize_timer) {
+        g_source_remove(p->resize_timer);
+        p->resize_timer = 0;
+    }
 }
 
 void preview_free(Preview *p)

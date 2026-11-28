@@ -182,6 +182,7 @@ static guint64 tree_size(Job *j, GFile *f)
     g_object_unref(fi);
     if (!dir)
         return n;
+    n = 0;                          /* a folder's own entry isn't copied as bytes: only its files count */
     gint64 now = g_get_monotonic_time();
     if (now - j->shown > 200000) {
         j->shown = now;
@@ -470,6 +471,13 @@ static gboolean extract_one(Job *j, GFile *archive, double base, double span, GE
     }
     ArcCtx x = { j, "Extracting", base_name, base, span };
     ok = arc_extract(path, tmpl, j->cancel, arc_progress, &x, err);
+    /* it worked, but some entries were left out (unsafe names): that note waits until the end, or
+     * the move below would start with an error already set and do nothing (a merge stopped) */
+    GError *left_out = NULL;
+    if (ok && err && *err) {
+        left_out = *err;
+        *err = NULL;
+    }
     GFile *tmp = g_file_new_for_path(tmpl);
     if (ok && !g_cancellable_is_cancelled(j->cancel)) {
         GList *kids = NULL;
@@ -516,6 +524,12 @@ static gboolean extract_one(Job *j, GFile *archive, double base, double span, GE
     if (g_file_query_exists(tmp, NULL))       /* cancelled, failed, skipped or moved out of */
         delete_tree(tmp, NULL, NULL);
     g_object_unref(tmp);
+    if (left_out) {
+        if (err && !*err)
+            *err = left_out;
+        else
+            g_error_free(left_out);
+    }
 out:
     g_free(tmpl);
     g_free(stem);

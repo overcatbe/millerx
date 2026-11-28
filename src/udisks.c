@@ -24,6 +24,7 @@
 static GDBusObjectManager *MGR;
 static GHashTable *KNOWN;           /* object paths already seen as devices: not "arrived" again */
 static gint64 SETTLE_UNTIL;         /* udisks2 (re)starting lists everything anew: no notices */
+static gboolean DOWN;               /* udisks2 went away: what it lists when it is back isn't new */
 static guint REFRESH;
 
 /* ---- properties --------------------------------------------------------------------------------- */
@@ -555,8 +556,8 @@ static void unlocked(GObject *src, GAsyncResult *res, gpointer data)
 /* the passphrase of an encrypted stick; NULL: cancelled. Wipe it after use. */
 static char *ask_passphrase(Win *w, const char *name)
 {
-    GtkWidget *d = gtk_dialog_new_with_buttons(_("Unlock"), GTK_WINDOW(w->window),
-                                               GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+    /* not destroyed with its window: the code below still touches it after gtk_dialog_run */
+    GtkWidget *d = gtk_dialog_new_with_buttons(_("Unlock"), GTK_WINDOW(w->window), GTK_DIALOG_MODAL,
                                                _("Cancel"), GTK_RESPONSE_CANCEL, _("Unlock"), GTK_RESPONSE_OK, NULL);
     gtk_dialog_set_default_response(GTK_DIALOG(d), GTK_RESPONSE_OK);
     GtkWidget *box = gtk_dialog_get_content_area(GTK_DIALOG(d));
@@ -758,7 +759,7 @@ static void check(GDBusObject *o, gboolean announce)
     if (g_hash_table_contains(KNOWN, path))
         return;
     g_hash_table_add(KNOWN, g_strdup(path));
-    if (!announce || g_get_monotonic_time() < SETTLE_UNTIL || is_system(o))
+    if (!announce || DOWN || g_get_monotonic_time() < SETTLE_UNTIL || is_system(o))
         return;
     GDBusObject *b = backing_of(o);           /* somebody unlocked a stick we already know */
     if (b) {
@@ -806,9 +807,18 @@ static void on_props(GDBusObjectManagerClient *m, GDBusObjectProxy *o, GDBusProx
 
 static void on_owner(GObject *m, GParamSpec *ps, gpointer d)
 {
-    /* udisks2 (re)started: it lists every device again, none of them is new */
-    g_hash_table_remove_all(KNOWN);
-    SETTLE_UNTIL = g_get_monotonic_time() + 3 * G_USEC_PER_SEC;
+    /* udisks2 went away, or came back. GLib tells "back" only after it has added every device
+     * again, so the devices must not count as new from the moment it went: else each one would
+     * be "plugged in" (and with Automount, mounted and opened) after a restart of udisks2 */
+    char *owner = g_dbus_object_manager_client_get_name_owner(G_DBUS_OBJECT_MANAGER_CLIENT(MGR));
+    if (!owner) {
+        DOWN = TRUE;
+        g_hash_table_remove_all(KNOWN);
+    } else {
+        DOWN = FALSE;
+        SETTLE_UNTIL = g_get_monotonic_time() + 3 * G_USEC_PER_SEC;     /* stragglers */
+    }
+    g_free(owner);
     schedule_refresh();
 }
 
@@ -821,6 +831,7 @@ static void manager_ready(GObject *src, GAsyncResult *res, gpointer d)
         g_error_free(e);
         return;
     }
+    DOWN = !ud_ready();                       /* udisks2 not started yet: its first list isn't news */
     GList *all = g_dbus_object_manager_get_objects(MGR);
     for (GList *l = all; l; l = l->next)
         check(l->data, FALSE);                /* there before us: not "arrived" */

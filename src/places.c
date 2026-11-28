@@ -488,6 +488,28 @@ static Column *computer_column(Win *w)
 }
 
 /* the disks changed (a stick came or went): list them again, keeping what is open */
+/* what a row is, not what it is called: two sticks named "8.0 GB Volume" are two rows, and after a
+ * refresh the selection must come back to the same one, or Safe to remove would hit the other */
+static char *row_key(Column *c, GtkTreeIter *it)
+{
+    gint64 kind;
+    guint64 idx;
+    char *name = NULL;
+    GFile *root = NULL;
+    gtk_tree_model_get(GTK_TREE_MODEL(c->store), it, C_MTIME, &kind, C_SIZE, &idx, C_NAME, &name, C_FILE, &root, -1);
+    gboolean has_obj = kind == K_MOUNT || kind == K_VOLUME || kind == K_UD_MOUNTED || kind == K_UD_UNMOUNTED ||
+                       kind == K_UD_LOCKED;
+    gpointer obj = has_obj && idx < c->objs->len ? g_ptr_array_index(c->objs, idx) : NULL;
+    char *uri = root ? g_file_get_uri(root) : NULL;
+    /* a stick's row changes kind when it is mounted: its object stays, so the object decides */
+    char *key = obj ? g_strdup_printf("o%p", obj) : g_strdup_printf("%" G_GINT64_FORMAT "|%s|%s", kind, uri ? uri : "",
+                                                                    name ? name : "");
+    g_free(uri);
+    g_clear_object(&root);
+    g_free(name);
+    return key;
+}
+
 void computer_refresh(Win *w)
 {
     Column *c = w->dead ? NULL : computer_column(w);
@@ -498,14 +520,13 @@ void computer_refresh(Win *w)
     GtkTreeIter it;
     char *was = NULL;
     if (gtk_tree_selection_get_selected(sel, &m, &it))
-        gtk_tree_model_get(m, &it, C_NAME, &was, -1);
+        was = row_key(c, &it);
     g_signal_handlers_block_matched(sel, G_SIGNAL_MATCH_DATA, 0, 0, NULL, NULL, c);
     computer_fill(c);
     gboolean found = FALSE;
     gboolean ok = was && gtk_tree_model_get_iter_first(GTK_TREE_MODEL(c->store), &it);
     while (ok && !found) {
-        char *n;
-        gtk_tree_model_get(GTK_TREE_MODEL(c->store), &it, C_NAME, &n, -1);
+        char *n = row_key(c, &it);
         if (!g_strcmp0(n, was)) {
             gtk_tree_selection_select_iter(sel, &it);
             found = TRUE;

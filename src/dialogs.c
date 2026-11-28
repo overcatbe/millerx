@@ -171,6 +171,7 @@ typedef struct {
 
 static void perm_free(Perm *p)
 {
+    win_unref(p->w);
     g_free(p->path);
     g_free(p);
 }
@@ -331,7 +332,7 @@ void dialog_properties(Win *w, GFile *f)
     if (g_file_info_has_attribute(info, "unix::mode") && path) {
         guint32 mode = g_file_info_get_attribute_uint32(info, "unix::mode");
         Perm *p = g_new0(Perm, 1);
-        p->w = w;
+        p->w = win_ref(w);             /* the window may close first: this one stays open */
         p->path = g_strdup(path);
         p->isdir = isdir;
         p->mine = g_file_info_get_attribute_uint32(info, "unix::uid") == getuid() || getuid() == 0;
@@ -538,6 +539,7 @@ typedef struct {
 
 static void multi_free(MultiPerm *m)
 {
+    win_unref(m->w);
     g_ptr_array_unref(m->paths);
     g_free(m);
 }
@@ -591,7 +593,7 @@ void dialog_properties_multi(Win *w, GList *files)
 {
     guint n = g_list_length(files);
     MultiPerm *m = g_new0(MultiPerm, 1);
-    m->w = w;
+    m->w = win_ref(w);
     m->paths = g_ptr_array_new_with_free_func(g_free);
     guint64 file_bytes = 0, nfiles = 0, ndirs = 0;
     GPtrArray *dirs = g_ptr_array_new();
@@ -1212,6 +1214,12 @@ static void hl_system_clicked(GtkButton *b, Set *s)
     g_free(msg);
 }
 
+static void set_free(Set *s)
+{
+    win_unref(s->w);
+    g_free(s);
+}
+
 void dialog_settings(Win *w)
 {
     GtkWidget *d = gtk_dialog_new_with_buttons(_("millerX settings"), GTK_WINDOW(w->window), 0, _("Close"),
@@ -1240,8 +1248,8 @@ void dialog_settings(Win *w)
     GtkWidget *tools_tab = tab(nb, _("Tools"), max_h);
     GtkWidget *grid = NULL;
     Set *s = g_new0(Set, 1);
-    s->w = w;
-    g_object_set_data_full(G_OBJECT(d), "set", s, g_free);
+    s->w = win_ref(w);                 /* the window it was opened from may close first */
+    g_object_set_data_full(G_OBJECT(d), "set", s, (GDestroyNotify) set_free);
     int r = 0;
 
     new_column(left);
@@ -1316,8 +1324,6 @@ void dialog_settings(Win *w)
     s->lang = gtk_combo_box_text_new();
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->lang), "system", _("System"));
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->lang), "en", _("English"));
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->lang), "wizard", _("Wizard (English, of a sort)"));
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->lang), "wienerisch", _("Wienerisch (Viennese slang)"));
 #ifdef ENABLE_NLS
     GPtrArray *own = own_languages_list();          /* people's own files, under their file names */
     for (guint i = 0; i < own->len; i++) {

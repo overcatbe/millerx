@@ -75,7 +75,7 @@ typedef struct {
     int clicks;             /* CLICKS_CLASSIC (default), CLICKS_UNLEASHED */
     gboolean update_notice; /* "millerX was updated · Restart now" (on by default) */
     int thumb_size;         /* TSIZE_TINY, _SMALL, _MEDIUM, _LARGE */
-    char *language;         /* "system", "en", "wizard", "wienerisch" or "own:NAME": read once at start */
+    char *language;         /* "system", "en" or "own:NAME": read once at start */
     char *compare;          /* what compares two files: "auto" (meld, kdiff3, kompare, diffuse) or a command */
 } Look;
 
@@ -321,6 +321,7 @@ void column_mark_files(Column *c, GList *files);   /* select rows quietly (the g
 /* ---- preview (preview.c) --------------------------------------------------- */
 Preview *preview_new(Win *w);
 void preview_free(Preview *p);
+void preview_stop(Preview *p);              /* the window closed: no more timers or watching */
 void preview_clear(Preview *p);
 void preview_show_file(Preview *p, GFile *f);
 void preview_show_many(Preview *p, GList *files);

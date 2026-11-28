@@ -42,6 +42,7 @@ void win_restore(Win *w, GList *files)
         if (parent && !g_file_query_exists(parent, NULL))
             g_file_make_directory_with_parents(parent, NULL, NULL);
         gboolean go = TRUE;
+        GFile *aside = NULL;                /* Replace: the old one waits here until the new one is in */
         if (g_file_query_exists(dest, NULL)) {
             Choice ch = for_all ? all : dialog_conflict(w, l->data, dest, FALSE, &for_all);
             if (for_all)
@@ -59,11 +60,29 @@ void win_restore(Win *w, GList *files)
                 g_object_unref(dest);
                 dest = unique_child(parent, base);
                 g_free(base);
-            } else if (!delete_tree(dest, NULL, &err))
-                go = FALSE;
+            } else {
+                /* Replace: renamed aside in the same folder (instant), deleted only once the trashed
+                 * one is in its place; if that move fails, the old one comes back */
+                char *base = g_file_get_basename(dest);
+                char *hidden = g_strconcat(".millerx-replaced-", base, NULL);
+                aside = unique_child(parent, hidden);
+                if (!g_file_move(dest, aside, G_FILE_COPY_NOFOLLOW_SYMLINKS, NULL, NULL, NULL, &err)) {
+                    g_clear_object(&aside);
+                    go = FALSE;
+                }
+                g_free(hidden);
+                g_free(base);
+            }
         }
         if (go && !err && g_file_move(l->data, dest, G_FILE_COPY_NOFOLLOW_SYMLINKS, NULL, NULL, NULL, &err))
             done++;
+        if (aside) {
+            if (!err)
+                delete_tree(aside, NULL, NULL);
+            else
+                g_file_move(aside, dest, G_FILE_COPY_NOFOLLOW_SYMLINKS, NULL, NULL, NULL, NULL);
+            g_object_unref(aside);
+        }
         if (err) {
             char *p = file_path(dest);
             char *m = g_strdup_printf("%s: %s", p, err->message);
