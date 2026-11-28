@@ -1,8 +1,19 @@
 # Changelog
 
-## 0.8.9 (not released yet)
+## 0.9.0 (not released yet)
 
-Wishes from the LinuxQuestions thread, and sticks without GVfs.
+One millerX again, wishes from the LinuxQuestions thread, and sticks without GVfs. (0.8.9 was
+never released: it is all in here.)
+
+- **millerX Unleashed is a setting now.** Settings → Look → Browsing → **Clicks and drags**:
+  - **Classic** (the default): a right-click selects, as millerX always did. What you select is
+    what you process, and it is the way for touch screens. Thanks, SCerovec!
+  - **Unleashed**: a right-click on something not selected only holds it (bold, underlined), its
+    menu acts on it and the columns stay put; a drag carries what you picked up without selecting
+    it; a folder held still under a drag opens. Thanks, kgha and brobr, who chose it!
+  - Coming from millerX Unleashed: its settings, sort orders and trusted programs are taken over
+    the first time millerX starts (if millerX had none of its own), with Unleashed chosen.
+    millerX Unleashed itself ends with 0.8.8.
 
 - **USB sticks, cards and discs straight from udisks2**, no GVfs needed. The Computer column
   lists them with their name, device and file system; a click mounts, an encrypted one asks for

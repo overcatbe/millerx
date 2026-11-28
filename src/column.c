@@ -7,6 +7,18 @@
 static const GtkTargetEntry URI_TARGET[] = { { (char *) "text/uri-list", 0, 0 } };
 static gboolean DRAG_ASK;             /* the running drag started with the right button: its drop asks */
 
+/* Clicks and drags: Unleashed (Settings → Look): a drag carries what was picked up, not what is selected, and a folder held
+ * still under a drag for a moment opens (only where that can't take away the column it came from) */
+static GList *DRAG_FILES;             /* GFile*, what the running drag from a column carries */
+static Column *DRAG_SRC;              /* the column it started in (a ref) */
+static guint SPRING_ID;               /* the timer for opening the folder under the drag */
+static Column *SPRING_COL;            /* (a ref) */
+static GtkTreeRowReference *SPRING_ROW;
+#define SPRING_MS 700
+
+static void held_clear(Column *c);
+static void left_prev_free(Column *c);
+
 void column_ref(Column *c)
 {
     c->ref++;
@@ -25,6 +37,9 @@ void column_unref(Column *c)
         g_ptr_array_unref(c->objs);
     g_free(c->pending_select);
     g_string_free(c->typed, TRUE);
+    if (c->held)
+        gtk_tree_row_reference_free(c->held);
+    left_prev_free(c);
     win_unref(c->win);
     g_free(c);
 }
@@ -45,15 +60,28 @@ void column_close(Column *c)
         g_signal_handlers_disconnect_by_data(gtk_tree_view_get_selection(GTK_TREE_VIEW(c->view)), c);
 }
 
-/* links in italics, like other file managers show them */
+/* the row held without being selected (Unleashed): right-clicked, or picked up by a drag */
+static gboolean is_held(Column *c, GtkTreeModel *m, GtkTreeIter *it)
+{
+    if (!c || !c->held || !gtk_tree_row_reference_valid(c->held))
+        return FALSE;
+    GtkTreePath *a = gtk_tree_row_reference_get_path(c->held), *b = gtk_tree_model_get_path(m, it);
+    gboolean eq = !gtk_tree_path_compare(a, b);
+    gtk_tree_path_free(a);
+    gtk_tree_path_free(b);
+    return eq;
+}
+
+/* links in italics, like other file managers show them; the held row bold and underlined */
 static void name_func(GtkTreeViewColumn *col, GtkCellRenderer *r, GtkTreeModel *m, GtkTreeIter *it, gpointer d)
 {
     (void) col;
-    (void) d;
-    gboolean link = FALSE;
+    gboolean link = FALSE, held = is_held(d, m, it);
     int git = GIT_CLEAN;
     gtk_tree_model_get(m, it, C_LINK, &link, C_GIT, &git, -1);
-    g_object_set(r, "style", link ? PANGO_STYLE_ITALIC : PANGO_STYLE_NORMAL, NULL);
+    g_object_set(r, "style", link ? PANGO_STYLE_ITALIC : PANGO_STYLE_NORMAL,
+                 "underline", held ? PANGO_UNDERLINE_SINGLE : PANGO_UNDERLINE_NONE,
+                 "weight", held ? PANGO_WEIGHT_BOLD : PANGO_WEIGHT_NORMAL, NULL);
     /* Git colours (git.c): green new, red changed; readable on light and dark themes */
     static const GdkRGBA green = { 0.22, 0.66, 0.30, 1 }, red = { 0.88, 0.30, 0.27, 1 };
     if (git == GIT_NEW)
@@ -62,6 +90,46 @@ static void name_func(GtkTreeViewColumn *col, GtkCellRenderer *r, GtkTreeModel *
         g_object_set(r, "foreground-rgba", &red, NULL);
     else
         g_object_set(r, "foreground-set", FALSE, NULL);
+}
+
+static void held_set(Column *c, GtkTreePath *p)
+{
+    held_clear(c);
+    c->held = gtk_tree_row_reference_new(GTK_TREE_MODEL(c->store), p);
+    gtk_widget_queue_draw(c->view);
+}
+
+static void held_clear(Column *c)
+{
+    if (!c->held)
+        return;
+    gtk_tree_row_reference_free(c->held);
+    c->held = NULL;
+    if (!c->closed && c->view)
+        gtk_widget_queue_draw(c->view);
+}
+
+/* the held row's file (a new ref), or NULL */
+static GFile *held_file(Column *c)
+{
+    GFile *f = NULL;
+    if (c->held && gtk_tree_row_reference_valid(c->held)) {
+        GtkTreePath *p = gtk_tree_row_reference_get_path(c->held);
+        GtkTreeIter it;
+        if (gtk_tree_model_get_iter(GTK_TREE_MODEL(c->store), &it, p))
+            gtk_tree_model_get(GTK_TREE_MODEL(c->store), &it, C_FILE, &f, -1);
+        gtk_tree_path_free(p);
+    }
+    return f;
+}
+
+static void left_prev_free(Column *c)
+{
+    g_list_free_full(c->left_prev, (GDestroyNotify) gtk_tree_row_reference_free);
+    c->left_prev = NULL;
+    if (c->left_row)
+        gtk_tree_row_reference_free(c->left_row);
+    c->left_row = NULL;
 }
 
 /* ---- loading ------------------------------------------------------------- */
@@ -415,7 +483,28 @@ gboolean column_selected_single(Column *c, GFile **f, gboolean *isdir)
 static void on_selection(GtkTreeSelection *sel, Column *c)
 {
     (void) sel;
+    if (c->left_wait)           /* a left press: a click or a drag? the release or the drag says */
+        return;
     win_column_selected(c->win, c);
+}
+
+/* the left press was a click after all: now it selects (and opens) as always */
+static void left_commit(Column *c)
+{
+    if (!c->left_wait)
+        return;
+    c->left_wait = FALSE;
+    left_prev_free(c);
+    if (!c->closed)
+        win_column_selected(c->win, c);
+}
+
+static gboolean left_commit_idle(gpointer data)
+{
+    Column *c = data;
+    left_commit(c);
+    column_unref(c);
+    return G_SOURCE_REMOVE;
 }
 
 /* The gallery's picks shown in this column (the folder's own one): the same rows selected and the
@@ -477,6 +566,8 @@ static gboolean on_focus(GtkWidget *w, GdkEvent *ev, Column *c)
 static gboolean on_button(GtkWidget *view, GdkEventButton *ev, Column *c)
 {
     GtkTreePath *p = NULL;
+    if (ev->type == GDK_BUTTON_PRESS)
+        left_commit(c);         /* a release we never saw: don't stay waiting */
     if (ev->type == GDK_BUTTON_PRESS && ev->button == 2) {      /* middle-click: a folder in a new window, a file opens */
         /* a double middle-click is two presses: the second one doesn't open it again */
         static guint32 last_middle;
@@ -525,15 +616,41 @@ static gboolean on_button(GtkWidget *view, GdkEventButton *ev, Column *c)
         }
         g_object_unref(f);
     }
+    /* Unleashed: the left button on an unselected row. GtkTreeView selects it now, but nothing
+     * follows yet: let go without moving and it's a click (selected and opened, as always); move
+     * and it's a drag, which carries the row while the old selection and the columns come back. */
+    if (LOOK.clicks == CLICKS_UNLEASHED && !c->computer && ev->type == GDK_BUTTON_PRESS && ev->button == 1 &&
+        !(ev->state & (GDK_CONTROL_MASK | GDK_SHIFT_MASK)) &&
+        gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(view), ev->x, ev->y, &p, NULL, NULL, NULL)) {
+        GtkTreeSelection *sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
+        if (!gtk_tree_selection_path_is_selected(sel, p)) {
+            left_prev_free(c);
+            GList *rows = gtk_tree_selection_get_selected_rows(sel, NULL);
+            for (GList *l = rows; l; l = l->next)
+                c->left_prev = g_list_append(c->left_prev,
+                                             gtk_tree_row_reference_new(GTK_TREE_MODEL(c->store), l->data));
+            g_list_free_full(rows, (GDestroyNotify) gtk_tree_path_free);
+            c->left_row = gtk_tree_row_reference_new(GTK_TREE_MODEL(c->store), p);
+            c->left_wait = TRUE;
+        }
+        gtk_tree_path_free(p);
+        return FALSE;
+    }
     if (ev->type != GDK_BUTTON_PRESS || ev->button != 3)
         return FALSE;
-    /* the right button: the row is chosen now; the menu comes when it's let go, unless it
-     * became a drag first (then the drop asks Copy / Move / Link) */
+    /* the right button: the menu comes when it's let go, unless it became a drag first (then
+     * the drop asks Copy / Move / Link). Unleashed: an unselected row isn't selected, only held
+     * (underlined); its menu and its drag act on it, and the columns stay where they are. */
     GtkTreeSelection *sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
+    held_clear(c);
     if (gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(view), ev->x, ev->y, &p, NULL, NULL, NULL)) {
         if (!gtk_tree_selection_path_is_selected(sel, p)) {
-            gtk_tree_selection_unselect_all(sel);
-            gtk_tree_selection_select_path(sel, p);
+            if (LOOK.clicks == CLICKS_UNLEASHED && !c->computer && !c->trash) {
+                held_set(c, p);
+            } else {
+                gtk_tree_selection_unselect_all(sel);
+                gtk_tree_selection_select_path(sel, p);
+            }
         }
         gtk_tree_path_free(p);
     } else {
@@ -568,12 +685,36 @@ typedef struct {
     GdkEvent *ev;
 } MenuLater;
 
+/* the held row's menu closed: its mark goes (later: "deactivate" comes before the item's "activate") */
+static gboolean held_menu_gone(gpointer data)
+{
+    Column *c = data;
+    held_clear(c);
+    column_unref(c);
+    return G_SOURCE_REMOVE;
+}
+
+static void on_held_menu_done(GtkMenuShell *menu, Column *c)
+{
+    (void) menu;
+    column_ref(c);
+    g_idle_add(held_menu_gone, c);
+}
+
 static gboolean menu_later(gpointer data)
 {
     MenuLater *m = data;
-    if (!m->c->closed)
+    GFile *f = m->c->closed ? NULL : held_file(m->c);
+    if (f) {
+        GtkWidget *menu = win_held_menu(m->c->win, m->c, f, (GdkEventButton *) m->ev);
+        g_signal_connect(menu, "deactivate", G_CALLBACK(on_held_menu_done), m->c);
+        g_object_unref(f);
+    } else if (!m->c->closed) {
+        held_clear(m->c);
         win_context_menu(m->c->win, m->c, (GdkEventButton *) m->ev);
+    }
     gdk_event_free(m->ev);
+    column_unref(m->c);
     g_free(m);
     return G_SOURCE_REMOVE;
 }
@@ -581,10 +722,16 @@ static gboolean menu_later(gpointer data)
 static gboolean on_button_release(GtkWidget *view, GdkEventButton *ev, Column *c)
 {
     (void) view;
+    if (ev->button == 1 && c->left_wait) {      /* after the tree view's own release */
+        column_ref(c);
+        g_idle_add(left_commit_idle, c);
+        return FALSE;
+    }
     if (ev->button != 3 || !c->right_down)
         return FALSE;
     c->right_down = FALSE;
     MenuLater *m = g_new0(MenuLater, 1);
+    column_ref(c);
     m->c = c;
     m->ev = gdk_event_copy((GdkEvent *) ev);
     g_idle_add(menu_later, m);
@@ -667,6 +814,7 @@ static gboolean on_key(GtkWidget *view, GdkEventKey *ev, Column *c)
     gboolean ctrl = ev->state & GDK_CONTROL_MASK, shift = ev->state & GDK_SHIFT_MASK;
     gboolean alt = ev->state & GDK_MOD1_MASK;
     Win *w = c->win;
+    left_commit(c);
     if (k == GDK_KEY_Escape && !ctrl && !shift && !alt && !c->computer) {
         /* Esc: nothing selected here any more; the columns to the right close, the status line
          * shows the folder's count again (random_guy) */
@@ -783,18 +931,152 @@ static gboolean on_key(GtkWidget *view, GdkEventKey *ev, Column *c)
 /* A drag with the right button (or a drop with Alt held, also from other programs) asks what to
  * do: Copy here, Move here, Link here, Cancel. The left button does what it always did. */
 
+static void spring_cancel(void)
+{
+    if (SPRING_ID)
+        g_source_remove(SPRING_ID);
+    SPRING_ID = 0;
+    if (SPRING_ROW)
+        gtk_tree_row_reference_free(SPRING_ROW);
+    SPRING_ROW = NULL;
+    if (SPRING_COL)
+        column_unref(SPRING_COL);
+    SPRING_COL = NULL;
+}
+
+static void drag_reset(void)
+{
+    spring_cancel();
+    g_list_free_full(DRAG_FILES, g_object_unref);
+    DRAG_FILES = NULL;
+    if (DRAG_SRC) {
+        held_clear(DRAG_SRC);
+        column_unref(DRAG_SRC);
+    }
+    DRAG_SRC = NULL;
+}
+
+/* Unleashed: what the drag carries is fixed now. A left drag from an unselected row: that row,
+ * held, and the selection from before the press back (nothing had followed it). */
 static void on_drag_begin(GtkWidget *view, GdkDragContext *ctx, Column *c)
 {
-    (void) view; (void) ctx;
+    (void) ctx;
     if (win_pointer_mask(c->win) & GDK_BUTTON3_MASK)
         DRAG_ASK = TRUE;            /* (on_motion set it already for the right button's drag) */
     c->right_down = FALSE;          /* a drag, not a click: no context menu at the end */
+    drag_reset();
+    column_ref(c);
+    DRAG_SRC = c;
+    GtkTreeSelection *sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
+    if (c->left_wait && c->left_row && gtk_tree_row_reference_valid(c->left_row)) {
+        GtkTreePath *row = gtk_tree_row_reference_get_path(c->left_row);
+        held_set(c, row);
+        gtk_tree_path_free(row);
+        GFile *f = held_file(c);
+        DRAG_FILES = f ? g_list_append(NULL, f) : NULL;
+        gtk_tree_selection_unselect_all(sel);
+        for (GList *l = c->left_prev; l; l = l->next)
+            if (gtk_tree_row_reference_valid(l->data)) {
+                GtkTreePath *p = gtk_tree_row_reference_get_path(l->data);
+                gtk_tree_selection_select_path(sel, p);
+                gtk_tree_path_free(p);
+            }
+        left_prev_free(c);
+        c->left_wait = FALSE;       /* only now: the restoring above changed nothing to the right */
+    } else {
+        GFile *f = held_file(c);
+        DRAG_FILES = f ? g_list_append(NULL, f) : column_selected_files(c);
+        left_prev_free(c);
+        c->left_wait = FALSE;
+    }
 }
 
 static void on_drag_end(GtkWidget *view, GdkDragContext *ctx, gpointer d)
 {
     (void) view; (void) ctx; (void) d;
     DRAG_ASK = FALSE;
+    drag_reset();
+}
+
+/* Unleashed: a folder held still under a drag opens. Not to the left of the column the drag came
+ * from in its own window: that would close that column under the drag. */
+static gboolean spring_allowed(Column *c)
+{
+    if (c->computer || c->closed || c->win->dead)
+        return FALSE;
+    if (!DRAG_SRC || DRAG_SRC->win != c->win)
+        return TRUE;
+    if (DRAG_SRC->closed)
+        return FALSE;
+    return g_list_index(c->win->columns, c) >= g_list_index(c->win->columns, DRAG_SRC);
+}
+
+static gboolean spring_fire(gpointer data)
+{
+    (void) data;
+    SPRING_ID = 0;
+    Column *c = SPRING_COL;
+    if (c && !c->closed && !c->win->dead && SPRING_ROW && gtk_tree_row_reference_valid(SPRING_ROW)) {
+        GtkTreePath *p = gtk_tree_row_reference_get_path(SPRING_ROW);
+        GtkTreeIter it;
+        if (gtk_tree_model_get_iter(GTK_TREE_MODEL(c->store), &it, p))
+            column_select_iter(c, &it);         /* its column comes to the right, as a click does */
+        gtk_tree_path_free(p);
+    }
+    spring_cancel();
+    return G_SOURCE_REMOVE;
+}
+
+static gboolean on_drag_motion(GtkWidget *view, GdkDragContext *ctx, int x, int y, guint t, Column *c)
+{
+    (void) ctx; (void) t;
+    GtkTreePath *p = NULL;
+    GtkTreeViewDropPosition pos;
+    if (LOOK.clicks != CLICKS_UNLEASHED || !spring_allowed(c) || !gtk_tree_view_get_dest_row_at_pos(GTK_TREE_VIEW(view), x, y, &p, &pos) ||
+        (pos != GTK_TREE_VIEW_DROP_INTO_OR_BEFORE && pos != GTK_TREE_VIEW_DROP_INTO_OR_AFTER)) {
+        if (p)
+            gtk_tree_path_free(p);
+        spring_cancel();
+        return FALSE;
+    }
+    if (SPRING_COL == c && SPRING_ROW && gtk_tree_row_reference_valid(SPRING_ROW)) {
+        GtkTreePath *q = gtk_tree_row_reference_get_path(SPRING_ROW);
+        gboolean same = !gtk_tree_path_compare(p, q);
+        gtk_tree_path_free(q);
+        if (same) {                 /* still the same folder: the timer runs on */
+            gtk_tree_path_free(p);
+            return FALSE;
+        }
+    }
+    spring_cancel();
+    GtkTreeIter it;
+    GFile *f = NULL;
+    gboolean isdir = FALSE;
+    if (gtk_tree_model_get_iter(GTK_TREE_MODEL(c->store), &it, p))
+        gtk_tree_model_get(GTK_TREE_MODEL(c->store), &it, C_FILE, &f, C_ISDIR, &isdir, -1);
+    gboolean ok = f && isdir;
+    for (GList *l = DRAG_FILES; l && ok; l = l->next)      /* the dragged folder itself: never */
+        if (g_file_equal(l->data, f))
+            ok = FALSE;
+    GtkTreeSelection *sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
+    if (ok && gtk_tree_selection_count_selected_rows(sel) == 1 && gtk_tree_selection_path_is_selected(sel, p))
+        ok = FALSE;                 /* already open */
+    if (ok) {
+        column_ref(c);
+        SPRING_COL = c;
+        SPRING_ROW = gtk_tree_row_reference_new(GTK_TREE_MODEL(c->store), p);
+        SPRING_ID = g_timeout_add(SPRING_MS, spring_fire, NULL);
+    }
+    g_clear_object(&f);
+    gtk_tree_path_free(p);
+    return FALSE;
+}
+
+static void on_drag_leave(GtkWidget *view, GdkDragContext *ctx, guint t, Column *c)
+{
+    (void) view; (void) ctx; (void) t;
+    if (SPRING_COL == c)
+        spring_cancel();
 }
 
 typedef struct {
@@ -875,7 +1157,8 @@ static void on_drag_get(GtkWidget *view, GdkDragContext *ctx, GtkSelectionData *
                         guint info, guint t, Column *c)
 {
     (void) ctx; (void) info; (void) t;
-    GList *files = column_selected_files(c);
+    GList *files = DRAG_SRC == c && DRAG_FILES ? g_list_copy_deep(DRAG_FILES, ref_copy, NULL)
+                                               : column_selected_files(c);
     int n = g_list_length(files), i = 0;
     char **uris = g_new0(char *, n + 1);
     for (GList *l = files; l; l = l->next)
@@ -1141,7 +1424,7 @@ Column *column_new(Win *w, GFile *gfile, GPtrArray *chain)
     g_object_set(r_name, "ellipsize", PANGO_ELLIPSIZE_END, NULL);
     gtk_tree_view_column_pack_start(col, r_name, TRUE);
     gtk_tree_view_column_add_attribute(col, r_name, "text", C_NAME);
-    gtk_tree_view_column_set_cell_data_func(col, r_name, name_func, NULL, NULL);
+    gtk_tree_view_column_set_cell_data_func(col, r_name, name_func, c, NULL);
     GtkCellRenderer *r_arrow = gtk_cell_renderer_text_new();
     g_object_set(r_arrow, "xalign", 1.0, NULL);
     gtk_tree_view_column_pack_end(col, r_arrow, FALSE);
@@ -1206,6 +1489,8 @@ Column *column_new(Win *w, GFile *gfile, GPtrArray *chain)
     g_signal_connect(c->view, "drag-data-get", G_CALLBACK(on_drag_get), c);
     g_signal_connect(c->view, "drag-data-received", G_CALLBACK(on_drag_received), c);
     g_signal_connect(c->view, "drag-data-delete", G_CALLBACK(on_drag_delete), NULL);
+    g_signal_connect(c->view, "drag-motion", G_CALLBACK(on_drag_motion), c);
+    g_signal_connect(c->view, "drag-leave", G_CALLBACK(on_drag_leave), c);
 
     c->monitor = g_file_monitor_directory(gfile, G_FILE_MONITOR_WATCH_MOVES, NULL, NULL);
     if (c->monitor)

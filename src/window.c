@@ -2171,6 +2171,69 @@ void win_file_menu(Win *w, GList *files, GdkEventButton *ev, GtkWidget *attach)
         gtk_menu_popup_at_widget(GTK_MENU(menu), attach, GDK_GRAVITY_CENTER, GDK_GRAVITY_NORTH_WEST, NULL);
 }
 
+/* Clicks and drags: Unleashed (Settings → Folders): the menu for a row that was right-clicked without being selected. Everything
+ * acts on that one file or folder; the selection and the columns stay as they are. Returns the
+ * menu, so the column can drop the row's mark when it closes. */
+GtkWidget *win_held_menu(Win *w, Column *c, GFile *f, GdkEventButton *ev)
+{
+    GList *files = g_list_append(NULL, f);
+    GFileInfo *info = mx_query_info(f, "standard::content-type,standard::type", G_FILE_QUERY_INFO_NONE,
+                                        NULL, NULL);
+    gboolean isdir = info && g_file_info_get_file_type(info) == G_FILE_TYPE_DIRECTORY;
+    const char *ct = info ? g_file_info_get_content_type(info) : NULL;
+    GtkWidget *menu = gtk_menu_new();
+    if (isdir) {
+        item(menu, w, NULL, files, NULL, A_SHOW, _("Open"), NULL, TRUE);
+        item(menu, w, NULL, NULL, f, A_NEW_WINDOW, _("Open in new window"), NULL, TRUE);
+    } else {
+        item(menu, w, NULL, files, NULL, A_OPEN, _("Open"), NULL, TRUE);
+    }
+    open_with_menu(menu, w, NULL, files, isdir ? NULL : ct, !isdir);
+    sep(menu);
+    if (all_archives(files)) {
+        item(menu, w, NULL, files, NULL, A_EXTRACT_HERE, _("Extract here"), NULL, TRUE);
+        item(menu, w, NULL, files, NULL, A_EXTRACT_TO, _("Extract to…"), NULL, TRUE);
+    }
+    item(menu, w, NULL, files, NULL, A_COMPRESS, _("Compress…"), NULL, TRUE);
+    sep(menu);
+    item(menu, w, NULL, files, NULL, A_CUT, _("Cut"), NULL, TRUE);
+    item(menu, w, NULL, files, NULL, A_COPY, _("Copy"), NULL, TRUE);
+    if (isdir) {
+        char *b = g_file_get_basename(f);
+        char *l = g_strdup_printf(_("Paste into “%s”"), b);
+        item(menu, w, NULL, files, NULL, A_PASTE_INTO, l, NULL, TRUE);
+        g_free(l);
+        g_free(b);
+    }
+    sep(menu);
+    item(menu, w, NULL, files, NULL, A_RENAME, _("Rename…"), NULL, TRUE);
+    item(menu, w, NULL, files, NULL, A_TRASH, _("Move to trash"), NULL, TRUE);
+    item(menu, w, NULL, files, NULL, A_DELETE, _("Delete permanently…"), NULL, TRUE);
+    sep(menu);
+    if (isdir) {
+        item(menu, w, NULL, NULL, f, A_TERMINAL, _("Open terminal here"), NULL, TRUE);
+        item(menu, w, NULL, NULL, f, A_BOOKMARK, _("Add to bookmarks"), NULL, TRUE);
+        if (!is_root() && LOOK.use_pkexec)
+            item(menu, w, NULL, NULL, f, A_ROOT, _("Open as root…"), NULL, TRUE);
+    } else {
+        item(menu, w, NULL, files, NULL, A_CHECKSUMS, _("Checksums…"), NULL, TRUE);
+    }
+    git_menu_add(menu, w, files, c->gfile);   /* the held item, in its column's repository */
+    item(menu, w, NULL, files, NULL, A_COPY_PATH, _("Copy path"), NULL, TRUE);
+    sep(menu);
+    item(menu, w, NULL, files, NULL, A_PROPERTIES, _("Properties…"), NULL, TRUE);
+    g_clear_object(&info);
+    g_list_free(files);
+    gtk_widget_show_all(menu);
+    gtk_menu_attach_to_widget(GTK_MENU(menu), c->view, NULL);
+    g_signal_connect(menu, "deactivate", G_CALLBACK(menu_done), NULL);
+    if (ev)
+        gtk_menu_popup_at_pointer(GTK_MENU(menu), (GdkEvent *) ev);
+    else
+        gtk_menu_popup_at_widget(GTK_MENU(menu), c->view, GDK_GRAVITY_CENTER, GDK_GRAVITY_NORTH_WEST, NULL);
+    return menu;
+}
+
 /* a second window at the folder this one shows (Ctrl+N, Menu -> New window) */
 static void new_window_here(Win *w)
 {

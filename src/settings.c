@@ -4,10 +4,11 @@
 #include "millerx.h"
 #include <string.h>
 #include <glib/gstdio.h>
+#include <fcntl.h>
 #include <unistd.h>
 
 Look LOOK = { NULL, 2, FALSE, PREVIEW_DEFAULT, TRUE, FALSE, .column_width = COL_DEFAULT,
-              .use_ffmpeg = TRUE, .use_pdftoppm = TRUE, .use_pkexec = TRUE, .use_blender = TRUE, .use_git = FALSE, .git_colours = FALSE, .automount = FALSE,
+              .use_ffmpeg = TRUE, .use_pdftoppm = TRUE, .use_pkexec = TRUE, .use_blender = TRUE, .use_git = FALSE, .git_colours = FALSE, .automount = FALSE, .clicks = CLICKS_CLASSIC,
               .thumb_size = TSIZE_MEDIUM,
               .thumbs = THUMBS_LOCAL, .detect = DETECT_NAME, .ask_programs = TRUE, .trust_system = TRUE };
 
@@ -57,11 +58,55 @@ static gboolean get_bool(GKeyFile *kf, const char *sec, const char *key, gboolea
     return r;
 }
 
+/* millerX Unleashed is a setting now (0.9.0): someone who only had Unleashed keeps its settings, sort
+ * orders and trusted programs, once, and gets Unleashed's clicks. Who has millerX's own settings
+ * already keeps those (the setting is one click away). */
+static void unleashed_take_over(const char *path)
+{
+    if (g_file_test(path, G_FILE_TEST_EXISTS))
+        return;
+    char *old = g_build_filename(g_get_user_config_dir(), "millerx-unleashed", NULL);
+    char *old_conf = g_build_filename(old, "millerx.conf", NULL);
+    if (g_file_test(old_conf, G_FILE_TEST_IS_REGULAR)) {
+        char *dir = g_path_get_dirname(path);
+        g_mkdir_with_parents(dir, 0700);
+        static const char *const FILES[] = { "millerx.conf", "sorting.conf", "trusted" };
+        for (guint i = 0; i < G_N_ELEMENTS(FILES); i++) {
+            char *from = g_build_filename(old, FILES[i], NULL), *to = g_build_filename(dir, FILES[i], NULL);
+            char *data = NULL;
+            gsize len = 0;
+            if (!g_file_test(to, G_FILE_TEST_EXISTS) && g_file_test(from, G_FILE_TEST_IS_REGULAR) &&
+                g_file_get_contents(from, &data, &len, NULL)) {
+                int fd = g_open(to, O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC, 0600);   /* the trusted list: yours only */
+                if (fd >= 0) {
+                    gboolean ok = write(fd, data, len) == (gssize) len;
+                    close(fd);
+                    if (!ok)
+                        g_unlink(to);
+                }
+            }
+            g_free(data);
+            g_free(from);
+            g_free(to);
+        }
+        GKeyFile *kf = g_key_file_new();
+        if (g_key_file_load_from_file(kf, path, G_KEY_FILE_KEEP_COMMENTS, NULL)) {
+            g_key_file_set_string(kf, "browse", "clicks", "unleashed");
+            g_key_file_save_to_file(kf, path, NULL);
+        }
+        g_key_file_free(kf);
+        g_free(dir);
+    }
+    g_free(old_conf);
+    g_free(old);
+}
+
 /* every value checked, defaults for anything odd */
 void look_load(void)
 {
     GKeyFile *kf = g_key_file_new();
     char *path = config_file();
+    unleashed_take_over(path);
     g_key_file_load_from_file(kf, path, G_KEY_FILE_NONE, NULL);   /* missing file = defaults */
 
     char *col = get_str(kf, "look", "divider_color");
@@ -123,6 +168,9 @@ void look_load(void)
     }
     LOOK.folders_first = get_bool(kf, "browse", "folders_first", TRUE);
     LOOK.show_hidden = get_bool(kf, "browse", "show_hidden", FALSE);
+    char *clicks = get_str(kf, "browse", "clicks");
+    LOOK.clicks = !g_strcmp0(clicks, "unleashed") ? CLICKS_UNLEASHED : CLICKS_CLASSIC;
+    g_free(clicks);
     LOOK.cache_max_mb = get_int(kf, "thumbnails", "max_mb", 1024, 50, 100000);
     LOOK.cache_days = get_int(kf, "thumbnails", "max_days", 180, 7, 3650);
     LOOK.cache_auto = get_bool(kf, "thumbnails", "auto_clean", TRUE);
@@ -146,6 +194,7 @@ gboolean look_save(GError **err)
     g_key_file_set_string(kf, "look", "highlight_color", LOOK.highlight);
     g_key_file_set_boolean(kf, "browse", "folders_first", LOOK.folders_first);
     g_key_file_set_boolean(kf, "browse", "show_hidden", LOOK.show_hidden);
+    g_key_file_set_string(kf, "browse", "clicks", LOOK.clicks == CLICKS_UNLEASHED ? "unleashed" : "classic");
     g_key_file_set_boolean(kf, "browse", "ask_programs", LOOK.ask_programs);
     g_key_file_set_boolean(kf, "browse", "trust_system", LOOK.trust_system);
     g_key_file_set_boolean(kf, "helpers", "ffmpeg", LOOK.use_ffmpeg);

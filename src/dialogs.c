@@ -740,7 +740,7 @@ typedef struct {
     Win *w;
     GtkWidget *auto_rb, *own_rb, *colour, *width, *style, *pw, *cw, *ff, *sh;
     GtkWidget *cache_size, *cache_clear, *cache_mb, *cache_days, *cache_auto;
-    GtkWidget *sort_list, *names, *thumbs, *tsize, *lang, *lang_note, *detect;
+    GtkWidget *sort_list, *names, *thumbs, *tsize, *lang, *lang_note, *detect, *clicks;
     GtkWidget *ask, *trust_sys, *trust_list;    /* Ask before running programs, root's own, the trusted ones */
     GtkWidget *use[5];         /* the optional helpers, when installed; NULL when not */
     GtkWidget *compare;        /* what compares two files */
@@ -782,6 +782,8 @@ static void settings_changed(GtkWidget *any, Set *s)
     nl.column_width = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(s->cw));
     nl.folders_first = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->ff));
     nl.show_hidden = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->sh));
+    nl.clicks = !g_strcmp0(gtk_combo_box_get_active_id(GTK_COMBO_BOX(s->clicks)), "unleashed") ? CLICKS_UNLEASHED
+                                                                                              : CLICKS_CLASSIC;
     nl.language = (char *) gtk_combo_box_get_active_id(GTK_COMBO_BOX(s->lang));   /* copied by app_apply_look */
     gtk_widget_set_visible(s->lang_note, g_strcmp0(nl.language, LANGUAGE_AT_START ? LANGUAGE_AT_START : "system"));
     nl.gallery_names = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->names));
@@ -1308,6 +1310,17 @@ void dialog_settings(Win *w)
     s->sh = gtk_check_button_new_with_label(_("Show hidden files when millerX starts"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(s->sh), LOOK.show_hidden);
     srow(grid, &r, _("Hidden files"), s->sh);
+    s->clicks = gtk_combo_box_text_new();
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->clicks), "classic", _("Classic: right-click selects"));
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->clicks), "unleashed", _("Unleashed: right-click and drag only hold"));
+    gtk_combo_box_set_active_id(GTK_COMBO_BOX(s->clicks), LOOK.clicks == CLICKS_UNLEASHED ? "unleashed" : "classic");
+    gtk_widget_set_tooltip_text(s->clicks,
+        _("Classic: a right-click selects what it is on (and opens a folder); a drag carries the selection. "
+          "Also the way for touch screens. "
+          "Unleashed: a right-click on something not selected only holds it (bold, underlined): its menu acts on "
+          "it and the columns stay where they are. A drag carries what you picked up without selecting it, and "
+          "a folder held still under a drag opens, so you can go down and drop inside."));
+    srow(grid, &r, _("Clicks and drags"), s->clicks);
     s->lang = gtk_combo_box_text_new();
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->lang), "system", _("System"));
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->lang), "en", _("English"));
@@ -1507,6 +1520,7 @@ void dialog_settings(Win *w)
     g_signal_connect(d, "destroy", G_CALLBACK(set_gone), s);
     g_signal_connect(s->tsize, "changed", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->lang, "changed", G_CALLBACK(settings_changed), s);
+    g_signal_connect(s->clicks, "changed", G_CALLBACK(settings_changed), s);
     for (int i = 0; i < 5; i++)
         if (s->use[i])
             g_signal_connect(s->use[i], "toggled", G_CALLBACK(settings_changed), s);

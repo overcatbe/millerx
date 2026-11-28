@@ -26,7 +26,10 @@
 #endif
 
 enum { THUMBS_ALWAYS, THUMBS_LOCAL, THUMBS_NEVER };
-enum { DETECT_NAME, DETECT_CONTENT };   /* Recognise files: by name (default) / by content, when you open a file */
+enum { DETECT_NAME, DETECT_CONTENT };
+/* Clicks and drags (Settings → Look → Browsing): Classic, right-click selects (default, also the
+ * touch-screen way); Unleashed, right-click and drag only hold, a folder opens under a drag */
+enum { CLICKS_CLASSIC, CLICKS_UNLEASHED };   /* Recognise files: by name (default) / by content, when you open a file */
 enum { TSIZE_SMALL, TSIZE_MEDIUM, TSIZE_LARGE, TSIZE_TINY };  /* gallery tiles: about 100, 200, 400, 64 px */
 #define COL_DEFAULT 230      /* the start width of a column, unless set in Settings */
 #define COL_MIN 120
@@ -69,6 +72,7 @@ typedef struct {
     gboolean git_colours;   /* … and file names coloured by their Git state (off by default) */
     gboolean use_git;       /* Git actions in the right-click menu, inside a repository (off by default) */
     gboolean automount;     /* a stick plugged in mounts itself and opens a window (off: a notice says what came) */
+    int clicks;             /* CLICKS_CLASSIC (default), CLICKS_UNLEASHED */
     int thumb_size;         /* TSIZE_TINY, _SMALL, _MEDIUM, _LARGE */
     char *language;         /* "system", "en", "wizard", "wienerisch" or "own:NAME": read once at start */
     char *compare;          /* what compares two files: "auto" (meld, kdiff3, kompare, diffuse) or a command */
@@ -158,6 +162,11 @@ struct Column {
     gboolean loaded, closed;
     gboolean right_down;       /* a right press that may still become a drag (the menu comes on release) */
     double right_x, right_y;   /* where it was pressed */
+    /* Clicks and drags: Unleashed: acting on a folder without selecting (and so opening) it */
+    GtkTreeRowReference *held; /* right-clicked or dragged without being selected: underlined */
+    gboolean left_wait;        /* a left press on an unselected row: a click selects on release, a drag doesn't */
+    GList *left_prev;          /* the selection before that press (GtkTreeRowReference), back after a drag */
+    GtkTreeRowReference *left_row; /* the row that press was on: what a drag from it carries */
     gboolean added_early;      /* a change on disk added a row while the folder was still being read */
     GtkListStore *store;
     GtkWidget *view, *scroller, *frame, *divider;
@@ -278,6 +287,7 @@ void win_look_changed(Win *w, gboolean resort);
 void app_sorting_changed(GtkApplication *app, const char *path);
 void win_context_menu(Win *w, Column *c, GdkEventButton *ev);
 void win_file_menu(Win *w, GList *files, GdkEventButton *ev, GtkWidget *attach);
+GtkWidget *win_held_menu(Win *w, Column *c, GFile *f, GdkEventButton *ev);
 void win_rename_file(Win *w, GFile *f);
 void win_open_default(Win *w, GFile *f);
 void win_trash(Win *w, GList *files);

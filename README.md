@@ -4,7 +4,14 @@ A small, native file browser with **Miller columns**: every folder from `/` down
 where you are sits in its own column, and the selected file is previewed on the right.
 Like a mind map of your disk. Written in C with GTK 3 and GIO.
 
-> **New in 0.8.8:** **Trusted programs**: the "is a program" question has a **Trusted** button,
+> **New in 0.9.0:** **millerX Unleashed is a setting now**: Settings → Look → Browsing →
+> **Clicks and drags**, Classic (right-click selects, as always; also the touch-screen way) or
+> Unleashed (right-click and drag only hold, folders open under a drag) · **USB sticks without
+> GVfs**, straight from udisks2, with a notice when one is plugged in and **Safe to remove**;
+> **Automount** off by default (thanks, SCerovec) · **"Restart now"** after an update · the copy
+> bar counts **bytes** (thanks, kgha) · clearer **"You may not read it"** messages (thanks, brobr).
+>
+> **0.8.8:** **Trusted programs**: the "is a program" question has a **Trusted** button,
 > and what you trusted runs without asking while it stays the same file; what your distribution
 > installed doesn't ask at all (thanks, SCerovec) · **middle-click a file** to open it · the
 > status line counts right after a multi-select and shows "28 items, 3 selected" · **Esc**
@@ -271,6 +278,16 @@ fast and clear, it leaves some things out on purpose:
 Middle-click a folder (or right-click → Open in new window) to open it in a second window;
 middle-click a file to open it.
 
+**Clicks and drags** (Settings → Look → Browsing) decides what a right-click and a drag do:
+- **Classic** (the default): a right-click selects what it is on, and a folder opens to the right;
+  a drag carries the selection. What you select is what you process, and it is the way for touch
+  screens, where a long press is the right-click.
+- **Unleashed**: a right-click on something not selected only holds it (bold, underlined); its
+  menu acts on it and the columns stay where they are. A drag carries what you picked up without
+  selecting it (the old selection stays), and a folder held still under a drag for a moment opens,
+  so you can go down and drop inside. This was millerX Unleashed until 0.8.8; its settings, sort
+  orders and trusted programs are taken over the first time, if millerX had none of its own.
+
 In the gallery: Ctrl/Shift+click selects several thumbnails, Ctrl+A all. Enter opens one in its
 column; Delete / Shift+Delete, Ctrl+C / Ctrl+X, F2, the Menu key and Alt+Enter work as in a column.
 
@@ -352,6 +369,7 @@ recognise = name         # name (like other file managers) | content (the file y
 [browse]
 folders_first = true
 show_hidden = false
+clicks = classic         # classic (right-click selects) | unleashed (right-click and drag only hold)
 ask_programs = true      # a program, script or launcher asks before it runs (what you trusted doesn't)
 trust_system = true      # ...except root's own (owned by root, in folders only root can change)
 

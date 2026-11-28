@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: millerx\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-28 17:00+0200\n"
+"POT-Creation-Date: 2026-11-28 17:08+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -49,73 +49,73 @@ msgstr ""
 msgid "Finishing the archive"
 msgstr ""
 
-#: src/column.c:104 src/column.c:257 src/window.c:574
+#: src/column.c:172 src/column.c:325 src/window.c:574
 #, c-format
 msgid "%s: %d item"
 msgid_plural "%s: %d items"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/column.c:657
+#: src/column.c:804
 #, c-format
 msgid "Jump: %s"
 msgstr ""
 
-#: src/column.c:659
+#: src/column.c:806
 #, c-format
 msgid "Jump: %s (no match)"
 msgstr ""
 
-#: src/column.c:715
+#: src/column.c:863
 msgid "Inside a trashed folder: delete the whole folder, or put it back first"
 msgstr ""
 
-#: src/column.c:834
+#: src/column.c:1116
 msgid "Couldn't make the link"
 msgstr ""
 
-#: src/column.c:860
+#: src/column.c:1142
 msgid "Copy here"
 msgstr ""
 
-#: src/column.c:860
+#: src/column.c:1142
 msgid "Move here"
 msgstr ""
 
-#: src/column.c:860
+#: src/column.c:1142
 msgid "Link here"
 msgstr ""
 
-#: src/column.c:868 src/dialogs.c:27 src/dialogs.c:868 src/git.c:182
+#: src/column.c:1150 src/dialogs.c:27 src/dialogs.c:870 src/git.c:182
 #: src/udisks.c:560 src/window.c:302 src/window.c:313 src/window.c:895
 #: src/window.c:938 src/window.c:987 src/window.c:1644 src/window.c:1672
-#: src/window.c:2512
+#: src/window.c:2575
 msgid "Cancel"
 msgstr ""
 
-#: src/column.c:992 src/sorting.c:114
+#: src/column.c:1275 src/sorting.c:114
 msgid "name"
 msgstr ""
 
-#: src/column.c:993
+#: src/column.c:1276
 msgid "size"
 msgstr ""
 
 #. largest first
-#: src/column.c:994
+#: src/column.c:1277
 msgid "newest"
 msgstr ""
 
 #. deleted last first
-#: src/column.c:995
+#: src/column.c:1278
 msgid "oldest"
 msgstr ""
 
-#: src/column.c:1023
+#: src/column.c:1306
 msgid "Sort:"
 msgstr ""
 
-#: src/column.c:1167 src/dialogs.c:1067
+#: src/column.c:1450 src/dialogs.c:1069
 msgid "Sort by name again"
 msgstr ""
 
@@ -182,7 +182,7 @@ msgstr ""
 msgid "Properties: %s"
 msgstr ""
 
-#: src/dialogs.c:237 src/dialogs.c:462 src/dialogs.c:644 src/dialogs.c:1214
+#: src/dialogs.c:237 src/dialogs.c:462 src/dialogs.c:644 src/dialogs.c:1216
 #: src/window.c:288
 msgid "Close"
 msgstr ""
@@ -192,7 +192,7 @@ msgid "Link to"
 msgstr ""
 
 #. the folders' contents counted in the background, the files' added
-#: src/dialogs.c:281 src/dialogs.c:680 src/dialogs.c:692 src/dialogs.c:1383
+#: src/dialogs.c:281 src/dialogs.c:680 src/dialogs.c:692 src/dialogs.c:1396
 #: src/preview.c:1623 src/preview.c:1758
 msgid "Size"
 msgstr ""
@@ -311,88 +311,88 @@ msgstr ""
 msgid "Permissions"
 msgstr ""
 
-#: src/dialogs.c:822
+#: src/dialogs.c:824
 msgid "Couldn't save the settings"
 msgstr ""
 
-#: src/dialogs.c:867
+#: src/dialogs.c:869
 msgid "Add a language file"
 msgstr ""
 
-#: src/dialogs.c:868 src/git.c:467
+#: src/dialogs.c:870 src/git.c:467
 msgid "Add"
 msgstr ""
 
-#: src/dialogs.c:870
+#: src/dialogs.c:872
 msgid "Language files (.po, .mo)"
 msgstr ""
 
-#: src/dialogs.c:888
+#: src/dialogs.c:890
 #, c-format
 msgid "Couldn't add “%s”"
 msgstr ""
 
-#: src/dialogs.c:943
+#: src/dialogs.c:945
 msgid "video frames, music covers, AVIF and HEIC pictures"
 msgstr ""
 
-#: src/dialogs.c:944
+#: src/dialogs.c:946
 msgid "videos and music show their icon, AVIF/HEIC too"
 msgstr ""
 
-#: src/dialogs.c:944
+#: src/dialogs.c:946
 msgid "ffmpeg (Slackware: l/ffmpeg)"
 msgstr ""
 
-#: src/dialogs.c:945
+#: src/dialogs.c:947
 msgid "the first page of PDFs"
 msgstr ""
 
-#: src/dialogs.c:946
+#: src/dialogs.c:948
 msgid "PDFs show their icon"
 msgstr ""
 
-#: src/dialogs.c:946
+#: src/dialogs.c:948
 msgid "poppler (Debian/Ubuntu: poppler-utils)"
 msgstr ""
 
-#: src/dialogs.c:947
+#: src/dialogs.c:949
 msgid "“Open as root”"
 msgstr ""
 
-#: src/dialogs.c:948
+#: src/dialogs.c:950
 msgid "no root window"
 msgstr ""
 
-#: src/dialogs.c:948
+#: src/dialogs.c:950
 msgid "polkit, plus an authentication agent"
 msgstr ""
 
-#: src/dialogs.c:949
+#: src/dialogs.c:951
 msgid "the pictures saved in Blender (.blend) files"
 msgstr ""
 
-#: src/dialogs.c:950
+#: src/dialogs.c:952
 msgid ".blend files show their icon"
 msgstr ""
 
-#: src/dialogs.c:950
+#: src/dialogs.c:952
 msgid "Blender (it comes with it; also found in /opt/blender*)"
 msgstr ""
 
-#: src/dialogs.c:951
+#: src/dialogs.c:953
 msgid "Git actions in the right-click menu (inside a repository)"
 msgstr ""
 
-#: src/dialogs.c:952
+#: src/dialogs.c:954
 msgid "no Git actions"
 msgstr ""
 
-#: src/dialogs.c:952
+#: src/dialogs.c:954
 msgid "git"
 msgstr ""
 
-#: src/dialogs.c:973
+#: src/dialogs.c:975
 #, c-format
 msgid ""
 "✗ not installed: %s.\n"
@@ -400,72 +400,72 @@ msgid ""
 "for %s.</small>"
 msgstr ""
 
-#: src/dialogs.c:991
+#: src/dialogs.c:993
 #, c-format
 msgid "%s in %u thumbnail (%u deleted)"
 msgid_plural "%s in %u thumbnails (%u deleted)"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/dialogs.c:993
+#: src/dialogs.c:995
 #, c-format
 msgid "%s in %u thumbnail"
 msgid_plural "%s in %u thumbnails"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/dialogs.c:1003
+#: src/dialogs.c:1005
 msgid "Clear the thumbnail cache?"
 msgstr ""
 
-#: src/dialogs.c:1004
+#: src/dialogs.c:1006
 msgid ""
 "All thumbnails in ~/.cache/thumbnails are deleted. Thunar and file dialogs "
 "use them too; everything is made again when it's needed."
 msgstr ""
 
-#: src/dialogs.c:1005
+#: src/dialogs.c:1007
 msgid "Clear"
 msgstr ""
 
-#: src/dialogs.c:1007
+#: src/dialogs.c:1009
 msgid "clearing…"
 msgstr ""
 
-#: src/dialogs.c:1042
+#: src/dialogs.c:1044
 msgid "None. Right-click a folder → Sort … to give it its own order."
 msgstr ""
 
-#: src/dialogs.c:1058 src/window.c:1940
+#: src/dialogs.c:1060 src/window.c:1940
 msgid "Name"
 msgstr ""
 
-#: src/dialogs.c:1059
+#: src/dialogs.c:1061
 msgid "Date (newest first)"
 msgstr ""
 
-#: src/dialogs.c:1060 src/window.c:1940
+#: src/dialogs.c:1062 src/window.c:1940
 msgid "Size (largest first)"
 msgstr ""
 
-#: src/dialogs.c:1061 src/preview.c:1755 src/window.c:1941
+#: src/dialogs.c:1063 src/preview.c:1755 src/window.c:1941
 msgid "Type"
 msgstr ""
 
-#: src/dialogs.c:1063 src/window.c:1953
+#: src/dialogs.c:1065 src/window.c:1953
 msgid "Reversed"
 msgstr ""
 
-#: src/dialogs.c:1117
+#: src/dialogs.c:1119
 msgid ""
 "None. When millerX asks before running something, “Trusted” adds it here."
 msgstr ""
 
-#: src/dialogs.c:1131
+#: src/dialogs.c:1133
 msgid "Not trusted any more: it asks again"
 msgstr ""
 
-#: src/dialogs.c:1193
+#: src/dialogs.c:1195
 #, c-format
 msgid ""
 "%s goes into ~/.config/gtk-3.0/gtk.css, in a block marked as millerX's; the "
@@ -473,167 +473,189 @@ msgid ""
 "start. You can remove it here again."
 msgstr ""
 
-#: src/dialogs.c:1197
+#: src/dialogs.c:1199
 msgid ""
 "millerX's block is taken out of ~/.config/gtk-3.0/gtk.css; the rest of that "
 "file stays. GTK 3 programs use the theme's colour again the next time they "
 "start."
 msgstr ""
 
-#: src/dialogs.c:1200
+#: src/dialogs.c:1202
 msgid "Use this highlight in all GTK programs?"
 msgstr ""
 
-#: src/dialogs.c:1200
+#: src/dialogs.c:1202
 msgid "Remove it from all GTK programs?"
 msgstr ""
 
-#: src/dialogs.c:1201
+#: src/dialogs.c:1203
 msgid "Use it"
 msgstr ""
 
-#: src/dialogs.c:1201
+#: src/dialogs.c:1203
 msgid "Remove"
 msgstr ""
 
-#: src/dialogs.c:1204
+#: src/dialogs.c:1206
 msgid "Couldn't write ~/.config/gtk-3.0/gtk.css"
 msgstr ""
 
-#: src/dialogs.c:1214
+#: src/dialogs.c:1216
 msgid "millerX settings"
 msgstr ""
 
-#: src/dialogs.c:1225
+#: src/dialogs.c:1227
 msgid "Look"
 msgstr ""
 
-#: src/dialogs.c:1232 src/dialogs.c:1362
+#: src/dialogs.c:1234 src/dialogs.c:1375
 msgid "Thumbnails"
 msgstr ""
 
-#: src/dialogs.c:1233
+#: src/dialogs.c:1235
 msgid "Folders"
 msgstr ""
 
-#: src/dialogs.c:1234
+#: src/dialogs.c:1236
 msgid "Programs"
 msgstr ""
 
-#: src/dialogs.c:1235
+#: src/dialogs.c:1237
 msgid "Tools"
 msgstr ""
 
-#: src/dialogs.c:1243
+#: src/dialogs.c:1245
 msgid "Column dividers"
 msgstr ""
 
-#: src/dialogs.c:1244
+#: src/dialogs.c:1246
 msgid "Follow the theme (20 % lighter / darker)"
 msgstr ""
 
-#: src/dialogs.c:1245 src/dialogs.c:1273
+#: src/dialogs.c:1247 src/dialogs.c:1275
 msgid "Own colour"
 msgstr ""
 
-#: src/dialogs.c:1262
+#: src/dialogs.c:1264
 msgid "Colour"
 msgstr ""
 
-#: src/dialogs.c:1265
+#: src/dialogs.c:1267
 msgid "Width (px)"
 msgstr ""
 
-#: src/dialogs.c:1267
+#: src/dialogs.c:1269
 msgid "Solid"
 msgstr ""
 
-#: src/dialogs.c:1268
+#: src/dialogs.c:1270
 msgid "Fading at the ends"
 msgstr ""
 
-#: src/dialogs.c:1270
+#: src/dialogs.c:1272
 msgid "Style"
 msgstr ""
 
-#: src/dialogs.c:1271
+#: src/dialogs.c:1273
 msgid "Highlight colour"
 msgstr ""
 
-#: src/dialogs.c:1272
+#: src/dialogs.c:1274
 msgid "Follow the theme"
 msgstr ""
 
-#: src/dialogs.c:1289 src/window.c:2435
+#: src/dialogs.c:1291 src/window.c:2498
 msgid "millerX"
 msgstr ""
 
-#: src/dialogs.c:1290
+#: src/dialogs.c:1292
 msgid "Use for all GTK programs…"
 msgstr ""
 
-#: src/dialogs.c:1291
+#: src/dialogs.c:1293
 msgid "Remove from all"
 msgstr ""
 
-#: src/dialogs.c:1297 src/dialogs.c:1312
+#: src/dialogs.c:1299 src/dialogs.c:1325
 msgid "System"
 msgstr ""
 
-#: src/dialogs.c:1299
+#: src/dialogs.c:1301
 msgid "Browsing"
 msgstr ""
 
-#: src/dialogs.c:1302
+#: src/dialogs.c:1304
 msgid ""
 "Where new columns start. A column you drag keeps its own width; double-click "
 "its divider to bring it back to this one."
 msgstr ""
 
-#: src/dialogs.c:1304
+#: src/dialogs.c:1306
 msgid "Column width (px)"
 msgstr ""
 
-#: src/dialogs.c:1305
+#: src/dialogs.c:1307
 msgid "Folders first"
 msgstr ""
 
-#: src/dialogs.c:1307
+#: src/dialogs.c:1309
 msgid "Sort by name"
 msgstr ""
 
-#: src/dialogs.c:1308
+#: src/dialogs.c:1310
 msgid "Show hidden files when millerX starts"
 msgstr ""
 
-#: src/dialogs.c:1310
+#: src/dialogs.c:1312
 msgid "Hidden files"
 msgstr ""
 
-#: src/dialogs.c:1313
-msgid "English"
-msgstr ""
-
 #: src/dialogs.c:1314
-msgid "Wizard (English, of a sort)"
+msgid "Classic: right-click selects"
 msgstr ""
 
 #: src/dialogs.c:1315
+msgid "Unleashed: right-click and drag only hold"
+msgstr ""
+
+#: src/dialogs.c:1318
+msgid ""
+"Classic: a right-click selects what it is on (and opens a folder); a drag "
+"carries the selection. Also the way for touch screens. Unleashed: a right-"
+"click on something not selected only holds it (bold, underlined): its menu "
+"acts on it and the columns stay where they are. A drag carries what you "
+"picked up without selecting it, and a folder held still under a drag opens, "
+"so you can go down and drop inside."
+msgstr ""
+
+#: src/dialogs.c:1323
+msgid "Clicks and drags"
+msgstr ""
+
+#: src/dialogs.c:1326
+msgid "English"
+msgstr ""
+
+#: src/dialogs.c:1327
+msgid "Wizard (English, of a sort)"
+msgstr ""
+
+#: src/dialogs.c:1328
 msgid "Wienerisch (Viennese slang)"
 msgstr ""
 
 #. its file is gone
-#: src/dialogs.c:1327
+#: src/dialogs.c:1340
 msgid ""
 "System: the language your computer is set to (English where there is no "
 "translation). Takes effect the next time millerX starts."
 msgstr ""
 
-#: src/dialogs.c:1332
+#: src/dialogs.c:1345
 msgid "Your own…"
 msgstr ""
 
-#: src/dialogs.c:1333
+#: src/dialogs.c:1346
 #, c-format
 msgid ""
 "Add a language file (.po or .mo), for example one from millerX's extras on "
@@ -641,133 +663,133 @@ msgid ""
 "leave empty stay English."
 msgstr ""
 
-#: src/dialogs.c:1341 src/dialogs.c:1343
+#: src/dialogs.c:1354 src/dialogs.c:1356
 msgid "Language"
 msgstr ""
 
-#: src/dialogs.c:1347
+#: src/dialogs.c:1360
 msgid "Takes effect after a restart."
 msgstr ""
 
-#: src/dialogs.c:1349 src/window.c:120
+#: src/dialogs.c:1362 src/window.c:120
 msgid "Restart now"
 msgstr ""
 
-#: src/dialogs.c:1354
+#: src/dialogs.c:1367
 msgid "Preview"
 msgstr ""
 
-#: src/dialogs.c:1357
+#: src/dialogs.c:1370
 msgid "Minimum width (px)"
 msgstr ""
 
 #. it takes the rest of the window
-#: src/dialogs.c:1358
+#: src/dialogs.c:1371
 msgid "Show names under thumbnails"
 msgstr ""
 
-#: src/dialogs.c:1360
+#: src/dialogs.c:1373
 msgid "Gallery"
 msgstr ""
 
-#: src/dialogs.c:1364
+#: src/dialogs.c:1377
 msgid "Always"
 msgstr ""
 
-#: src/dialogs.c:1365
+#: src/dialogs.c:1378
 msgid "Not in network folders"
 msgstr ""
 
-#: src/dialogs.c:1366
+#: src/dialogs.c:1379
 msgid "Never (plain icons)"
 msgstr ""
 
-#: src/dialogs.c:1369
+#: src/dialogs.c:1382
 msgid ""
 "Pictures in the gallery under a folder. A file you click is always shown "
 "big. Network folders (NFS, Samba, sshfs) can be slow with them."
 msgstr ""
 
-#: src/dialogs.c:1371 src/places.c:955
+#: src/dialogs.c:1384 src/places.c:955
 msgid "Show"
 msgstr ""
 
-#: src/dialogs.c:1373
+#: src/dialogs.c:1386
 msgid "Tiny (about 64 px)"
 msgstr ""
 
-#: src/dialogs.c:1374
+#: src/dialogs.c:1387
 msgid "Small (about 100 px)"
 msgstr ""
 
-#: src/dialogs.c:1375
+#: src/dialogs.c:1388
 msgid "Medium (about 200 px)"
 msgstr ""
 
-#: src/dialogs.c:1376
+#: src/dialogs.c:1389
 msgid "Large (about 400 px)"
 msgstr ""
 
-#: src/dialogs.c:1380
+#: src/dialogs.c:1393
 msgid ""
 "How big the gallery's pictures are. Large ones are made again the first time "
 "(bigger thumbnails, a bigger cache); a wide pane gets more of them per row, "
 "not bigger ones."
 msgstr ""
 
-#: src/dialogs.c:1384
+#: src/dialogs.c:1397
 msgid "Cache (shared with Thunar)"
 msgstr ""
 
-#: src/dialogs.c:1385
+#: src/dialogs.c:1398
 msgid "measuring…"
 msgstr ""
 
-#: src/dialogs.c:1387
+#: src/dialogs.c:1400
 msgid "Clear…"
 msgstr ""
 
-#: src/dialogs.c:1391
+#: src/dialogs.c:1404
 msgid "Now"
 msgstr ""
 
-#: src/dialogs.c:1394
+#: src/dialogs.c:1407
 msgid "Keep at most (MB)"
 msgstr ""
 
-#: src/dialogs.c:1397
+#: src/dialogs.c:1410
 msgid "Forget unused after (days)"
 msgstr ""
 
-#: src/dialogs.c:1398
+#: src/dialogs.c:1411
 msgid "Once a day when millerX starts"
 msgstr ""
 
-#: src/dialogs.c:1400
+#: src/dialogs.c:1413
 msgid "Clean up"
 msgstr ""
 
-#: src/dialogs.c:1402
+#: src/dialogs.c:1415
 msgid "Optional helpers (millerX works without them; untick to not use one)"
 msgstr ""
 
-#: src/dialogs.c:1405
+#: src/dialogs.c:1418
 msgid "Folders sorted their own way (all others: by name)"
 msgstr ""
 
-#: src/dialogs.c:1415
+#: src/dialogs.c:1428
 msgid "Recognise files"
 msgstr ""
 
-#: src/dialogs.c:1417
+#: src/dialogs.c:1430
 msgid "By name, like other file managers"
 msgstr ""
 
-#: src/dialogs.c:1418
+#: src/dialogs.c:1431
 msgid "By content, when you open a file"
 msgstr ""
 
-#: src/dialogs.c:1421
+#: src/dialogs.c:1434
 msgid ""
 "Other file managers go by the name: a “holiday.jpg” that is really a program "
 "shows as a picture and opens in the picture viewer. By content, millerX also "
@@ -778,31 +800,31 @@ msgid ""
 "disguise, not every trick."
 msgstr ""
 
-#: src/dialogs.c:1426
+#: src/dialogs.c:1439
 msgid "Recognise"
 msgstr ""
 
-#: src/dialogs.c:1427 src/dialogs.c:1434 src/window.c:899 src/window.c:940
+#: src/dialogs.c:1440 src/dialogs.c:1447 src/window.c:899 src/window.c:940
 #: src/window.c:991
 msgid "Run"
 msgstr ""
 
-#: src/dialogs.c:1428
+#: src/dialogs.c:1441
 msgid "Ask before running programs, scripts and launchers"
 msgstr ""
 
-#: src/dialogs.c:1431
+#: src/dialogs.c:1444
 msgid ""
 "On: a double-click on a program, a script or a launcher (.desktop) says what "
 "it is and asks first; what you trusted runs at once. Off: everything runs at "
 "once, without a question, also a “holiday.jpg” that is really a program."
 msgstr ""
 
-#: src/dialogs.c:1435
+#: src/dialogs.c:1448
 msgid "Trust system programs (owned by root)"
 msgstr ""
 
-#: src/dialogs.c:1438
+#: src/dialogs.c:1451
 msgid ""
 "On: what your distribution installed runs without asking, also after "
 "updates: a program, script or launcher that belongs to root, in folders that "
@@ -813,40 +835,40 @@ msgid ""
 "they stay the same file."
 msgstr ""
 
-#: src/dialogs.c:1446
+#: src/dialogs.c:1459
 msgid "Trusted (they run without asking while they stay the same file):"
 msgstr ""
 
-#: src/dialogs.c:1452 src/dialogs.c:1723 src/window.c:2101 src/window.c:2163
+#: src/dialogs.c:1465 src/dialogs.c:1737 src/window.c:2101 src/window.c:2163
 msgid "Compare"
 msgstr ""
 
-#: src/dialogs.c:1455
+#: src/dialogs.c:1468
 msgid ""
 "Two files selected → Compare. \"auto\": meld, kdiff3, kompare or diffuse, "
 "whichever is there; none: the differences as text. Or your own command (the "
 "two files are added at the end)."
 msgstr ""
 
-#: src/dialogs.c:1458
+#: src/dialogs.c:1471
 msgid "Compare with"
 msgstr ""
 
-#: src/dialogs.c:1460
+#: src/dialogs.c:1473
 msgid ""
 "Tools are part of millerX, not something added from outside. Each is off "
 "until you switch it on."
 msgstr ""
 
-#: src/dialogs.c:1466 src/git.c:471
+#: src/dialogs.c:1479 src/git.c:471
 msgid "Git"
 msgstr ""
 
-#: src/dialogs.c:1469
+#: src/dialogs.c:1482
 msgid "Colour file names by their Git state"
 msgstr ""
 
-#: src/dialogs.c:1473
+#: src/dialogs.c:1486
 msgid ""
 "Inside a repository: green for new files, red for changed ones; a folder "
 "shows what's in it. millerX asks git about the folder you look at, and again "
@@ -855,15 +877,15 @@ msgid ""
 "(filters, includes) stays uncoloured."
 msgstr ""
 
-#: src/dialogs.c:1480
+#: src/dialogs.c:1493
 msgid "Devices"
 msgstr ""
 
-#: src/dialogs.c:1481
+#: src/dialogs.c:1494
 msgid "Automount: a stick plugged in mounts itself and opens a window"
 msgstr ""
 
-#: src/dialogs.c:1484
+#: src/dialogs.c:1497
 msgid ""
 "Off: millerX only tells you what was plugged in (its name, device, file "
 "system and size), with a button to mount it; you see where it was mounted, "
@@ -872,46 +894,46 @@ msgid ""
 "themselves and open in a new window. Encrypted ones always wait for you."
 msgstr ""
 
-#: src/dialogs.c:1533
+#: src/dialogs.c:1547
 msgid "Files in Miller columns, from / to where you are."
 msgstr ""
 
-#: src/dialogs.c:1620
+#: src/dialogs.c:1634
 msgid "✗ matches none of them"
 msgstr ""
 
-#: src/dialogs.c:1623
+#: src/dialogs.c:1637
 #, c-format
 msgid "✓ matches %s"
 msgstr ""
 
-#: src/dialogs.c:1627
+#: src/dialogs.c:1641
 msgid "…when the file is read"
 msgstr ""
 
-#: src/dialogs.c:1650
+#: src/dialogs.c:1664
 #, c-format
 msgid "✗ couldn't read the file: %s"
 msgstr ""
 
-#: src/dialogs.c:1693
+#: src/dialogs.c:1707
 #, c-format
 msgid "Checksums: %s"
 msgstr ""
 
-#: src/dialogs.c:1696
+#: src/dialogs.c:1710
 msgid "_Close"
 msgstr ""
 
-#: src/dialogs.c:1708
+#: src/dialogs.c:1722
 msgid "reading…"
 msgstr ""
 
-#: src/dialogs.c:1716 src/window.c:2072 src/window.c:2153
+#: src/dialogs.c:1730 src/window.c:2072 src/window.c:2153 src/window.c:2200
 msgid "Copy"
 msgstr ""
 
-#: src/dialogs.c:1726
+#: src/dialogs.c:1740
 msgid "paste the checksum you were given"
 msgstr ""
 
@@ -1390,7 +1412,7 @@ msgid "%s (%s) is mounted at %s"
 msgstr ""
 
 #: src/places.c:947 src/window.c:896 src/window.c:2055 src/window.c:2058
-#: src/window.c:2136 src/window.c:2138
+#: src/window.c:2136 src/window.c:2138 src/window.c:2186 src/window.c:2189
 msgid "Open"
 msgstr ""
 
@@ -1412,7 +1434,7 @@ msgstr ""
 msgid "Mount"
 msgstr ""
 
-#: src/places.c:1036 src/window.c:2056
+#: src/places.c:1036 src/window.c:2056 src/window.c:2187
 msgid "Open in new window"
 msgstr ""
 
@@ -1569,20 +1591,20 @@ msgstr ""
 msgid "Search in “%s” and the folders in it"
 msgstr ""
 
-#: src/settings.c:247
+#: src/settings.c:296
 msgid "Pick a language file: a .po or .mo file."
 msgstr ""
 
-#: src/settings.c:254
+#: src/settings.c:303
 msgid ""
 "A .po file needs msgfmt (gettext) to be checked, and it isn't installed."
 msgstr ""
 
-#: src/settings.c:263
+#: src/settings.c:312
 msgid "Couldn't make a temporary file."
 msgstr ""
 
-#: src/settings.c:550
+#: src/settings.c:599
 msgid "Drag to resize, double-click for the default width"
 msgstr ""
 
@@ -1670,7 +1692,7 @@ msgstr ""
 msgid "Put back"
 msgstr ""
 
-#: src/trash.c:224 src/window.c:2085 src/window.c:2157
+#: src/trash.c:224 src/window.c:2085 src/window.c:2157 src/window.c:2211
 msgid "Delete permanently…"
 msgstr ""
 
@@ -1809,7 +1831,7 @@ msgid ""
 "This needs root rights."
 msgstr ""
 
-#: src/window.c:289 src/window.c:2104
+#: src/window.c:289 src/window.c:2104 src/window.c:2217
 msgid "Open as root…"
 msgstr ""
 
@@ -2135,23 +2157,23 @@ msgstr ""
 msgid "Open with"
 msgstr ""
 
-#: src/window.c:2066 src/window.c:2147
+#: src/window.c:2066 src/window.c:2147 src/window.c:2194
 msgid "Extract here"
 msgstr ""
 
-#: src/window.c:2067 src/window.c:2148
+#: src/window.c:2067 src/window.c:2148 src/window.c:2195
 msgid "Extract to…"
 msgstr ""
 
-#: src/window.c:2069 src/window.c:2150
+#: src/window.c:2069 src/window.c:2150 src/window.c:2197
 msgid "Compress…"
 msgstr ""
 
-#: src/window.c:2071 src/window.c:2152
+#: src/window.c:2071 src/window.c:2152 src/window.c:2199
 msgid "Cut"
 msgstr ""
 
-#: src/window.c:2075
+#: src/window.c:2075 src/window.c:2203
 #, c-format
 msgid "Paste into “%s”"
 msgstr ""
@@ -2160,11 +2182,11 @@ msgstr ""
 msgid "Paste"
 msgstr ""
 
-#: src/window.c:2083 src/window.c:2155
+#: src/window.c:2083 src/window.c:2155 src/window.c:2209
 msgid "Rename…"
 msgstr ""
 
-#: src/window.c:2084 src/window.c:2156
+#: src/window.c:2084 src/window.c:2156 src/window.c:2210
 msgid "Move to trash"
 msgstr ""
 
@@ -2177,23 +2199,24 @@ msgid "New file…"
 msgstr ""
 
 #. the highlighted folder, else this column's own
-#: src/window.c:2094
+#: src/window.c:2094 src/window.c:2214
 msgid "Open terminal here"
 msgstr ""
 
-#: src/window.c:2097 src/window.c:2159
+#. the held item, in its column's repository
+#: src/window.c:2097 src/window.c:2159 src/window.c:2222
 msgid "Copy path"
 msgstr ""
 
-#: src/window.c:2099 src/window.c:2161
+#: src/window.c:2099 src/window.c:2161 src/window.c:2219
 msgid "Checksums…"
 msgstr ""
 
-#: src/window.c:2102
+#: src/window.c:2102 src/window.c:2215
 msgid "Add to bookmarks"
 msgstr ""
 
-#: src/window.c:2106 src/window.c:2164
+#: src/window.c:2106 src/window.c:2164 src/window.c:2224
 msgid "Properties…"
 msgstr ""
 
@@ -2209,56 +2232,56 @@ msgstr ""
 msgid "Copy paths"
 msgstr ""
 
-#: src/window.c:2444
+#: src/window.c:2507
 msgid "Parent folder (Backspace, Alt+Up)"
 msgstr ""
 
-#: src/window.c:2446
+#: src/window.c:2509
 msgid "Home (Alt+Home)"
 msgstr ""
 
-#: src/window.c:2448
+#: src/window.c:2511
 msgid "Computer: disks, USB sticks, network (Alt+/)"
 msgstr ""
 
-#: src/window.c:2452
+#: src/window.c:2515
 msgid "Bookmarks (Ctrl+D adds this folder)"
 msgstr ""
 
-#: src/window.c:2456
+#: src/window.c:2519
 msgid "New window"
 msgstr ""
 
-#: src/window.c:2462
+#: src/window.c:2525
 msgid "Open this folder as root…"
 msgstr ""
 
-#: src/window.c:2468
+#: src/window.c:2531
 msgid "Search here…"
 msgstr ""
 
-#: src/window.c:2472
+#: src/window.c:2535
 msgid "Settings…"
 msgstr ""
 
-#: src/window.c:2475
+#: src/window.c:2538
 msgid "About millerX"
 msgstr ""
 
-#: src/window.c:2525
+#: src/window.c:2588
 msgid ""
 "<b>You are root:</b> every change here is made as administrator. Be careful."
 msgstr ""
 
-#: src/window.c:2610
+#: src/window.c:2673
 msgid "Not now"
 msgstr ""
 
-#: src/window.c:2610
+#: src/window.c:2673
 msgid ""
 "Files are still being copied, moved or packed. Restart when that is done."
 msgstr ""
 
-#: src/window.c:2648
+#: src/window.c:2711
 msgid "Couldn't restart millerX"
 msgstr ""
