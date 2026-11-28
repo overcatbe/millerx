@@ -65,6 +65,11 @@
   </keywords>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="0.9.0" date="2026-11-28">
+      <description>
+        <p>One millerX again: millerX Unleashed is a setting (Settings, Unleash, Clicks and drags: Classic or Unleashed). USB sticks straight from udisks2, with a notice when one is plugged in, Safe to remove and optional Automount. Restart now after an update. The copy bar counts bytes. Many fixes from a review of the whole program.</p>
+      </description>
+    </release>
     <release version="0.8.8" date="2026-11-28">
       <description>
         <p>Trusted programs: what you trusted runs without asking while it stays the same file. Middle-click a file to open it. The status line counts right after a multi-select, Esc unselects. Optional Git actions with a small Commit window.</p>

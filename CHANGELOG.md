@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.9.0 (not released yet)
+## 0.9.0 (2026-11-28)
 
 One millerX again, wishes from the LinuxQuestions thread, and sticks without GVfs. (0.8.9 was
 never released: it is all in here.)

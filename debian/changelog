@@ -1,3 +1,16 @@
+millerx (0.9.0) unstable; urgency=medium
+
+  * millerX Unleashed is a setting now: Settings, Unleash, Clicks and drags
+    (Classic, the default, or Unleashed).
+  * USB sticks, cards and discs straight from udisks2, without GVfs: a
+    notice when one is plugged in, Safe to remove, optional Automount.
+  * Restart now after an update (a setting); the copy bar counts bytes.
+  * Wizard and Wienerisch moved to extras/languages.
+  * Fixes from a review of the whole program (language file check, trusted
+    system programs on sticks, git pathspecs, archives, crashes).
+
+ -- overcatbe <1771834+overcatbe@users.noreply.github.com>  Sat, 28 Nov 2026 18:00:00 +0200
+
 millerx (0.8.8) unstable; urgency=medium
 
   * Trusted programs: a program, script or launcher you trusted runs

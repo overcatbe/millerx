@@ -1,6 +1,6 @@
 .\" SPDX-License-Identifier: GPL-2.0-or-later
 .\" Copyright (C) 2026 overcatbe
-.TH MILLERX 1 "2026-11-28" "millerX 0.8.8" "User Commands"
+.TH MILLERX 1 "2026-11-28" "millerX 0.9.0" "User Commands"
 .SH NAME
 millerx \- a small file browser with Miller columns
 .SH SYNOPSIS
@@ -120,6 +120,16 @@ change (what your distribution installed) runs without asking, also after update
 \(-> Programs can switch that off. Inside a git repository the right\-click menu can have
 \fBGit\fR (Status, Log, Diff, Add, Commit, Revert): Settings \(-> Tools \(-> Git, off by default;
 a second switch there colours new files green and changed ones red.
+.PP
+Settings \(-> Unleash \(-> \fBClicks and drags\fR: \fBClassic\fR (the default) selects what a
+right\-click is on; \fBUnleashed\fR (once a program of its own, millerX Unleashed) only holds it:
+its menu acts on it, the columns stay, a drag carries it without selecting it, and a folder held
+still under a drag opens. When the installed millerX is replaced by an update, a bar offers
+\fBRestart now\fR (Settings \(-> Unleash \(-> Updates can switch it off).
+.PP
+USB sticks, cards and discs come from udisks2: a click mounts one (an encrypted one asks for its
+passphrase), the right\-click menu has Unmount and \fBSafe to remove\fR. A stick plugged in gets a
+notice with Mount; Settings \(-> Tools \(-> Automount (off by default) mounts it and opens a window.
 .SH FILES
 .TP
 .I ~/.config/millerx/millerx.conf
