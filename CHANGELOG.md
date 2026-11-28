@@ -52,6 +52,14 @@ never released: it is all in here.)
     linked one stays a link. "By content" never opens a device file to look inside.
   - Coming from Unleashed: own language files come along, and the first start already speaks the
     chosen language.
+  - **Smaller ones:** a setting with " #" in it (a Compare command like `meld --label #1`) came
+    back cut after a restart, now it is saved in quotes; Settings only takes what you change in it
+    (it undid a preview width dragged meanwhile, and two Settings windows undid each other); a
+    trusted program asks again where someone else could swap the file between the check and the
+    start (a folder others may write to); a folder with a line break in its name can't plant a
+    sort rule for another folder; Clear in the thumbnail cache never follows a link out of it;
+    a drag from the gallery doesn't open folders in its own window (it emptied the gallery under
+    the drag); packing refuses when an item isn't on a local disk, instead of leaving it out.
 - **USB sticks, cards and discs straight from udisks2**, no GVfs needed. The Computer column
   lists them with their name, device and file system; a click mounts, an encrypted one asks for
   its passphrase (wiped from memory after use). Right-click: Mount, Unlock…, Unmount and

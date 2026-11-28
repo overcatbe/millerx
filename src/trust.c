@@ -121,6 +121,31 @@ static char *file_sum(const char *path, gint64 *size)
     return sum;
 }
 
+/* only you (or root) can change it: owned by you or root, nobody else may write */
+static gboolean only_us(const struct stat *st)
+{
+    return (st->st_uid == getuid() || st->st_uid == 0) && !(st->st_mode & (S_IWGRP | S_IWOTH));
+}
+
+/* between the fingerprint and the start someone else could swap the file, wherever someone else
+ * may write: the file, its folder (unless sticky, like /tmp, where only the owner may replace it)
+ * and the folder of a link that leads to it. There a trusted program asks again (review for 0.9.0). */
+static gboolean nobody_else_can_swap(const char *path)
+{
+    struct stat st, lst, dst;
+    char *real = realpath(path, NULL);
+    gboolean ok = real && !stat(real, &st) && only_us(&st) && !lstat(path, &lst);
+    const char *dirs[2] = { real, path };
+    uid_t owners[2] = { ok ? st.st_uid : 0, ok ? lst.st_uid : 0 };   /* the file's, the link's */
+    for (int i = 0; ok && i < 2; i++) {
+        char *d = g_path_get_dirname(dirs[i]);
+        ok = !stat(d, &dst) && (only_us(&dst) || ((dst.st_mode & S_ISVTX) && (owners[i] == getuid() || owners[i] == 0)));
+        g_free(d);
+    }
+    free(real);
+    return ok;
+}
+
 int trust_check(const char *path)
 {
     GPtrArray *list = load();
@@ -135,7 +160,7 @@ int trust_check(const char *path)
         else if (!(sum = file_sum(path, &size)) || strcmp(sum, t->sum))
             r = TRUST_CHANGED;
         else
-            r = TRUST_YES;
+            r = nobody_else_can_swap(path) ? TRUST_YES : TRUST_NO;
         g_free(sum);
     }
     g_ptr_array_unref(list);

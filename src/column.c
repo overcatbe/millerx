@@ -1009,11 +1009,17 @@ static void on_drag_end(GtkWidget *view, GdkDragContext *ctx, gpointer d)
 
 /* Unleashed: a folder held still under a drag opens. Not to the left of the column the drag came
  * from in its own window: that would close that column under the drag. */
-static gboolean spring_allowed(Column *c)
+static gboolean spring_allowed(Column *c, GdkDragContext *ctx)
 {
     if (c->computer || c->closed || c->win->dead)
         return FALSE;
-    if (!DRAG_SRC || DRAG_SRC->win != c->win)
+    if (!DRAG_SRC) {
+        /* not from a column: from this window's gallery, opening a folder here would take the
+         * gallery away under the drag; from anywhere else (another window, another program) fine */
+        GtkWidget *from = gtk_drag_get_source_widget(ctx);
+        return !from || gtk_widget_get_toplevel(from) != c->win->window;
+    }
+    if (DRAG_SRC->win != c->win)
         return TRUE;
     if (DRAG_SRC->closed)
         return FALSE;
@@ -1038,10 +1044,10 @@ static gboolean spring_fire(gpointer data)
 
 static gboolean on_drag_motion(GtkWidget *view, GdkDragContext *ctx, int x, int y, guint t, Column *c)
 {
-    (void) ctx; (void) t;
+    (void) t;
     GtkTreePath *p = NULL;
     GtkTreeViewDropPosition pos;
-    if (LOOK.clicks != CLICKS_UNLEASHED || !spring_allowed(c) || !gtk_tree_view_get_dest_row_at_pos(GTK_TREE_VIEW(view), x, y, &p, &pos) ||
+    if (LOOK.clicks != CLICKS_UNLEASHED || !spring_allowed(c, ctx) || !gtk_tree_view_get_dest_row_at_pos(GTK_TREE_VIEW(view), x, y, &p, &pos) ||
         (pos != GTK_TREE_VIEW_DROP_INTO_OR_BEFORE && pos != GTK_TREE_VIEW_DROP_INTO_OR_AFTER)) {
         if (p)
             gtk_tree_path_free(p);

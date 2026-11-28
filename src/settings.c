@@ -20,6 +20,12 @@ static char *config_file(void)
 static char *get_str(GKeyFile *kf, const char *sec, const char *key)
 {
     char *v = g_key_file_get_string(kf, sec, key, NULL);
+    size_t vl = v ? strlen(v) : 0;
+    if (vl >= 2 && v[0] == '"' && v[vl - 1] == '"') {   /* "…": as it is, a " #" in it too (set_free) */
+        memmove(v, v + 1, vl - 2);
+        v[vl - 2] = '\0';
+        return v;
+    }
     if (v) {
         /* a comment after the value ("true   # once a day"), as in the README; "#rrggbb" stays */
         for (char *c = v + 1; *c; c++)
@@ -30,6 +36,22 @@ static char *get_str(GKeyFile *kf, const char *sec, const char *key)
         g_strstrip(v);
     }
     return v;
+}
+
+/* a value people type (a command, a name): in quotes when get_str would cut it (" #" in it, spaces
+ * at its ends) or when it is quoted itself, so it comes back as it was saved */
+static void set_free(GKeyFile *kf, const char *sec, const char *key, const char *val)
+{
+    gboolean quote = *val == '"' || g_ascii_isspace(*val) || (*val && g_ascii_isspace(val[strlen(val) - 1]));
+    for (const char *c = val + (*val ? 1 : 0); *c && !quote; c++)
+        quote = *c == '#' && (c[-1] == ' ' || c[-1] == '\t');
+    if (!quote) {
+        g_key_file_set_string(kf, sec, key, val);
+        return;
+    }
+    char *q = g_strconcat("\"", val, "\"", NULL);
+    g_key_file_set_string(kf, sec, key, q);
+    g_free(q);
 }
 
 static int get_int(GKeyFile *kf, const char *sec, const char *key, int def, int lo, int hi)
@@ -215,7 +237,7 @@ gboolean look_save(GError **err)
     g_key_file_set_integer(kf, "look", "preview_width", LOOK.preview_width);
     g_key_file_set_integer(kf, "look", "column_width", LOOK.column_width);
     g_key_file_set_boolean(kf, "look", "gallery_names", LOOK.gallery_names);
-    g_key_file_set_string(kf, "look", "language", LOOK.language ? LOOK.language : "system");
+    set_free(kf, "look", "language", LOOK.language ? LOOK.language : "system");
     g_key_file_set_string(kf, "look", "highlight_color", LOOK.highlight);
     g_key_file_set_boolean(kf, "browse", "folders_first", LOOK.folders_first);
     g_key_file_set_boolean(kf, "browse", "show_hidden", LOOK.show_hidden);
@@ -230,7 +252,7 @@ gboolean look_save(GError **err)
     g_key_file_set_boolean(kf, "helpers", "git_colours", LOOK.git_colours);
     g_key_file_set_boolean(kf, "devices", "automount", LOOK.automount);
     g_key_file_set_boolean(kf, "updates", "notice", LOOK.update_notice);
-    g_key_file_set_string(kf, "helpers", "compare", LOOK.compare ? LOOK.compare : "auto");
+    set_free(kf, "helpers", "compare", LOOK.compare ? LOOK.compare : "auto");
     g_key_file_set_string(kf, "thumbnails", "show",
                           LOOK.thumbs == THUMBS_LOCAL ? "local" : LOOK.thumbs == THUMBS_NEVER ? "never" : "always");
     g_key_file_set_string(kf, "look", "recognise", LOOK.detect == DETECT_CONTENT ? "content" : "name");

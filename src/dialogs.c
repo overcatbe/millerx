@@ -749,6 +749,7 @@ typedef struct {
     GtkWidget *git_col;        /* Git colours; NULL when git isn't installed */
     GtkWidget *automount;      /* Tools → Devices */
     GtkWidget *hl_auto, *hl_own, *hl_colour, *hl_sys, *hl_unsys;
+    Look shown;                /* what the window showed: only what you change here is taken from it */
 } Set;
 
 static void fill_sort_list(Set *s);
@@ -814,6 +815,18 @@ static void settings_changed(GtkWidget *any, Set *s)
     nl.cache_max_mb = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(s->cache_mb));
     nl.cache_days = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(s->cache_days));
     nl.cache_auto = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->cache_auto));
+    /* only what was changed here: a field this window still shows as it was keeps what it is now,
+     * changed elsewhere meanwhile (the preview's width dragged, another Settings window) */
+#define TAKE(f) do { if (nl.f == s->shown.f) nl.f = LOOK.f; else s->shown.f = nl.f; } while (0)
+#define TAKE_S(f) do { if (!g_strcmp0(nl.f, s->shown.f)) nl.f = LOOK.f; \
+                       else { g_free(s->shown.f); s->shown.f = g_strdup(nl.f); } } while (0)
+    TAKE_S(divider_color); TAKE(divider_width); TAKE(fade); TAKE(preview_width); TAKE(folders_first);
+    TAKE(show_hidden); TAKE(gallery_names); TAKE_S(highlight); TAKE(cache_max_mb); TAKE(cache_days);
+    TAKE(cache_auto); TAKE(column_width); TAKE(thumbs); TAKE(detect); TAKE(trust_system); TAKE(ask_programs);
+    TAKE(use_ffmpeg); TAKE(use_pdftoppm); TAKE(use_pkexec); TAKE(use_blender); TAKE(git_colours); TAKE(use_git);
+    TAKE(automount); TAKE(clicks); TAKE(update_notice); TAKE(thumb_size); TAKE_S(language); TAKE_S(compare);
+#undef TAKE
+#undef TAKE_S
     app_apply_look(s->w->app, &nl);
     g_free(col);
     g_free(hcol);
@@ -1217,6 +1230,10 @@ static void hl_system_clicked(GtkButton *b, Set *s)
 static void set_free(Set *s)
 {
     win_unref(s->w);
+    g_free(s->shown.divider_color);
+    g_free(s->shown.highlight);
+    g_free(s->shown.language);
+    g_free(s->shown.compare);
     g_free(s);
 }
 
@@ -1249,6 +1266,11 @@ void dialog_settings(Win *w)
     GtkWidget *grid = NULL;
     Set *s = g_new0(Set, 1);
     s->w = win_ref(w);                 /* the window it was opened from may close first */
+    s->shown = LOOK;                   /* its widgets start from these */
+    s->shown.divider_color = g_strdup(LOOK.divider_color);
+    s->shown.highlight = g_strdup(LOOK.highlight);
+    s->shown.language = g_strdup(LOOK.language);
+    s->shown.compare = g_strdup(LOOK.compare);
     g_object_set_data_full(G_OBJECT(d), "set", s, (GDestroyNotify) set_free);
     int r = 0;
 

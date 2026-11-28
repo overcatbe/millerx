@@ -544,17 +544,20 @@ static gpointer compress_thread(gpointer data)
 {
     Job *j = data;
     GPtrArray *paths = g_ptr_array_new_with_free_func(g_free);
+    gboolean all_local = TRUE;      /* one item on a phone or a GVfs share: nothing packed, not a part */
     for (GList *l = j->sources; l; l = l->next) {
         char *p = g_file_get_path(l->data);
         if (p)
             g_ptr_array_add(paths, p);
+        else
+            all_local = FALSE;
     }
     g_ptr_array_add(paths, NULL);
     char *outp = g_file_get_path(j->out);
     char *dpath = g_file_get_path(j->dest);
     char *name = g_file_get_basename(j->out);
     GError *err = NULL;
-    if (!outp || !dpath || paths->len < 2) {
+    if (!outp || !dpath || !all_local || paths->len < 2) {
         g_set_error_literal(&err, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED, _("only local files can be packed"));
     } else {
         /* written under a hidden name first, renamed when complete */

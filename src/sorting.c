@@ -55,6 +55,11 @@ static void save(void)
     GList *paths = sorting_paths();
     for (GList *l = paths; l; l = l->next) {
         FolderSort *s = g_hash_table_lookup(SORTS, l->data);
+        /* one line per folder: a name with a line break in it would end its line early, and what
+         * follows would read as a rule for another folder. Such a folder keeps its order until
+         * millerX quits, not in the file. */
+        if (strpbrk(l->data, "\n\r"))
+            continue;
         g_string_append_printf(out, "%s\t%d\t%s\n", BY_NAMES[s->by], s->reverse ? 1 : 0, (char *) l->data);
     }
     g_list_free_full(paths, g_free);

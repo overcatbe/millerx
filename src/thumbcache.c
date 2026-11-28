@@ -36,7 +36,8 @@ static GPtrArray *list_thumbs(guint64 *total)
     for (guint i = 0; i < G_N_ELEMENTS(DIRS); i++)
         g_ptr_array_add(dirs, g_build_filename(root, DIRS[i], NULL));
     char *fail = g_build_filename(root, "fail", NULL);
-    GDir *fd = g_dir_open(fail, 0, NULL);
+    struct stat fst;
+    GDir *fd = !lstat(fail, &fst) && S_ISDIR(fst.st_mode) ? g_dir_open(fail, 0, NULL) : NULL;
     if (fd) {
         const char *n;
         while ((n = g_dir_read_name(fd)))
@@ -47,6 +48,11 @@ static GPtrArray *list_thumbs(guint64 *total)
     gint64 now = g_get_real_time() / G_USEC_PER_SEC;
     for (guint i = 0; i < dirs->len; i++) {
         const char *dir = g_ptr_array_index(dirs, i);
+        /* a size folder or fail/<program> that is a link points out of the cache: what is there
+         * isn't ours to clean up (or delete) */
+        struct stat dst;
+        if (lstat(dir, &dst) || !S_ISDIR(dst.st_mode))
+            continue;
         GDir *d = g_dir_open(dir, 0, NULL);
         if (!d)
             continue;
