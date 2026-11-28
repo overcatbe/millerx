@@ -740,7 +740,7 @@ typedef struct {
     Win *w;
     GtkWidget *auto_rb, *own_rb, *colour, *width, *style, *pw, *cw, *ff, *sh;
     GtkWidget *cache_size, *cache_clear, *cache_mb, *cache_days, *cache_auto;
-    GtkWidget *sort_list, *names, *thumbs, *tsize, *lang, *lang_note, *detect, *clicks;
+    GtkWidget *sort_list, *names, *thumbs, *tsize, *lang, *lang_note, *detect, *clicks, *upd;
     GtkWidget *ask, *trust_sys, *trust_list;    /* Ask before running programs, root's own, the trusted ones */
     GtkWidget *use[5];         /* the optional helpers, when installed; NULL when not */
     GtkWidget *compare;        /* what compares two files */
@@ -797,6 +797,7 @@ static void settings_changed(GtkWidget *any, Set *s)
         gtk_widget_set_sensitive(s->git_col, nl.use_git);
     }
     nl.automount = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->automount));
+    nl.update_notice = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->upd));
     nl.detect = !g_strcmp0(gtk_combo_box_get_active_id(GTK_COMBO_BOX(s->detect)), "content") ? DETECT_CONTENT
                                                                                               : DETECT_NAME;
     nl.ask_programs = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(s->ask));
@@ -1215,7 +1216,7 @@ void dialog_settings(Win *w)
 {
     GtkWidget *d = gtk_dialog_new_with_buttons(_("millerX settings"), GTK_WINDOW(w->window), 0, _("Close"),
                                                GTK_RESPONSE_CLOSE, NULL);
-    /* three tabs: Look (two columns), Thumbnails, Folders; every section a framed box */
+    /* the tabs: Look (two columns), Unleash, Thumbnails, Folders, Programs, Tools; every section a framed box */
     GdkRectangle area = { 0, 0, 0, 900 };
     GdkMonitor *mon = gdk_display_get_monitor_at_window(gtk_widget_get_display(w->window),
                                                         gtk_widget_get_window(w->window));
@@ -1231,6 +1232,8 @@ void dialog_settings(Win *w)
     gtk_box_pack_start(GTK_BOX(cols), left, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(cols), right, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(look), cols, FALSE, FALSE, 0);
+    /* TRANSLATORS: a tab of the settings: how millerX behaves (clicks and drags, updates) */
+    GtkWidget *unleash_tab = tab(nb, _("Unleash"), max_h);
     GtkWidget *thumbs_tab = tab(nb, _("Thumbnails"), max_h);
     GtkWidget *folders_tab = tab(nb, _("Folders"), max_h);
     GtkWidget *programs_tab = tab(nb, _("Programs"), max_h);
@@ -1310,17 +1313,6 @@ void dialog_settings(Win *w)
     s->sh = gtk_check_button_new_with_label(_("Show hidden files when millerX starts"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(s->sh), LOOK.show_hidden);
     srow(grid, &r, _("Hidden files"), s->sh);
-    s->clicks = gtk_combo_box_text_new();
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->clicks), "classic", _("Classic: right-click selects"));
-    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->clicks), "unleashed", _("Unleashed: right-click and drag only hold"));
-    gtk_combo_box_set_active_id(GTK_COMBO_BOX(s->clicks), LOOK.clicks == CLICKS_UNLEASHED ? "unleashed" : "classic");
-    gtk_widget_set_tooltip_text(s->clicks,
-        _("Classic: a right-click selects what it is on (and opens a folder); a drag carries the selection. "
-          "Also the way for touch screens. "
-          "Unleashed: a right-click on something not selected only holds it (bold, underlined): its menu acts on "
-          "it and the columns stay where they are. A drag carries what you picked up without selecting it, and "
-          "a folder held still under a drag opens, so you can go down and drop inside."));
-    srow(grid, &r, _("Clicks and drags"), s->clicks);
     s->lang = gtk_combo_box_text_new();
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->lang), "system", _("System"));
     gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->lang), "en", _("English"));
@@ -1501,6 +1493,30 @@ void dialog_settings(Win *w)
           "Encrypted ones always wait for you."));
     srow(grid, &r, "", s->automount);
     g_signal_connect(s->automount, "toggled", G_CALLBACK(settings_changed), s);
+
+    /* Unleash: how millerX behaves */
+    new_column(unleash_tab);
+    section(&grid, &r, _("Clicks and drags"));
+    s->clicks = gtk_combo_box_text_new();
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->clicks), "classic", _("Classic: right-click selects"));
+    gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(s->clicks), "unleashed", _("Unleashed: right-click and drag only hold"));
+    gtk_combo_box_set_active_id(GTK_COMBO_BOX(s->clicks), LOOK.clicks == CLICKS_UNLEASHED ? "unleashed" : "classic");
+    gtk_widget_set_tooltip_text(s->clicks,
+        _("Classic: a right-click selects what it is on (and opens a folder); a drag carries the selection. "
+          "Also the way for touch screens. "
+          "Unleashed: a right-click on something not selected only holds it (bold, underlined): its menu acts on "
+          "it and the columns stay where they are. A drag carries what you picked up without selecting it, and "
+          "a folder held still under a drag opens, so you can go down and drop inside."));
+    srow(grid, &r, "", s->clicks);
+    section(&grid, &r, _("Updates"));
+    s->upd = gtk_check_button_new_with_label(_("Offer a restart when millerX was updated"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(s->upd), LOOK.update_notice);
+    gtk_widget_set_tooltip_text(s->upd,
+        _("After a package upgrade the running millerX is still the old one. On: a bar says so, with "
+          "“Restart now”, and your windows come back where they were. Off: no bar; the new version "
+          "starts the next time you start millerX."));
+    srow(grid, &r, "", s->upd);
+    g_signal_connect(s->upd, "toggled", G_CALLBACK(settings_changed), s);
 
     g_signal_connect(s->auto_rb, "toggled", G_CALLBACK(settings_changed), s);
     g_signal_connect(s->colour, "color-set", G_CALLBACK(settings_changed), s);

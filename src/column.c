@@ -7,7 +7,7 @@
 static const GtkTargetEntry URI_TARGET[] = { { (char *) "text/uri-list", 0, 0 } };
 static gboolean DRAG_ASK;             /* the running drag started with the right button: its drop asks */
 
-/* Clicks and drags: Unleashed (Settings → Look): a drag carries what was picked up, not what is selected, and a folder held
+/* Clicks and drags: Unleashed (Settings → Unleash): a drag carries what was picked up, not what is selected, and a folder held
  * still under a drag for a moment opens (only where that can't take away the column it came from) */
 static GList *DRAG_FILES;             /* GFile*, what the running drag from a column carries */
 static Column *DRAG_SRC;              /* the column it started in (a ref) */

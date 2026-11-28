@@ -4,7 +4,7 @@ A small, native file browser with **Miller columns**: every folder from `/` down
 where you are sits in its own column, and the selected file is previewed on the right.
 Like a mind map of your disk. Written in C with GTK 3 and GIO.
 
-> **New in 0.9.0:** **millerX Unleashed is a setting now**: Settings → Look → Browsing →
+> **New in 0.9.0:** **millerX Unleashed is a setting now**: Settings → Unleash →
 > **Clicks and drags**, Classic (right-click selects, as always; also the touch-screen way) or
 > Unleashed (right-click and drag only hold, folders open under a drag) · **USB sticks without
 > GVfs**, straight from udisks2, with a notice when one is plugged in and **Safe to remove**;
@@ -278,7 +278,7 @@ fast and clear, it leaves some things out on purpose:
 Middle-click a folder (or right-click → Open in new window) to open it in a second window;
 middle-click a file to open it.
 
-**Clicks and drags** (Settings → Look → Browsing) decides what a right-click and a drag do:
+**Clicks and drags** (Settings → Unleash) decides what a right-click and a drag do:
 - **Classic** (the default): a right-click selects what it is on, and a folder opens to the right;
   a drag carries the selection. What you select is what you process, and it is the way for touch
   screens, where a long press is the right-click.
@@ -372,6 +372,12 @@ show_hidden = false
 clicks = classic         # classic (right-click selects) | unleashed (right-click and drag only hold)
 ask_programs = true      # a program, script or launcher asks before it runs (what you trusted doesn't)
 trust_system = true      # ...except root's own (owned by root, in folders only root can change)
+
+[devices]
+automount = false        # a stick plugged in mounts itself and opens a window (off: a notice says what came)
+
+[updates]
+notice = true            # "millerX was updated · Restart now" after a package upgrade
 
 [thumbnails]
 show = local             # local (none in network folders) | always | never

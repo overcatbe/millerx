@@ -5,7 +5,8 @@
 One millerX again, wishes from the LinuxQuestions thread, and sticks without GVfs. (0.8.9 was
 never released: it is all in here.)
 
-- **millerX Unleashed is a setting now.** Settings → Look → Browsing → **Clicks and drags**:
+- **A new settings tab, Unleash**, for how millerX behaves: Clicks and drags, and Updates.
+- **millerX Unleashed is a setting now.** Settings → **Unleash** → **Clicks and drags**:
   - **Classic** (the default): a right-click selects, as millerX always did. What you select is
     what you process, and it is the way for touch screens. Thanks, SCerovec!
   - **Unleashed**: a right-click on something not selected only holds it (bold, underlined), its
@@ -29,7 +30,8 @@ never released: it is all in here.)
   new window. Encrypted ones always wait for you.
 - **"millerX was updated · Restart now."** After a package upgrade the running millerX notices its
   own program was replaced and offers a restart; your windows come back where they were. New
-  windows of an old millerX say so too. Thanks, SCerovec!
+  windows of an old millerX say so too; Settings → Unleash → Updates switches the bar off.
+  Thanks, SCerovec!
 - **The copy bar counts bytes**: it counts what to copy first, then "Copying name (2/5) · 1.2 GB
   of 4.0 GB", so one big file moves the bar too (it used to move only between files). A move on
   the same disk is still a quick rename, with nothing to count. Thanks, kgha!

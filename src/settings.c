@@ -8,7 +8,7 @@
 #include <unistd.h>
 
 Look LOOK = { NULL, 2, FALSE, PREVIEW_DEFAULT, TRUE, FALSE, .column_width = COL_DEFAULT,
-              .use_ffmpeg = TRUE, .use_pdftoppm = TRUE, .use_pkexec = TRUE, .use_blender = TRUE, .use_git = FALSE, .git_colours = FALSE, .automount = FALSE, .clicks = CLICKS_CLASSIC,
+              .use_ffmpeg = TRUE, .use_pdftoppm = TRUE, .use_pkexec = TRUE, .use_blender = TRUE, .use_git = FALSE, .git_colours = FALSE, .automount = FALSE, .clicks = CLICKS_CLASSIC, .update_notice = TRUE,
               .thumb_size = TSIZE_MEDIUM,
               .thumbs = THUMBS_LOCAL, .detect = DETECT_NAME, .ask_programs = TRUE, .trust_system = TRUE };
 
@@ -131,6 +131,7 @@ void look_load(void)
     LOOK.use_git = get_bool(kf, "helpers", "git", FALSE);
     LOOK.git_colours = get_bool(kf, "helpers", "git_colours", FALSE);
     LOOK.automount = get_bool(kf, "devices", "automount", FALSE);
+    LOOK.update_notice = get_bool(kf, "updates", "notice", TRUE);
     char *th = get_str(kf, "thumbnails", "show");
     LOOK.thumbs = !g_strcmp0(th, "always") ? THUMBS_ALWAYS : !g_strcmp0(th, "never") ? THUMBS_NEVER : THUMBS_LOCAL;
     g_free(th);
@@ -204,6 +205,7 @@ gboolean look_save(GError **err)
     g_key_file_set_boolean(kf, "helpers", "git", LOOK.use_git);
     g_key_file_set_boolean(kf, "helpers", "git_colours", LOOK.git_colours);
     g_key_file_set_boolean(kf, "devices", "automount", LOOK.automount);
+    g_key_file_set_boolean(kf, "updates", "notice", LOOK.update_notice);
     g_key_file_set_string(kf, "helpers", "compare", LOOK.compare ? LOOK.compare : "auto");
     g_key_file_set_string(kf, "thumbnails", "show",
                           LOOK.thumbs == THUMBS_LOCAL ? "local" : LOOK.thumbs == THUMBS_NEVER ? "never" : "always");

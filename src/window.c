@@ -116,6 +116,8 @@ static void restart_clicked(Win *w, int button, gpointer data)
 
 static void self_notice(Win *w)
 {
+    if (!LOOK.update_notice)        /* Settings → Unleash → Updates: no bar */
+        return;
     win_notice(w, "update", _("millerX was updated. Restart to use the new version (your windows come back where they are)."),
                _("Restart now"), NULL, restart_clicked, NULL, NULL);
 }
@@ -2624,6 +2626,7 @@ void app_apply_look(GtkApplication *app, const Look *nl)
     char *lang = g_strdup(nl->language ? nl->language : "system");
     gboolean hl_changed = g_strcmp0(nl->highlight, LOOK.highlight);
     gboolean git_changed = nl->use_git != LOOK.use_git || nl->git_colours != LOOK.git_colours;
+    gboolean upd_changed = nl->update_notice != LOOK.update_notice;
     g_free(LOOK.divider_color);
     g_free(LOOK.highlight);
     g_free(LOOK.language);
@@ -2639,6 +2642,10 @@ void app_apply_look(GtkApplication *app, const Look *nl)
         Win *w = g_object_get_data(G_OBJECT(l->data), "millerx-win");
         if (w && !w->dead) {
             win_look_changed(w, resort);
+            if (upd_changed && !LOOK.update_notice)      /* switched off: the bar goes at once */
+                win_notice_close(w, "update");
+            else if (upd_changed && SELF_UPDATED)        /* switched on after an update: it comes */
+                self_notice(w);
             if (git_changed)                 /* Git colours on or off: at once */
                 for (GList *k = w->columns; k; k = k->next)
                     git_colours_schedule(k->data);

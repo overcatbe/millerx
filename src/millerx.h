@@ -27,7 +27,7 @@
 
 enum { THUMBS_ALWAYS, THUMBS_LOCAL, THUMBS_NEVER };
 enum { DETECT_NAME, DETECT_CONTENT };
-/* Clicks and drags (Settings → Look → Browsing): Classic, right-click selects (default, also the
+/* Clicks and drags (Settings → Unleash): Classic, right-click selects (default, also the
  * touch-screen way); Unleashed, right-click and drag only hold, a folder opens under a drag */
 enum { CLICKS_CLASSIC, CLICKS_UNLEASHED };   /* Recognise files: by name (default) / by content, when you open a file */
 enum { TSIZE_SMALL, TSIZE_MEDIUM, TSIZE_LARGE, TSIZE_TINY };  /* gallery tiles: about 100, 200, 400, 64 px */
@@ -73,6 +73,7 @@ typedef struct {
     gboolean use_git;       /* Git actions in the right-click menu, inside a repository (off by default) */
     gboolean automount;     /* a stick plugged in mounts itself and opens a window (off: a notice says what came) */
     int clicks;             /* CLICKS_CLASSIC (default), CLICKS_UNLEASHED */
+    gboolean update_notice; /* "millerX was updated · Restart now" (on by default) */
     int thumb_size;         /* TSIZE_TINY, _SMALL, _MEDIUM, _LARGE */
     char *language;         /* "system", "en", "wizard", "wienerisch" or "own:NAME": read once at start */
     char *compare;          /* what compares two files: "auto" (meld, kdiff3, kompare, diffuse) or a command */
